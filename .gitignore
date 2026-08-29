@@ -1,0 +1,80 @@
+# ============================================================
+# UrbanGen AI — .gitignore
+# ============================================================
+
+# ------------------------------------------------------------
+# Python
+# ------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# ------------------------------------------------------------
+# Virtual environments
+# ------------------------------------------------------------
+venv/
+.venv/
+
+# ------------------------------------------------------------
+# Frontend
+# ------------------------------------------------------------
+frontend/node_modules/
+frontend/dist/
+
+# ------------------------------------------------------------
+# Secrets
+# ------------------------------------------------------------
+.env
+*.env
+.env.*
+!.env.example
+
+# ------------------------------------------------------------
+# Large datasets — downloaded locally, not tracked. See
+# HOW_TO_RUN.md for where to get these.
+# ------------------------------------------------------------
+EuroSAT/
+UCMerced_LandUse/
+pune_datasets/
+
+# ------------------------------------------------------------
+# Session/debug logs — disposable
+# ------------------------------------------------------------
+*.log
+
+# ------------------------------------------------------------
+# Runtime artifacts
+# ------------------------------------------------------------
+outputs/*/.train_lock
+
+# ------------------------------------------------------------
+# Training debug output — keep the model weights + history
+# (see explicit include below), not every epoch's sample image
+# ------------------------------------------------------------
+outputs/*/samples/
+outputs/*/prior_samples_*.png
+outputs/*/latent_interpolation_*.png
+outputs/generated/
+
+# ------------------------------------------------------------
+# Explicitly keep model weights + training history. Scoped to the
+# three real model dirs only — a broader `!outputs/*/` would also
+# un-ignore outputs/generated/ above.
+# ------------------------------------------------------------
+!outputs/
+!outputs/ae/
+!outputs/vae/
+!outputs/transformer/
+!outputs/**/*.pth
+!outputs/**/history.json
+
+# ------------------------------------------------------------
+# OS / editor junk
+# ------------------------------------------------------------
+.DS_Store
+Thumbs.db
+.vscode/settings.json
+.vscode/launch.json
+.idea/
+2022_REVISION _(2.0)_COMP_SYLLABUS.pdf
+Untitled0.ipynb
