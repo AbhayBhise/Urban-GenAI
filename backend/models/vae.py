@@ -76,3 +76,19 @@ class VAE(nn.Module):
         z = self.reparameterize(mu, logvar)
         recon = self.decode(z)
         return recon, mu, logvar
+
+
+def kl_divergence(mu, logvar):
+    """Analytic KL( q(z|x) || N(0, I) ) for a diagonal-Gaussian posterior.
+
+    mu / logvar are spatial here (B, C, H, W). Returns:
+      kl_mean      : scalar, mean total KL (nats) per image  -- the number
+                     surfaced in the UI; it is exactly the term the VAE
+                     objective trades against reconstruction.
+      kl_per_dim   : scalar, mean KL per latent dimension (easier to read).
+    """
+    kl_map = -0.5 * (1 + logvar - mu.pow(2) - logvar.exp())
+    per_image = kl_map.sum(dim=[1, 2, 3])
+    kl_mean = per_image.mean().item()
+    n_dims = mu[0].numel()
+    return kl_mean, kl_mean / n_dims

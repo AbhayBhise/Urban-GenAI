@@ -40,16 +40,29 @@ export default function ModelExplorer({ setActiveView }: ModelExplorerProps) {
           </button>
         </div>
 
-        <div className="card" style={{ cursor: 'pointer', transition: 'all 0.2s' }} onClick={() => setActiveView('transformer')}>
+        <div className="card" style={{ cursor: 'pointer', transition: 'all 0.2s' }} onClick={() => setActiveView('plan-generator')}>
           <div className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <Cpu size={24} color="#00E676" />
-            Transformer (UrbanViT)
+            Transformer (Urban Plan Generator)
           </div>
           <p style={{ color: 'var(--muted)', fontSize: '0.9rem', marginBottom: '20px' }}>
-            Visualize how self-attention mechanisms classify urban land-use patterns into distinct categories.
+            A from-scratch decoder-only Transformer: causal self-attention + positional embeddings, generating urban-planning recommendations from land-use statistics.
           </p>
           <button className="btn" style={{ background: 'transparent', border: '1px solid #00E676', color: '#00E676', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
             Explore Transformer <ArrowRight size={16} />
+          </button>
+        </div>
+
+        <div className="card" style={{ cursor: 'pointer', transition: 'all 0.2s' }} onClick={() => setActiveView('classifier')}>
+          <div className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <Cpu size={24} color="var(--accent)" />
+            Land-Use Classifier (ResNet18)
+          </div>
+          <p style={{ color: 'var(--muted)', fontSize: '0.9rem', marginBottom: '20px' }}>
+            Transfer-learned CNN that classifies aerial tiles into 21 zoning categories for automated land-use auditing.
+          </p>
+          <button className="btn" style={{ background: 'transparent', border: '1px solid var(--accent)', color: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
+            Explore Classifier <ArrowRight size={16} />
           </button>
         </div>
       </div>

@@ -65,8 +65,9 @@ outputs/generated/
 !outputs/ae/
 !outputs/vae/
 !outputs/transformer/
+!outputs/gpt/
 !outputs/**/*.pth
-!outputs/**/history.json
+!outputs/**/*.json
 
 # ------------------------------------------------------------
 # OS / editor junk
