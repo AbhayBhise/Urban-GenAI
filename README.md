@@ -236,6 +236,19 @@ UrbanGen AI is designed with responsible AI principles in mind:
 - **Model Limitations**: Deep learning models may fail to generalise across cities with different climatic, cultural, and infrastructural contexts.
 - **Non-Authoritative Recommendations**: Outputs from UrbanGen AI are intended to assist human decision-making — not replace it. No output from this system should be directly implemented without proper regulatory and professional review.
 
+### Governance documentation
+
+| Document | Covers |
+|---|---|
+| [`docs/ETHICS.md`](docs/ETHICS.md) | Fairness, transparency, accountability, explicit bias disclosure, misuse boundaries |
+| [`docs/PRIVACY.md`](docs/PRIVACY.md) | GDPR, India DPDP Act 2023, EU AI Act classification, zero-retention data handling |
+| [`docs/SECURITY.md`](docs/SECURITY.md) | Threat model, API-key auth, CORS, rate limiting, upload validation, deployment checklist |
+| [`docs/MODEL_CARD.md`](docs/MODEL_CARD.md) | Per-model purpose, data, metrics, limitations, and carbon footprint |
+
+These are also served by the API (`GET /governance/{ethics,privacy,security,model_card}`)
+and rendered in the app's **Governance** page. Security controls are configured via
+`backend/.env` (see `backend/.env.example`).
+
 ---
 
 ## License

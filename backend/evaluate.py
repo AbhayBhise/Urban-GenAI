@@ -4,7 +4,7 @@ from PIL import Image
 import torch
 import torch.nn.functional as F
 from torchvision import transforms
-from models.transformer import UrbanClassifier
+from models.classifier import UrbanClassifier
 from dataset import URBAN_CLASSES
 
 def evaluate_generated_images(input_dir='../outputs/generated', model_path='../outputs/transformer/model.pth'):
