@@ -10,6 +10,7 @@ import Evaluation from './pages/Evaluation';
 import Research from './pages/Research';
 import PlanGenerator from './pages/PlanGenerator';
 import Governance from './pages/Governance';
+import GAN from './pages/GAN';
 import { apiFetch, getApiKey, setApiKey } from './lib/api';
 
 type ViewType = 'ae' | 'vae' | 'classifier' | 'plan-generator' | 'governance' | 'gan' | 'prediction' | 'datasets' | 'system' | 'model-explorer' | 'model-comparison' | 'training' | 'evaluation' | 'research';
@@ -216,7 +217,7 @@ export default function App() {
     { id: 'governance', label: 'Governance', icon: ShieldCheck, active: true },
     { id: 'datasets', label: 'Dataset Explorer', icon: Database, active: true },
     { id: 'system', label: 'System Info', icon: HardDrive, active: true },
-    { id: 'gan', label: 'GAN', icon: ImageIcon, active: false, badge: 'Soon' },
+    { id: 'gan', label: 'GAN Generator', icon: ImageIcon, active: true },
     { id: 'prediction', label: 'Prediction Engine', icon: CheckCircle2, active: false, badge: 'Soon' },
   ];
 
@@ -351,6 +352,7 @@ export default function App() {
             {activeView === 'research' && <Research />}
             {activeView === 'plan-generator' && <PlanGenerator />}
             {activeView === 'governance' && <Governance />}
+            {activeView === 'gan' && <GAN isGanTrained={status['gan'] === 'Trained'} />}
 
             {isImageView(activeView) && (
               <>

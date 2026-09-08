@@ -22,6 +22,7 @@ from models.autoencoder import DenoisingAE
 from models.vae import VAE, kl_divergence
 from models.classifier import UrbanClassifier
 from models.gpt import GPTConfig, MiniGPT
+from models.gan import Generator as GANGenerator, LATENT_DIM as GAN_LATENT_DIM, NUM_CLASSES as GAN_NUM_CLASSES
 from dataset import URBAN_CLASSES
 from rag_pipeline import PUNE_STATS, query_rag
 from security import (
@@ -73,6 +74,20 @@ def load_model_if_exists(model, path):
 ae_loaded = load_model_if_exists(ae, '../outputs/ae/model.pth')
 vae_loaded = load_model_if_exists(vae, '../outputs/vae/model.pth')
 trans_loaded = load_model_if_exists(transformer, '../outputs/transformer/model.pth')
+
+# ---------------------------------------------------------------------------
+# Conditional GAN Generator — loaded from EMA checkpoint produced by train_gan.py
+# ---------------------------------------------------------------------------
+gan_generator = GANGenerator(latent_dim=GAN_LATENT_DIM, num_classes=GAN_NUM_CLASSES).to(device)
+gan_loaded = load_model_if_exists(gan_generator, '../outputs/gan/generator_ema.pth')
+GAN_META: dict = {}
+_gan_meta_path = '../outputs/gan/meta.json'
+if os.path.exists(_gan_meta_path):
+    try:
+        with open(_gan_meta_path, encoding='utf-8') as _f:
+            GAN_META = json.load(_f)
+    except Exception as _e:
+        print(f"Warning: could not load GAN meta: {_e}")
 
 # ---------------------------------------------------------------------------
 # MiniGPT (transformer-based generative model) — trained on the urban-planning
@@ -238,6 +253,7 @@ def get_status():
         "vae": "Trained" if vae_loaded else "Not trained yet",
         "transformer": "Trained" if trans_loaded else "Not trained yet",
         "gpt": "Trained" if gpt_loaded else "Not trained yet",
+        "gan": "Trained" if gan_loaded else "Not trained yet",
     }
 
 
@@ -410,6 +426,106 @@ async def infer_transformer(request: Request, file: UploadFile = File(...)):
 
 # alias
 app.add_api_route("/infer/classifier", infer_transformer, methods=["POST"], dependencies=GUARDED)
+
+
+# ---------------------------------------------------------------------------
+# GAN inference — class-conditional urban tile generation
+# ---------------------------------------------------------------------------
+
+class GANRequest(BaseModel):
+    class_index: int = 0          # UCMerced class index 0-20
+    num_images: int = 4           # how many tiles to generate (1-16)
+    seed: int | None = None       # optional reproducibility seed
+
+
+@app.post("/infer/gan", dependencies=GUARDED)
+@limiter.limit(RATE_LIMIT)
+def infer_gan(request: Request, req: GANRequest):
+    """Generate synthetic urban aerial tile(s) for a given land-use class.
+
+    Uses the EMA Generator checkpoint from train_gan.py.  Returns a
+    base64-encoded JPEG grid of generated images plus metadata.
+    """
+    if not gan_loaded:
+        return Response(
+            status_code=400,
+            content="GAN not trained yet — run: python train_gan.py"
+        )
+
+    class_idx = max(0, min(int(req.class_index), GAN_NUM_CLASSES - 1))
+    n = max(1, min(int(req.num_images), 16))
+
+    if req.seed is not None:
+        torch.manual_seed(int(req.seed))
+
+    z = torch.randn(n, GAN_LATENT_DIM, device=device)
+    labels = torch.full((n,), class_idx, dtype=torch.long, device=device)
+
+    gan_generator.eval()
+    with torch.no_grad():
+        fake_imgs = gan_generator(z, labels)   # (n, 3, 128, 128) in [-1,1]
+
+    # Build a square grid (up to 4 per row)
+    nrow = min(n, 4)
+    grid = make_grid(fake_imgs, nrow=nrow, padding=2, normalize=True, value_range=(-1, 1))
+    buf = io.BytesIO()
+    transforms.ToPILImage()(grid).save(buf, format="JPEG", quality=92)
+    img_b64 = base64.b64encode(buf.getvalue()).decode("utf-8")
+
+    # Individual images as base64 list for the frontend carousel
+    individual = []
+    for i in range(n):
+        b = io.BytesIO()
+        single = fake_imgs[i] * 0.5 + 0.5
+        single = single.clamp(0, 1).cpu()
+        transforms.ToPILImage()(single).save(b, format="JPEG", quality=90)
+        individual.append(base64.b64encode(b.getvalue()).decode("utf-8"))
+
+    class_name = URBAN_CLASSES[class_idx] if class_idx < len(URBAN_CLASSES) else str(class_idx)
+    epochs_trained = GAN_META.get("epochs_trained", "unknown")
+
+    return {
+        "grid": img_b64,
+        "images": individual,
+        "class_index": class_idx,
+        "class_name": class_name,
+        "num_generated": n,
+        "latent_dim": GAN_LATENT_DIM,
+        "epochs_trained": epochs_trained,
+    }
+
+
+@app.get("/infer/gan/classes")
+def gan_classes():
+    """Return the list of urban land-use classes the GAN was trained on."""
+    return {
+        "classes": [
+            {"index": i, "name": name}
+            for i, name in enumerate(URBAN_CLASSES)
+        ],
+        "trained": gan_loaded,
+        "epochs_trained": GAN_META.get("epochs_trained"),
+    }
+
+
+@app.get("/infer/gan/grid")
+@limiter.limit(RATE_LIMIT)
+def gan_class_grid(request: Request):
+    """Generate one sample per class (21 images) as a reference grid."""
+    if not gan_loaded:
+        return Response(status_code=400, content="GAN not trained yet")
+
+    z = torch.randn(GAN_NUM_CLASSES, GAN_LATENT_DIM, device=device)
+    labels = torch.arange(GAN_NUM_CLASSES, device=device)
+
+    gan_generator.eval()
+    with torch.no_grad():
+        fake_imgs = gan_generator(z, labels)  # (21, 3, 128, 128)
+
+    grid = make_grid(fake_imgs, nrow=7, padding=2, normalize=True, value_range=(-1, 1))
+    buf = io.BytesIO()
+    transforms.ToPILImage()(grid).save(buf, format="JPEG", quality=92)
+    return Response(content=buf.getvalue(), media_type="image/jpeg")
 
 
 # ---------------------------------------------------------------------------
