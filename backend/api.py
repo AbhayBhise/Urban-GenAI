@@ -229,12 +229,16 @@ def score_anomaly(mse):
 # version" needs.
 DEVELOPED_CLASSES = ["denseresidential", "mediumresidential", "buildings", "intersection", "freeway"]
 
-# Natural/low-development UCMerced classes -- used by /sample/ucmerced/undeveloped
+# Natural, developable-land UCMerced classes -- used by /sample/ucmerced/undeveloped
 # so "Load Real Sample" on the VAE page surfaces tiles that actually show a
 # visible before/after with the urbanization projection (a tile that's
 # already built-up, e.g. a runway or tennis court, has little room to
-# visibly "develop" further).
-UNDEVELOPED_CLASSES = ["agricultural", "beach", "chaparral", "forest", "river"]
+# visibly "develop" further). Deliberately excludes "beach" and "river":
+# besides not being land anyone would realistically build over, water has
+# no land-like surface texture for Gram-matrix style transfer to work
+# with, so those two classes only ever produced a color-tinted version of
+# the same water body, never a convincing "developed" result.
+UNDEVELOPED_CLASSES = ["agricultural", "chaparral", "forest"]
 URBANIZATION_TARGET_PATHS = []  # paths to real developed tiles, used as style targets
 
 STYLE_IMAGENET_MEAN = torch.tensor([0.485, 0.456, 0.406], device=device).view(1, 3, 1, 1)
