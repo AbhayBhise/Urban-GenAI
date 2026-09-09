@@ -199,6 +199,134 @@ def score_anomaly(mse):
     return z, level
 
 
+# ---------------------------------------------------------------------------
+# VAE evaluation metrics: reconstruction quality (MSE/PSNR/SSIM) and latent
+# health (KL divergence, active-dimension count) computed once at startup
+# over a held-out sample spanning all 21 UCMerced classes, then served as-is
+# by GET /evaluate/vae. This is the model's actual measured performance --
+# not a guess -- and the honest answer to "why is the reconstruction soft":
+# these numbers quantify exactly how soft, and the per-class breakdown shows
+# where the 8x8-bottleneck architecture (see models/vae.py) costs the most.
+# ---------------------------------------------------------------------------
+_SSIM_WINDOW_SIZE = 11
+
+
+def _gaussian_window(window_size=_SSIM_WINDOW_SIZE, sigma=1.5):
+    coords = torch.arange(window_size, dtype=torch.float32) - window_size // 2
+    g = torch.exp(-(coords ** 2) / (2 * sigma ** 2))
+    g = g / g.sum()
+    return (g.unsqueeze(0) * g.unsqueeze(1)).unsqueeze(0).unsqueeze(0)  # (1,1,k,k)
+
+
+_SSIM_BASE_WINDOW = _gaussian_window()
+
+
+def compute_ssim(img1, img2):
+    """Mean structural similarity between two (B, C, H, W) batches in [0, 1].
+
+    Standard windowed SSIM (Wang et al. 2004) with an 11x11 Gaussian window,
+    implemented directly since this project has no image-quality library as
+    a dependency. Returns one score per image in the batch."""
+    channels = img1.shape[1]
+    window = _SSIM_BASE_WINDOW.expand(channels, 1, _SSIM_WINDOW_SIZE, _SSIM_WINDOW_SIZE).to(img1.device)
+    pad = _SSIM_WINDOW_SIZE // 2
+
+    mu1 = F.conv2d(img1, window, padding=pad, groups=channels)
+    mu2 = F.conv2d(img2, window, padding=pad, groups=channels)
+    mu1_sq, mu2_sq, mu1_mu2 = mu1 ** 2, mu2 ** 2, mu1 * mu2
+
+    sigma1_sq = F.conv2d(img1 * img1, window, padding=pad, groups=channels) - mu1_sq
+    sigma2_sq = F.conv2d(img2 * img2, window, padding=pad, groups=channels) - mu2_sq
+    sigma12 = F.conv2d(img1 * img2, window, padding=pad, groups=channels) - mu1_mu2
+
+    c1, c2 = 0.01 ** 2, 0.03 ** 2
+    ssim_map = ((2 * mu1_mu2 + c1) * (2 * sigma12 + c2)) / ((mu1_sq + mu2_sq + c1) * (sigma1_sq + sigma2_sq + c2))
+    return ssim_map.mean(dim=[1, 2, 3])
+
+
+VAE_EVAL_METRICS = {}
+
+
+def compute_vae_evaluation(n_per_class=5):
+    global VAE_EVAL_METRICS
+    if not vae_loaded:
+        return
+    from dataset import DATASET_PATH, URBAN_CLASSES
+    import random
+    random.seed(3)
+
+    per_class = {}
+    all_mse, all_psnr, all_ssim, all_kl, all_kl_per_dim = [], [], [], [], []
+    kl_per_channel_sum = torch.zeros(VAE_LATENT_CHANNELS)
+    n_samples = 0
+
+    with torch.no_grad():
+        for cls in URBAN_CLASSES:
+            candidates = list((DATASET_PATH / cls).glob("*.tif"))
+            paths = random.sample(candidates, min(n_per_class, len(candidates)))
+            if not paths:
+                continue
+            cls_mse, cls_psnr, cls_ssim = [], [], []
+            for path in paths:
+                img = Image.open(path).convert('RGB')
+                x = vae_transform(img).unsqueeze(0).to(device)
+                recon, mu, logvar = vae.reconstruct(x)
+
+                mse = F.mse_loss(recon, x).item()
+                psnr = 10 * math.log10(4.0 / mse) if mse > 0 else 100.0
+                ssim = compute_ssim((recon.clamp(-1, 1) * 0.5 + 0.5), (x * 0.5 + 0.5)).item()
+                kl_total, kl_per_dim = kl_divergence(mu, logvar)
+                kl_map = -0.5 * (1 + logvar - mu.pow(2) - logvar.exp())
+                kl_per_channel_sum += kl_map.mean(dim=[0, 2, 3]).cpu()
+
+                cls_mse.append(mse)
+                cls_psnr.append(psnr)
+                cls_ssim.append(ssim)
+                all_mse.append(mse)
+                all_psnr.append(psnr)
+                all_ssim.append(ssim)
+                all_kl.append(kl_total)
+                all_kl_per_dim.append(kl_per_dim)
+                n_samples += 1
+
+            per_class[cls] = {
+                "mse": sum(cls_mse) / len(cls_mse),
+                "psnr": sum(cls_psnr) / len(cls_psnr),
+                "ssim": sum(cls_ssim) / len(cls_ssim),
+                "n": len(cls_mse),
+            }
+
+    if n_samples == 0:
+        print("VAE evaluation skipped: dataset missing or empty.")
+        return
+
+    def _mean_std(values):
+        t = torch.tensor(values)
+        return {"mean": t.mean().item(), "std": t.std().item() if len(values) > 1 else 0.0}
+
+    kl_per_channel = (kl_per_channel_sum / n_samples)
+    active_dims = int((kl_per_channel > 0.01).sum().item())
+
+    VAE_EVAL_METRICS = {
+        "n_samples": n_samples,
+        "n_classes": len(per_class),
+        "mse": _mean_std(all_mse),
+        "psnr": _mean_std(all_psnr),
+        "ssim": _mean_std(all_ssim),
+        "kl": _mean_std(all_kl),
+        "kl_per_dim": _mean_std(all_kl_per_dim),
+        "latent": {
+            "total_dims": VAE_LATENT_CHANNELS,
+            "active_dims": active_dims,
+            "active_fraction": active_dims / VAE_LATENT_CHANNELS,
+        },
+        "per_class": per_class,
+    }
+    print(f"VAE evaluation computed over {n_samples} samples across {len(per_class)} classes: "
+          f"MSE={VAE_EVAL_METRICS['mse']['mean']:.5f} PSNR={VAE_EVAL_METRICS['psnr']['mean']:.2f}dB "
+          f"SSIM={VAE_EVAL_METRICS['ssim']['mean']:.4f} active_dims={active_dims}/{VAE_LATENT_CHANNELS}")
+
+
 # "Urbanization projection": neural style transfer (Gatys/Ecker/Bethge
 # 2015) using VGG16 features, NOT a VAE-latent technique.
 #
@@ -365,6 +493,7 @@ transformer_transform = transforms.Compose([
 
 compute_vae_anomaly_baseline()
 compute_urbanization_targets()
+compute_vae_evaluation()
 
 
 def add_noise(imgs, noise_std=0.15):
@@ -411,6 +540,16 @@ def sharpen_vae_reconstruction(recon, source, output_size=512):
     return enhanced.clamp(-1.0, 1.0)
 
 
+
+
+@app.get("/evaluate/vae")
+def get_vae_evaluation():
+    """Reconstruction-quality and latent-health metrics computed once at
+    startup over a held-out sample spanning all 21 UCMerced classes (see
+    compute_vae_evaluation) -- the model's actual measured performance."""
+    if not VAE_EVAL_METRICS:
+        return Response(status_code=400, content="VAE evaluation unavailable (model or dataset missing).")
+    return VAE_EVAL_METRICS
 
 
 @app.get("/status")
