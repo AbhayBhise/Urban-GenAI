@@ -272,15 +272,29 @@ def _gram_matrix(x):
     return f @ f.transpose(1, 2) / (c * h * w)
 
 
-def run_urbanization_style_transfer(content_img, target_img, size=200, steps=120,
-                                     content_weight=3.0, style_weight=5e4, lr=0.03):
+def _tv_loss(x):
+    """Total-variation regularizer: penalizes sharp pixel-to-pixel jumps.
+
+    Without this, the optimizer readily finds a "wrinkled foil" solution --
+    high-frequency noise that satisfies the Gram-matrix style loss (texture
+    statistics don't care about spatial coherence) while looking nothing
+    like a real material. TV pushes the optimizer toward locally smooth
+    solutions instead, which is what turns the result from incoherent
+    noise into a plausible-looking texture."""
+    return (torch.abs(x[:, :, 1:, :] - x[:, :, :-1, :]).mean()
+            + torch.abs(x[:, :, :, 1:] - x[:, :, :, :-1]).mean())
+
+
+def run_urbanization_style_transfer(content_img, target_img, size=200, steps=150,
+                                     content_weight=3.0, style_weight=5e4, tv_weight=3.0, lr=0.03):
     """Optimizes pixel values of a copy of `content_img` (the user's own
     upload) so its VGG features match `target_img`'s texture (Gram
     matrices, i.e. style) while staying close to its own VGG features at
-    STYLE_CONTENT_LAYER (i.e. content/structure). Runs on CPU in this
-    deployment -- ~40-60s for the default step count, so callers should run
-    it off the event loop (see infer_vae_urbanize) and the frontend should
-    show a "this takes about a minute" loading state."""
+    STYLE_CONTENT_LAYER (i.e. content/structure), regularized by _tv_loss
+    to keep the result spatially coherent (see its docstring). Runs on CPU
+    in this deployment -- ~50-70s for the default step count, so callers
+    should run it off the event loop (see infer_vae_urbanize) and the
+    frontend should show a "this takes about a minute" loading state."""
     to_tensor = transforms.Compose([transforms.Resize((size, size)), transforms.ToTensor()])
     content = to_tensor(content_img).unsqueeze(0).to(device)
     target = to_tensor(target_img).unsqueeze(0).to(device)
@@ -300,7 +314,8 @@ def run_urbanization_style_transfer(content_img, target_img, size=200, steps=120
         feats = _vgg_features(gen.clamp(0, 1), all_layers)
         c_loss = F.mse_loss(feats[STYLE_CONTENT_LAYER], fixed_content)
         s_loss = sum(F.mse_loss(_gram_matrix(feats[l]), target_grams[l]) for l in STYLE_LAYERS)
-        (content_weight * c_loss + style_weight * s_loss).backward()
+        t_loss = _tv_loss(gen)
+        (content_weight * c_loss + style_weight * s_loss + tv_weight * t_loss).backward()
         optimizer.step()
 
     return gen.clamp(0, 1).detach()
