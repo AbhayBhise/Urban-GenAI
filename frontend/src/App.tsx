@@ -70,6 +70,9 @@ export default function App() {
   const [interpImg, setInterpImg] = useState<string | null>(null);
   const [interpLoading, setInterpLoading] = useState(false);
   const [predictions, setPredictions] = useState<any[] | null>(null);
+  const [randomGenImg, setRandomGenImg] = useState<string | null>(null);
+  const [randomGenLoading, setRandomGenLoading] = useState(false);
+  const [randomGenError, setRandomGenError] = useState<string | null>(null);
 
   const [metrics, setMetrics] = useState<any>(null);
   const [history, setHistory] = useState<any[]>([]);
@@ -196,6 +199,24 @@ export default function App() {
       console.error(err);
     } finally {
       setInterpLoading(false);
+    }
+  };
+
+  const handleGenerateRandom = async () => {
+    setRandomGenLoading(true);
+    setRandomGenError(null);
+    try {
+      const res = await apiFetch('/generate/vae/random', { method: 'POST' });
+      if (!res.ok) {
+        setRandomGenError(res.status === 401 ? 'API key required — set it in the sidebar.' : await res.text());
+        return;
+      }
+      const data = await res.json();
+      setRandomGenImg(`data:image/jpeg;base64,${data.generated}`);
+    } catch (err) {
+      setRandomGenError(String(err));
+    } finally {
+      setRandomGenLoading(false);
     }
   };
 
@@ -459,6 +480,39 @@ export default function App() {
               )}
               <input type="file" ref={fileInputRef} style={{ display: 'none' }} accept="image/*,.tif,.tiff" onChange={handleFileChange} />
             </div>
+
+            {activeView === 'vae' && (
+              <div className="card" style={{ marginBottom: '30px' }}>
+                <div className="card-title">Generate Random Sample</div>
+                <p style={{ color: 'var(--muted)', fontSize: '0.85rem', lineHeight: 1.5, marginBottom: '15px' }}>
+                  Samples a latent z ~ N(0, I) directly from the prior — with no input image — and
+                  decodes it. This is the VAE's defining generative capability, distinct from
+                  reconstruction (above) and interpolation (which both decode real, encoded
+                  images). This checkpoint was trained to prioritize reconstruction fidelity over
+                  matching the prior exactly, so a pure prior sample can look more abstract than a
+                  reconstruction — that's an expected trade-off, not a bug.
+                </p>
+                <button className="btn" style={{ maxWidth: '320px' }} onClick={handleGenerateRandom} disabled={randomGenLoading || status[statusKey] !== 'Trained'}>
+                  {randomGenLoading ? 'Generating...' : 'Generate Random Sample'}
+                </button>
+                {randomGenError && (
+                  <div style={{
+                    border: '1px solid #FF5252', color: '#FF5252', borderRadius: '4px',
+                    padding: '10px 12px', marginTop: '15px', fontSize: '0.85rem',
+                  }}>
+                    {randomGenError}
+                  </div>
+                )}
+                {randomGenImg && (
+                  <div style={{ marginTop: '15px', maxWidth: '320px' }}>
+                    <div style={{ color: 'var(--muted)', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px', textAlign: 'center' }}>
+                      Generated from N(0, I)
+                    </div>
+                    <img src={randomGenImg} style={{ width: '100%', height: 'auto', borderRadius: '4px', border: '1px solid var(--border)' }} alt="Random prior sample" />
+                  </div>
+                )}
+              </div>
+            )}
 
             {activeView === 'classifier' && (
               <div className="grid-2">

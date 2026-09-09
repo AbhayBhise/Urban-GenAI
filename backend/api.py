@@ -403,6 +403,28 @@ async def infer_vae_interpolate(request: Request, file: UploadFile = File(...)):
     return Response(content=tensor_to_image_bytes(interp_imgs), media_type="image/jpeg")
 
 
+@app.post("/generate/vae/random", dependencies=GUARDED)
+@limiter.limit(RATE_LIMIT)
+async def generate_vae_random(request: Request):
+    """Samples z ~ N(0, I) directly from the prior -- independent of any
+    encoded image -- and decodes it. This is the VAE's defining generative
+    capability, distinct from reconstruction (which decodes the posterior
+    mean of a real encoded image, see infer_vae) and interpolation (which
+    blends two real posteriors, see infer_vae_interpolate).
+
+    Note: this checkpoint was trained with the KL term deliberately
+    de-weighted in favor of reconstruction fidelity (see models/vae.py), so
+    the posterior is not tightly matched to N(0, I). Prior samples can
+    therefore look more abstract or less realistic than reconstructions --
+    that's an expected, honest consequence of that trade-off, not a bug."""
+    if not vae_loaded:
+        return Response(status_code=400, content="VAE not trained")
+    with torch.no_grad():
+        z = torch.randn(1, VAE_LATENT_CHANNELS, 8, 8, device=device)
+        generated = vae.decode(z)
+    return {"generated": tensor_to_b64(generated[0])}
+
+
 @app.post("/infer/transformer", dependencies=GUARDED)
 @limiter.limit(RATE_LIMIT)
 async def infer_transformer(request: Request, file: UploadFile = File(...)):
