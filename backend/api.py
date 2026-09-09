@@ -7,7 +7,7 @@ import torch
 import torch.nn.functional as F
 import psutil
 import platform
-from fastapi import FastAPI, UploadFile, File, Depends, Request
+from fastapi import FastAPI, UploadFile, File, Form, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from fastapi.responses import Response, PlainTextResponse
@@ -181,6 +181,64 @@ def score_anomaly(mse):
         level = "Highly Anomalous"
     return z, level
 
+
+# "Urbanization projection": the mean posterior latent of real developed/
+# built-up UCMerced classes, computed once at startup. An uploaded tile's
+# own latent is linearly blended toward this target (same technique as
+# infer_vae_interpolate, which blends toward a second REAL encoded image)
+# and decoded, shifting its appearance toward "more built-up" -- this is a
+# tone/texture shift illustrating land-use intensification, not an
+# architectural plan (UCMerced has no paired before/after imagery to train
+# a proper conditional model on, and this checkpoint's decoder is soft at
+# any latent -- see sharpen_vae_reconstruction).
+DEVELOPED_CLASSES = ["denseresidential", "mediumresidential", "buildings", "intersection", "freeway"]
+URBANIZATION_TARGET = None
+
+
+def _mean_latent_for_classes(classes, n_per_class=40):
+    from dataset import DATASET_PATH
+    import random
+    random.seed(1)
+    paths = []
+    for cls in classes:
+        candidates = list((DATASET_PATH / cls).glob("*.tif"))
+        paths.extend(random.sample(candidates, min(n_per_class, len(candidates))))
+    if not paths:
+        return None
+
+    mus = []
+    batch = []
+    with torch.no_grad():
+        for path in paths:
+            img = Image.open(path).convert('RGB')
+            batch.append(vae_transform(img))
+            if len(batch) == 32:
+                x = torch.stack(batch).to(device)
+                mu, _ = vae.encode(x)
+                mus.append(mu)
+                batch = []
+        if batch:
+            x = torch.stack(batch).to(device)
+            mu, _ = vae.encode(x)
+            mus.append(mu)
+
+    if not mus:
+        return None
+    return torch.cat(mus, dim=0).mean(dim=0)  # (C, H, W)
+
+
+def compute_urbanization_direction():
+    global URBANIZATION_TARGET
+    if not vae_loaded:
+        return
+    developed_mean = _mean_latent_for_classes(DEVELOPED_CLASSES)
+    if developed_mean is None:
+        print("Urbanization target skipped: dataset missing or empty.")
+        return
+    URBANIZATION_TARGET = developed_mean
+    print(f"Urbanization target computed (norm={URBANIZATION_TARGET.norm().item():.4f}).")
+
+
 ae_transform = transforms.Compose([
     transforms.Resize((128, 128)),
     transforms.ToTensor(),
@@ -200,6 +258,7 @@ transformer_transform = transforms.Compose([
 ])
 
 compute_vae_anomaly_baseline()
+compute_urbanization_direction()
 
 
 def add_noise(imgs, noise_std=0.15):
@@ -225,7 +284,7 @@ def tensor_to_b64(t):
     return base64.b64encode(tensor_to_image_bytes(t)).decode("utf-8")
 
 
-def sharpen_vae_reconstruction(recon, source, output_size=512):
+def sharpen_vae_reconstruction(recon, source, output_size=512, recon_weight=0.65, source_weight=0.35, detail_weight=0.8):
     """Upscale a VAE result while restoring source-image edge detail.
 
     The current checkpoint has an 8x8 spatial bottleneck, so a pure decoder
@@ -234,6 +293,14 @@ def sharpen_vae_reconstruction(recon, source, output_size=512):
     the display path.  This preserves roads, roofs, and field boundaries
     without pretending that interpolation can create detail absent from the
     checkpoint.
+
+    The weights default to plain reconstruction's balance (recon-dominant
+    color/tone, meaningful source contribution). infer_vae_urbanize passes
+    a recon-heavier balance: with the default weights, the source image's
+    own color (0.35 direct + high-frequency edges) swamps the visible
+    difference between decoding the original latent vs. a shifted one --
+    unsurprising for an 8x8 bottleneck, but it means the default blend
+    hides the entire effect of shifting the latent.
     """
     recon_up = F.interpolate(recon, size=(output_size, output_size), mode="bicubic", align_corners=False)
     source_up = F.interpolate(source, size=(output_size, output_size), mode="bicubic", align_corners=False)
@@ -242,7 +309,7 @@ def sharpen_vae_reconstruction(recon, source, output_size=512):
 
     # Let the learned reconstruction control the scene appearance while
     # retaining enough source structure for a clear, spatially aligned image.
-    enhanced = 0.65 * recon_up + 0.35 * source_up + 0.8 * source_detail
+    enhanced = recon_weight * recon_up + source_weight * source_up + detail_weight * source_detail
     return enhanced.clamp(-1.0, 1.0)
 
 
@@ -401,6 +468,59 @@ async def infer_vae_interpolate(request: Request, file: UploadFile = File(...)):
         interp_imgs = model.decode(interp_z)
 
     return Response(content=tensor_to_image_bytes(interp_imgs), media_type="image/jpeg")
+
+
+@app.post("/infer/vae/urbanize", dependencies=GUARDED)
+@limiter.limit(RATE_LIMIT)
+async def infer_vae_urbanize(request: Request, file: UploadFile = File(...), alpha: float = Form(0.6)):
+    """Projects the uploaded tile toward a more built-up appearance: linearly
+    blends the tile's posterior mean with the precomputed mean latent of
+    real developed/built-up tiles (see compute_urbanization_direction),
+    weighted by `alpha` (0 = original tile, 1 = fully the "typical
+    developed tile" latent), then decodes -- the same latent-blend
+    technique as infer_vae_interpolate, just blending toward a class mean
+    instead of a second real image.
+
+    Uses a recon-heavier display blend than plain reconstruction (see
+    sharpen_vae_reconstruction) so the shift is actually visible: this is a
+    tone/texture shift, not an architectural plan -- it has no notion of
+    roads, parcels, or zoning, just what "more built-up" looks like on
+    average across this model's latent space."""
+    if not vae_loaded:
+        return Response(status_code=400, content="VAE not trained")
+    if URBANIZATION_TARGET is None:
+        return Response(status_code=400, content="Urbanization target unavailable (dataset missing).")
+    alpha = max(0.0, min(alpha, 1.0))
+    img = await read_image_upload(file)
+    clean_x = vae_transform(img).unsqueeze(0).to(device)
+    with torch.no_grad():
+        mu, _ = vae.encode(clean_x)
+        new_z = (1 - alpha) * mu + alpha * URBANIZATION_TARGET.unsqueeze(0)
+        raw = vae.decode(new_z)
+        display = sharpen_vae_reconstruction(raw, clean_x, recon_weight=0.9, source_weight=0.1, detail_weight=0.65)
+    return {"urbanized": tensor_to_b64(display[0]), "alpha": alpha}
+
+
+@app.post("/generate/vae/random", dependencies=GUARDED)
+@limiter.limit(RATE_LIMIT)
+async def generate_vae_random(request: Request):
+    """Samples z ~ N(0, I) directly from the prior -- independent of any
+    encoded image -- and decodes it. This is the VAE's defining generative
+    capability, distinct from reconstruction (which decodes the posterior
+    mean of a real encoded image, see infer_vae) and interpolation (which
+    blends two real posteriors, see infer_vae_interpolate).
+
+    Note: this checkpoint was trained with the KL term deliberately
+    de-weighted in favor of reconstruction fidelity (see models/vae.py), so
+    the posterior is not tightly matched to N(0, I). Prior samples can
+    therefore look more abstract or less realistic than reconstructions --
+    that's an expected, honest consequence of that trade-off, not a bug."""
+    if not vae_loaded:
+        return Response(status_code=400, content="VAE not trained")
+    with torch.no_grad():
+        z = torch.randn(1, VAE_LATENT_CHANNELS, 8, 8, device=device)
+        generated = vae.decode(z)
+    return {"generated": tensor_to_b64(generated[0])}
 
 
 @app.post("/infer/transformer", dependencies=GUARDED)
