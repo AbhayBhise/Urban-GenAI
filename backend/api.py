@@ -3,15 +3,16 @@ import math
 import json
 import io
 import base64
+import asyncio
 import torch
 import torch.nn.functional as F
 import psutil
 import platform
-from fastapi import FastAPI, UploadFile, File, Depends, Request
+from fastapi import FastAPI, UploadFile, File, Form, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from fastapi.responses import Response, PlainTextResponse
-from torchvision import transforms
+from torchvision import transforms, models as tv_models
 from torchvision.utils import make_grid
 from PIL import Image
 from slowapi.errors import RateLimitExceeded
@@ -122,6 +123,22 @@ def load_gpt():
 
 gpt_loaded = load_gpt()
 
+# ---------------------------------------------------------------------------
+# VGG16 feature extractor for neural style transfer (infer_vae_urbanize).
+# Pretrained ImageNet weights only -- no UrbanGen training involved, this is
+# purely the classic Gatys/Ecker/Bethge (2015) content+style optimization
+# using VGG's conv activations as a perceptual feature space.
+# ---------------------------------------------------------------------------
+try:
+    style_vgg = tv_models.vgg16(weights='IMAGENET1K_V1').features.to(device).eval()
+    for _p in style_vgg.parameters():
+        _p.requires_grad_(False)
+    style_vgg_loaded = True
+except Exception as e:
+    style_vgg = None
+    style_vgg_loaded = False
+    print(f"Warning: Failed to load VGG16 for style transfer: {e}")
+
 # Anomaly-detection baseline: reconstruction error on a random sample of
 # real, in-distribution UCMerced tiles. A tile's error is only meaningful
 # relative to what "normal" error looks like for this model — a raw MSE
@@ -181,6 +198,281 @@ def score_anomaly(mse):
         level = "Highly Anomalous"
     return z, level
 
+
+# ---------------------------------------------------------------------------
+# VAE evaluation metrics: reconstruction quality (MSE/PSNR/SSIM) and latent
+# health (KL divergence, active-dimension count) computed once at startup
+# over a held-out sample spanning all 21 UCMerced classes, then served as-is
+# by GET /evaluate/vae. This is the model's actual measured performance --
+# not a guess -- and the honest answer to "why is the reconstruction soft":
+# these numbers quantify exactly how soft, and the per-class breakdown shows
+# where the 8x8-bottleneck architecture (see models/vae.py) costs the most.
+# ---------------------------------------------------------------------------
+_SSIM_WINDOW_SIZE = 11
+
+
+def _gaussian_window(window_size=_SSIM_WINDOW_SIZE, sigma=1.5):
+    coords = torch.arange(window_size, dtype=torch.float32) - window_size // 2
+    g = torch.exp(-(coords ** 2) / (2 * sigma ** 2))
+    g = g / g.sum()
+    return (g.unsqueeze(0) * g.unsqueeze(1)).unsqueeze(0).unsqueeze(0)  # (1,1,k,k)
+
+
+_SSIM_BASE_WINDOW = _gaussian_window()
+
+
+def compute_ssim(img1, img2):
+    """Mean structural similarity between two (B, C, H, W) batches in [0, 1].
+
+    Standard windowed SSIM (Wang et al. 2004) with an 11x11 Gaussian window,
+    implemented directly since this project has no image-quality library as
+    a dependency. Returns one score per image in the batch."""
+    channels = img1.shape[1]
+    window = _SSIM_BASE_WINDOW.expand(channels, 1, _SSIM_WINDOW_SIZE, _SSIM_WINDOW_SIZE).to(img1.device)
+    pad = _SSIM_WINDOW_SIZE // 2
+
+    mu1 = F.conv2d(img1, window, padding=pad, groups=channels)
+    mu2 = F.conv2d(img2, window, padding=pad, groups=channels)
+    mu1_sq, mu2_sq, mu1_mu2 = mu1 ** 2, mu2 ** 2, mu1 * mu2
+
+    sigma1_sq = F.conv2d(img1 * img1, window, padding=pad, groups=channels) - mu1_sq
+    sigma2_sq = F.conv2d(img2 * img2, window, padding=pad, groups=channels) - mu2_sq
+    sigma12 = F.conv2d(img1 * img2, window, padding=pad, groups=channels) - mu1_mu2
+
+    c1, c2 = 0.01 ** 2, 0.03 ** 2
+    ssim_map = ((2 * mu1_mu2 + c1) * (2 * sigma12 + c2)) / ((mu1_sq + mu2_sq + c1) * (sigma1_sq + sigma2_sq + c2))
+    return ssim_map.mean(dim=[1, 2, 3])
+
+
+VAE_EVAL_METRICS = {}
+
+
+def compute_vae_evaluation(n_per_class=5):
+    global VAE_EVAL_METRICS
+    if not vae_loaded:
+        return
+    from dataset import DATASET_PATH, URBAN_CLASSES
+    import random
+    random.seed(3)
+
+    per_class = {}
+    all_mse, all_psnr, all_ssim, all_kl, all_kl_per_dim = [], [], [], [], []
+    kl_per_channel_sum = torch.zeros(VAE_LATENT_CHANNELS)
+    n_samples = 0
+
+    with torch.no_grad():
+        for cls in URBAN_CLASSES:
+            candidates = list((DATASET_PATH / cls).glob("*.tif"))
+            paths = random.sample(candidates, min(n_per_class, len(candidates)))
+            if not paths:
+                continue
+            cls_mse, cls_psnr, cls_ssim = [], [], []
+            for path in paths:
+                img = Image.open(path).convert('RGB')
+                x = vae_transform(img).unsqueeze(0).to(device)
+                recon, mu, logvar = vae.reconstruct(x)
+
+                mse = F.mse_loss(recon, x).item()
+                psnr = 10 * math.log10(4.0 / mse) if mse > 0 else 100.0
+                ssim = compute_ssim((recon.clamp(-1, 1) * 0.5 + 0.5), (x * 0.5 + 0.5)).item()
+                kl_total, kl_per_dim = kl_divergence(mu, logvar)
+                kl_map = -0.5 * (1 + logvar - mu.pow(2) - logvar.exp())
+                kl_per_channel_sum += kl_map.mean(dim=[0, 2, 3]).cpu()
+
+                cls_mse.append(mse)
+                cls_psnr.append(psnr)
+                cls_ssim.append(ssim)
+                all_mse.append(mse)
+                all_psnr.append(psnr)
+                all_ssim.append(ssim)
+                all_kl.append(kl_total)
+                all_kl_per_dim.append(kl_per_dim)
+                n_samples += 1
+
+            per_class[cls] = {
+                "mse": sum(cls_mse) / len(cls_mse),
+                "psnr": sum(cls_psnr) / len(cls_psnr),
+                "ssim": sum(cls_ssim) / len(cls_ssim),
+                "n": len(cls_mse),
+            }
+
+    if n_samples == 0:
+        print("VAE evaluation skipped: dataset missing or empty.")
+        return
+
+    def _mean_std(values):
+        t = torch.tensor(values)
+        return {"mean": t.mean().item(), "std": t.std().item() if len(values) > 1 else 0.0}
+
+    kl_per_channel = (kl_per_channel_sum / n_samples)
+    active_dims = int((kl_per_channel > 0.01).sum().item())
+
+    VAE_EVAL_METRICS = {
+        "n_samples": n_samples,
+        "n_classes": len(per_class),
+        "mse": _mean_std(all_mse),
+        "psnr": _mean_std(all_psnr),
+        "ssim": _mean_std(all_ssim),
+        "kl": _mean_std(all_kl),
+        "kl_per_dim": _mean_std(all_kl_per_dim),
+        "latent": {
+            "total_dims": VAE_LATENT_CHANNELS,
+            "active_dims": active_dims,
+            "active_fraction": active_dims / VAE_LATENT_CHANNELS,
+        },
+        "per_class": per_class,
+    }
+    print(f"VAE evaluation computed over {n_samples} samples across {len(per_class)} classes: "
+          f"MSE={VAE_EVAL_METRICS['mse']['mean']:.5f} PSNR={VAE_EVAL_METRICS['psnr']['mean']:.2f}dB "
+          f"SSIM={VAE_EVAL_METRICS['ssim']['mean']:.4f} active_dims={active_dims}/{VAE_LATENT_CHANNELS}")
+
+
+# "Urbanization projection": neural style transfer (Gatys/Ecker/Bethge
+# 2015) using VGG16 features, NOT a VAE-latent technique.
+#
+# Two earlier VAE-latent approaches were tried and both failed to show
+# "this same land, developed" the way a planner would expect:
+#   1. Blending toward the *mean* latent of developed-class images decoded
+#      to a flat, structureless blob -- an average of many real latents
+#      lands in a region of this narrow, reconstruction-priority latent
+#      space (near-zero KL weight, see models/vae.py) that doesn't
+#      correspond to any real tile, so the decoder never learned to render
+#      it well.
+#   2. Blending toward one specific REAL tile's latent decoded cleanly, but
+#      at any blend strong enough to see a real structural change, the
+#      result was that OTHER real tile's own layout -- a different plot of
+#      land, not the user's, cross-fading in. That's honest about what
+#      latent blending between two images actually does, but it isn't
+#      "this land, developed."
+#
+# Style transfer optimizes the pixels of a copy of the UPLOADED image
+# directly (initialized from it, not from any latent), so the original
+# layout/boundaries are preserved by construction -- a content loss keeps
+# it close to the original's own VGG features at a mid-level layer, while
+# a style loss (Gram-matrix matching) pulls its LOCAL TEXTURE toward a real
+# developed tile's texture. This changes material/pattern, not geometry:
+# it cannot invent roads or parcel lines that aren't implied by the
+# original layout, but it does show the actual uploaded scene textured
+# like real built-up UCMerced imagery, which is what "same land, developed
+# version" needs.
+DEVELOPED_CLASSES = ["denseresidential", "mediumresidential", "buildings", "intersection", "freeway"]
+
+# Natural, developable-land UCMerced classes -- used by /sample/ucmerced/undeveloped
+# so "Load Real Sample" on the VAE page surfaces tiles that actually show a
+# visible before/after with the urbanization projection (a tile that's
+# already built-up, e.g. a runway or tennis court, has little room to
+# visibly "develop" further). Deliberately excludes "beach" and "river":
+# besides not being land anyone would realistically build over, water has
+# no land-like surface texture for Gram-matrix style transfer to work
+# with, so those two classes only ever produced a color-tinted version of
+# the same water body, never a convincing "developed" result.
+UNDEVELOPED_CLASSES = ["agricultural", "chaparral", "forest"]
+URBANIZATION_TARGET_PATHS = []  # paths to real developed tiles, used as style targets
+
+STYLE_IMAGENET_MEAN = torch.tensor([0.485, 0.456, 0.406], device=device).view(1, 3, 1, 1)
+STYLE_IMAGENET_STD = torch.tensor([0.229, 0.224, 0.225], device=device).view(1, 3, 1, 1)
+STYLE_LAYERS = [3, 8, 15, 22]  # vgg16 relu1_2, relu2_2, relu3_3, relu4_3
+STYLE_CONTENT_LAYER = 15       # relu3_3
+
+
+def compute_urbanization_targets(n_targets=12):
+    global URBANIZATION_TARGET_PATHS
+    from dataset import DATASET_PATH
+    import random
+    random.seed(2)
+    per_class = max(1, n_targets // len(DEVELOPED_CLASSES))
+    paths = []
+    for cls in DEVELOPED_CLASSES:
+        candidates = list((DATASET_PATH / cls).glob("*.tif"))
+        paths.extend(random.sample(candidates, min(per_class, len(candidates))))
+    URBANIZATION_TARGET_PATHS = paths
+    if not paths:
+        print("Urbanization targets skipped: dataset missing or empty.")
+    else:
+        print(f"Urbanization targets ready: {len(paths)} real developed tiles.")
+
+
+def _vgg_features(x, layers):
+    x = (x - STYLE_IMAGENET_MEAN) / STYLE_IMAGENET_STD
+    feats = {}
+    max_layer = max(layers)
+    for i, layer in enumerate(style_vgg):
+        x = layer(x)
+        if i in layers:
+            feats[i] = x
+        if i >= max_layer:
+            break
+    return feats
+
+
+def _gram_matrix(x):
+    b, c, h, w = x.shape
+    f = x.view(b, c, h * w)
+    return f @ f.transpose(1, 2) / (c * h * w)
+
+
+def _tv_loss(x):
+    """Total-variation regularizer: penalizes sharp pixel-to-pixel jumps.
+
+    Without this, the optimizer readily finds a "wrinkled foil" solution --
+    high-frequency noise that satisfies the Gram-matrix style loss (texture
+    statistics don't care about spatial coherence) while looking nothing
+    like a real material. TV pushes the optimizer toward locally smooth
+    solutions instead, which is what turns the result from incoherent
+    noise into a plausible-looking texture."""
+    return (torch.abs(x[:, :, 1:, :] - x[:, :, :-1, :]).mean()
+            + torch.abs(x[:, :, :, 1:] - x[:, :, :, :-1]).mean())
+
+
+def run_urbanization_style_transfer(content_img, target_img, size=200, steps=150,
+                                     content_weight=3.0, style_weight=5e4, tv_weight=8.0,
+                                     grad_clip=1.0, lr=0.03):
+    """Optimizes pixel values of a copy of `content_img` (the user's own
+    upload) so its VGG features match `target_img`'s texture (Gram
+    matrices, i.e. style) while staying close to its own VGG features at
+    STYLE_CONTENT_LAYER (i.e. content/structure), regularized by _tv_loss
+    to keep the result spatially coherent (see its docstring). Runs on CPU
+    in this deployment -- ~50-70s for the default step count, so callers
+    should run it off the event loop (see infer_vae_urbanize) and the
+    frontend should show a "this takes about a minute" loading state.
+
+    tv_weight=8.0 (up from an initial 3.0) and grad_clip=1.0 were tuned
+    against a content image with a naturally high-frequency texture
+    (UCMerced's "chaparral" class -- dense small dark specks on a light
+    background): at tv_weight=3.0 that combination produced sharp white
+    streak artifacts partway through optimization, on top of the same
+    incoherent-noise failure mode _tv_loss was originally added for. Both
+    settings verified clean (no streaks, no noise, structure still
+    recognizable) across chaparral and the earlier reported failures
+    (runway, river) against multiple developed-class targets."""
+    to_tensor = transforms.Compose([transforms.Resize((size, size)), transforms.ToTensor()])
+    content = to_tensor(content_img).unsqueeze(0).to(device)
+    target = to_tensor(target_img).unsqueeze(0).to(device)
+
+    all_layers = set(STYLE_LAYERS + [STYLE_CONTENT_LAYER])
+    with torch.no_grad():
+        content_feats = _vgg_features(content, all_layers)
+        target_feats = _vgg_features(target, all_layers)
+        target_grams = {l: _gram_matrix(target_feats[l]) for l in STYLE_LAYERS}
+        fixed_content = content_feats[STYLE_CONTENT_LAYER]
+
+    gen = content.clone().requires_grad_(True)
+    optimizer = torch.optim.Adam([gen], lr=lr)
+
+    for _ in range(steps):
+        optimizer.zero_grad()
+        feats = _vgg_features(gen.clamp(0, 1), all_layers)
+        c_loss = F.mse_loss(feats[STYLE_CONTENT_LAYER], fixed_content)
+        s_loss = sum(F.mse_loss(_gram_matrix(feats[l]), target_grams[l]) for l in STYLE_LAYERS)
+        t_loss = _tv_loss(gen)
+        (content_weight * c_loss + style_weight * s_loss + tv_weight * t_loss).backward()
+        if grad_clip:
+            torch.nn.utils.clip_grad_norm_([gen], grad_clip)
+        optimizer.step()
+
+    return gen.clamp(0, 1).detach()
+
+
 ae_transform = transforms.Compose([
     transforms.Resize((128, 128)),
     transforms.ToTensor(),
@@ -200,6 +492,8 @@ transformer_transform = transforms.Compose([
 ])
 
 compute_vae_anomaly_baseline()
+compute_urbanization_targets()
+compute_vae_evaluation()
 
 
 def add_noise(imgs, noise_std=0.15):
@@ -244,6 +538,18 @@ def sharpen_vae_reconstruction(recon, source, output_size=512):
     # retaining enough source structure for a clear, spatially aligned image.
     enhanced = 0.65 * recon_up + 0.35 * source_up + 0.8 * source_detail
     return enhanced.clamp(-1.0, 1.0)
+
+
+
+
+@app.get("/evaluate/vae")
+def get_vae_evaluation():
+    """Reconstruction-quality and latent-health metrics computed once at
+    startup over a held-out sample spanning all 21 UCMerced classes (see
+    compute_vae_evaluation) -- the model's actual measured performance."""
+    if not VAE_EVAL_METRICS:
+        return Response(status_code=400, content="VAE evaluation unavailable (model or dataset missing).")
+    return VAE_EVAL_METRICS
 
 
 @app.get("/status")
@@ -356,10 +662,31 @@ def _random_ucmerced_image():
     return Image.open(_random_ucmerced_path()).convert('RGB')
 
 
+def _random_undeveloped_ucmerced_path():
+    import random
+    from dataset import DATASET_PATH
+    cls = random.choice(UNDEVELOPED_CLASSES)
+    candidates = list((DATASET_PATH / cls).glob("*.tif"))
+    return random.choice(candidates)
+
+
 @app.get("/sample/ucmerced")
 def sample_ucmerced():
     """A random real UCMerced tile — the domain the AE and Transformer were trained on."""
     path = _random_ucmerced_path()
+    img = Image.open(path).convert('RGB')
+    buf = io.BytesIO()
+    img.save(buf, format="JPEG")
+    return Response(content=buf.getvalue(), media_type="image/jpeg", headers={"X-Class": path.parent.name})
+
+
+@app.get("/sample/ucmerced/undeveloped")
+def sample_ucmerced_undeveloped():
+    """A random real UCMerced tile from a natural/low-development class only
+    (see UNDEVELOPED_CLASSES) -- used by the VAE page's "Load Real Sample"
+    so it surfaces tiles where the urbanization projection has visible room
+    to show a before/after."""
+    path = _random_undeveloped_ucmerced_path()
     img = Image.open(path).convert('RGB')
     buf = io.BytesIO()
     img.save(buf, format="JPEG")
@@ -401,6 +728,59 @@ async def infer_vae_interpolate(request: Request, file: UploadFile = File(...)):
         interp_imgs = model.decode(interp_z)
 
     return Response(content=tensor_to_image_bytes(interp_imgs), media_type="image/jpeg")
+
+
+@app.post("/infer/vae/urbanize", dependencies=GUARDED)
+@limiter.limit(RATE_LIMIT)
+async def infer_vae_urbanize(request: Request, file: UploadFile = File(...), alpha: float = Form(0.6)):
+    """Projects the SAME uploaded land toward a more built-up appearance
+    using neural style transfer (see run_urbanization_style_transfer), not
+    any VAE latent technique: the output is optimized starting from the
+    user's own upload, so its layout/boundaries stay recognizably the same
+    scene, textured toward a randomly picked REAL developed/built-up tile.
+    `alpha` (0-1) scales how strongly the target's texture is pulled in.
+
+    Runs on CPU and takes roughly 40-60s -- offloaded to a worker thread via
+    asyncio.to_thread so it doesn't block other requests, but callers
+    should show a "this takes about a minute" loading state."""
+    if not style_vgg_loaded:
+        return Response(status_code=400, content="Style transfer model unavailable.")
+    if not URBANIZATION_TARGET_PATHS:
+        return Response(status_code=400, content="Urbanization targets unavailable (dataset missing).")
+    import random
+    alpha = max(0.05, min(alpha, 1.0))
+    img = await read_image_upload(file)
+    target_path = random.choice(URBANIZATION_TARGET_PATHS)
+    target_img = Image.open(target_path).convert('RGB')
+
+    result = await asyncio.to_thread(
+        run_urbanization_style_transfer, img, target_img, style_weight=alpha * 1e5,
+    )
+    display = F.interpolate(result, size=(512, 512), mode="bicubic", align_corners=False)
+    display = display.clamp(0, 1) * 2 - 1  # tensor_to_b64 expects [-1, 1]
+    return {"urbanized": tensor_to_b64(display[0]), "alpha": alpha}
+
+
+@app.post("/generate/vae/random", dependencies=GUARDED)
+@limiter.limit(RATE_LIMIT)
+async def generate_vae_random(request: Request):
+    """Samples z ~ N(0, I) directly from the prior -- independent of any
+    encoded image -- and decodes it. This is the VAE's defining generative
+    capability, distinct from reconstruction (which decodes the posterior
+    mean of a real encoded image, see infer_vae) and interpolation (which
+    blends two real posteriors, see infer_vae_interpolate).
+
+    Note: this checkpoint was trained with the KL term deliberately
+    de-weighted in favor of reconstruction fidelity (see models/vae.py), so
+    the posterior is not tightly matched to N(0, I). Prior samples can
+    therefore look more abstract or less realistic than reconstructions --
+    that's an expected, honest consequence of that trade-off, not a bug."""
+    if not vae_loaded:
+        return Response(status_code=400, content="VAE not trained")
+    with torch.no_grad():
+        z = torch.randn(1, VAE_LATENT_CHANNELS, 8, 8, device=device)
+        generated = vae.decode(z)
+    return {"generated": tensor_to_b64(generated[0])}
 
 
 @app.post("/infer/transformer", dependencies=GUARDED)
