@@ -18,6 +18,7 @@ from PIL import Image
 from models.autoencoder import DenoisingAE
 from models.vae import VAE
 from models.transformer import UrbanClassifier
+from models.diffusion import SimpleUNet, DDPM
 from dataset import URBAN_CLASSES
 from rag_pipeline import PUNE_STATS, query_rag
 
@@ -40,6 +41,8 @@ VAE_LATENT_CHANNELS = 64
 ae = DenoisingAE().to(device)
 vae = VAE(latent_channels=VAE_LATENT_CHANNELS).to(device)
 transformer = UrbanClassifier(num_classes=len(URBAN_CLASSES)).to(device)
+unet = SimpleUNet(image_channels=3, down_channels=(64, 128, 256), up_channels=(256, 128, 64), out_dim=3).to(device)
+ddpm = DDPM(unet, num_timesteps=1000, device=device).to(device)
 
 
 def load_model_if_exists(model, path):
@@ -57,6 +60,7 @@ def load_model_if_exists(model, path):
 ae_loaded = load_model_if_exists(ae, '../outputs/ae/model.pth')
 vae_loaded = load_model_if_exists(vae, '../outputs/vae/model.pth')
 trans_loaded = load_model_if_exists(transformer, '../outputs/transformer/model.pth')
+ddpm_loaded = load_model_if_exists(ddpm.network, '../outputs/diffusion/model.pth') or load_model_if_exists(ddpm.network, 'weights/diffusion.pth')
 
 # Anomaly-detection baseline: reconstruction error on a random sample of
 # real, in-distribution UCMerced tiles. A tile's error is only meaningful
@@ -187,7 +191,8 @@ def get_status():
     return {
         "ae": "Trained" if ae_loaded else "Not trained yet",
         "vae": "Trained" if vae_loaded else "Not trained yet",
-        "transformer": "Trained" if trans_loaded else "Not trained yet"
+        "transformer": "Trained" if trans_loaded else "Not trained yet",
+        "diffusion": "Trained" if ddpm_loaded else "Not trained yet"
     }
 
 
@@ -369,6 +374,17 @@ class QueryRequest(BaseModel):
 def api_query_rag(req: QueryRequest):
     response = query_rag(req.query)
     return {"response": response}
+
+
+@app.get("/generate/diffusion")
+def generate_diffusion(n: int = 1):
+    """Generates n images using the DDPM model from pure noise."""
+    if not ddpm_loaded:
+        return Response(status_code=400, content="Diffusion model not trained")
+    n = max(1, min(n, 16))
+    with torch.no_grad():
+        samples = ddpm.sample(n, image_size=64, channels=3)
+    return Response(content=tensor_to_image_bytes(samples), media_type="image/jpeg")
 
 
 @app.get("/transformer/stats")

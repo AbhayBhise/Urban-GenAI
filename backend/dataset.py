@@ -5,8 +5,8 @@ import torch
 from torch.utils.data import Dataset, DataLoader, random_split
 from torchvision import transforms
 
-DATASET_PATH = Path("../UCMerced_LandUse/UCMerced_LandUse/Images")
-EUROSAT_PATH = Path("../EuroSAT/EuroSAT")
+DATASET_PATH = Path("../../UCMerced_LandUse/UCMerced_LandUse/Images")
+EUROSAT_PATH = Path("../../EuroSAT/EuroSAT")
 
 URBAN_CLASSES = [
     "agricultural", "airplane", "baseballdiamond", "beach",
