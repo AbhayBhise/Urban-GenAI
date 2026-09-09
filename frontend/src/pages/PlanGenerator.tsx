@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { apiFetch } from '../lib/api';
 import TransparencyBanner from '../lib/TransparencyBanner';
 
@@ -10,6 +10,8 @@ export default function PlanGenerator() {
   const [result, setResult] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [attachedFileName, setAttachedFileName] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     apiFetch('/generate/plan/presets')
@@ -48,6 +50,24 @@ export default function PlanGenerator() {
     return m ? m[1] : p.slice(0, 40);
   };
 
+  const handleFileSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    e.target.value = '';
+    if (!f) return;
+    setError(null);
+    const reader = new FileReader();
+    reader.onload = () => {
+      setPrompt(String(reader.result ?? ''));
+      setAttachedFileName(f.name);
+    };
+    reader.onerror = () => setError('Could not read the selected file.');
+    reader.readAsText(f);
+  };
+
+  const clearAttachedFile = () => {
+    setAttachedFileName(null);
+  };
+
   return (
     <div>
       <div className="panel-header">
@@ -70,7 +90,7 @@ export default function PlanGenerator() {
             {presets.map((p, i) => (
               <button
                 key={i}
-                onClick={() => setPrompt(p)}
+                onClick={() => { setPrompt(p); setAttachedFileName(null); }}
                 className="btn"
                 style={{
                   width: 'auto', marginTop: 0, padding: '6px 12px', fontSize: '0.8rem',
@@ -85,9 +105,44 @@ export default function PlanGenerator() {
           </div>
         )}
 
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            className="btn"
+            style={{
+              width: 'auto', marginTop: 0, padding: '6px 12px', fontSize: '0.8rem',
+              background: 'transparent', color: 'var(--text)', border: '1px solid var(--border)',
+            }}
+          >
+            📎 Attach text file
+          </button>
+          <input
+            type="file"
+            ref={fileInputRef}
+            style={{ display: 'none' }}
+            accept=".txt,text/plain"
+            onChange={handleFileSelected}
+          />
+          {attachedFileName && (
+            <span style={{ fontSize: '0.8rem', color: 'var(--muted)' }}>
+              Loaded from <strong style={{ color: 'var(--text)' }}>{attachedFileName}</strong>
+              {' '}
+              <button
+                onClick={clearAttachedFile}
+                style={{
+                  background: 'none', border: 'none', color: 'var(--muted)',
+                  cursor: 'pointer', textDecoration: 'underline', fontSize: '0.8rem', padding: 0,
+                }}
+              >
+                clear
+              </button>
+            </span>
+          )}
+        </div>
+
         <textarea
           value={prompt}
-          onChange={e => setPrompt(e.target.value)}
+          onChange={e => { setPrompt(e.target.value); setAttachedFileName(null); }}
           style={{
             width: '100%', minHeight: 120, background: 'var(--bg)', color: 'var(--text)',
             border: '1px solid var(--border)', borderRadius: 4, padding: 12,
