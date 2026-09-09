@@ -147,6 +147,11 @@ def compute_vae_anomaly_baseline(n_samples=300):
             per_image_mse = F.mse_loss(recon, x, reduction='none').mean(dim=[1, 2, 3])
             errors.extend(per_image_mse.cpu().tolist())
 
+    if len(errors) < 2:
+        print(f"VAE anomaly baseline skipped: only {len(errors)} real UCMerced "
+              "tile(s) found (dataset missing or empty) — anomaly scoring disabled.")
+        return
+
     errors_t = torch.tensor(errors)
     VAE_ANOMALY_MEAN = errors_t.mean().item()
     VAE_ANOMALY_STD = errors_t.std().item()
@@ -155,7 +160,10 @@ def compute_vae_anomaly_baseline(n_samples=300):
 
 
 def score_anomaly(mse):
-    if VAE_ANOMALY_MEAN is None or VAE_ANOMALY_STD in (None, 0):
+    if (
+        VAE_ANOMALY_MEAN is None or VAE_ANOMALY_STD in (None, 0)
+        or math.isnan(VAE_ANOMALY_MEAN) or math.isnan(VAE_ANOMALY_STD)
+    ):
         return None, None
     z = (mse - VAE_ANOMALY_MEAN) / VAE_ANOMALY_STD
     if z < 1.0:

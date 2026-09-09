@@ -131,8 +131,13 @@ export default function App() {
     const meta = MODEL_META[activeView];
     if (!meta) return;
     setLoading(true);
+    setMetrics(null);
     try {
       const res = await apiFetch(meta.sampleEndpoint);
+      if (!res.ok) {
+        setMetrics({ error: res.status === 401 ? 'API key required — set it in the sidebar.' : await res.text() });
+        return;
+      }
       const blob = await res.blob();
       const cls = res.headers.get('X-Class') || 'sample';
       const f = new File([blob], `${cls}.jpg`, { type: 'image/jpeg' });
@@ -140,10 +145,9 @@ export default function App() {
       setPreview(URL.createObjectURL(f));
       setResultData(null);
       setInterpImg(null);
-      setMetrics(null);
       setPredictions(null);
     } catch (err) {
-      console.error(err);
+      setMetrics({ error: String(err) });
     } finally {
       setLoading(false);
     }
@@ -152,6 +156,7 @@ export default function App() {
   const handleUpload = async () => {
     if (!file) return;
     setLoading(true);
+    setMetrics(null);
     const formData = new FormData();
     formData.append('file', file);
 
@@ -174,7 +179,7 @@ export default function App() {
         setMetrics({ error: res.status === 401 ? 'API key required — set it in the sidebar.' : await res.text() });
       }
     } catch (err) {
-      console.error(err);
+      setMetrics({ error: String(err) });
     } finally {
       setLoading(false);
     }
@@ -360,6 +365,14 @@ export default function App() {
                   ? MODEL_META[activeView].resultTitle
                   : activeView === 'classifier' ? 'Classify Land-Use' : 'Upload Image'}
               </div>
+              {metrics?.error && (
+                <div style={{
+                  border: '1px solid #FF5252', color: '#FF5252', borderRadius: '4px',
+                  padding: '10px 12px', marginBottom: '16px', fontSize: '0.85rem',
+                }}>
+                  {metrics.error}
+                </div>
+              )}
               {!file ? (
                 <div>
                   <div className="upload-zone" onClick={() => fileInputRef.current?.click()}>
@@ -518,7 +531,7 @@ export default function App() {
               </div>
             )}
 
-            {(activeView === 'ae' || activeView === 'vae') && metrics && (
+            {(activeView === 'ae' || activeView === 'vae') && metrics && !metrics.error && (
               <div className="metrics-strip">
                 {activeView === 'ae' ? (
                   <>
