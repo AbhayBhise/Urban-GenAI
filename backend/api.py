@@ -293,7 +293,8 @@ def _tv_loss(x):
 
 
 def run_urbanization_style_transfer(content_img, target_img, size=200, steps=150,
-                                     content_weight=3.0, style_weight=5e4, tv_weight=3.0, lr=0.03):
+                                     content_weight=3.0, style_weight=5e4, tv_weight=8.0,
+                                     grad_clip=1.0, lr=0.03):
     """Optimizes pixel values of a copy of `content_img` (the user's own
     upload) so its VGG features match `target_img`'s texture (Gram
     matrices, i.e. style) while staying close to its own VGG features at
@@ -301,7 +302,17 @@ def run_urbanization_style_transfer(content_img, target_img, size=200, steps=150
     to keep the result spatially coherent (see its docstring). Runs on CPU
     in this deployment -- ~50-70s for the default step count, so callers
     should run it off the event loop (see infer_vae_urbanize) and the
-    frontend should show a "this takes about a minute" loading state."""
+    frontend should show a "this takes about a minute" loading state.
+
+    tv_weight=8.0 (up from an initial 3.0) and grad_clip=1.0 were tuned
+    against a content image with a naturally high-frequency texture
+    (UCMerced's "chaparral" class -- dense small dark specks on a light
+    background): at tv_weight=3.0 that combination produced sharp white
+    streak artifacts partway through optimization, on top of the same
+    incoherent-noise failure mode _tv_loss was originally added for. Both
+    settings verified clean (no streaks, no noise, structure still
+    recognizable) across chaparral and the earlier reported failures
+    (runway, river) against multiple developed-class targets."""
     to_tensor = transforms.Compose([transforms.Resize((size, size)), transforms.ToTensor()])
     content = to_tensor(content_img).unsqueeze(0).to(device)
     target = to_tensor(target_img).unsqueeze(0).to(device)
@@ -323,6 +334,8 @@ def run_urbanization_style_transfer(content_img, target_img, size=200, steps=150
         s_loss = sum(F.mse_loss(_gram_matrix(feats[l]), target_grams[l]) for l in STYLE_LAYERS)
         t_loss = _tv_loss(gen)
         (content_weight * c_loss + style_weight * s_loss + tv_weight * t_loss).backward()
+        if grad_clip:
+            torch.nn.utils.clip_grad_norm_([gen], grad_clip)
         optimizer.step()
 
     return gen.clamp(0, 1).detach()
