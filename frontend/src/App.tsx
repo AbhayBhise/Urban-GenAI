@@ -510,22 +510,23 @@ export default function App() {
                       {activeView === 'vae' && (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', alignItems: 'center', borderTop: '1px solid var(--border)', paddingTop: '15px' }}>
                           <p style={{ color: 'var(--muted)', fontSize: '0.8rem', lineHeight: 1.5, textAlign: 'center', maxWidth: '480px' }}>
-                            Blends this tile's latent toward a randomly picked REAL developed/
-                            built-up tile (denseresidential, buildings, intersections, freeways),
-                            cross-fading structure and color as the blend increases — at 100% this
-                            becomes that real tile. This is a real-image-guided visual projection
-                            illustrating land-use intensification, not an architectural plan: the
-                            structure that appears comes from an actual real tile, not a generated
-                            street plan.
+                            Neural style transfer (VGG16 features, optimized per request — not a VAE
+                            technique): starts from <strong>this exact uploaded image</strong> and
+                            textures it toward a randomly picked real developed/built-up tile, while
+                            a content loss keeps it anchored to the original layout. This is the same
+                            land — its boundaries and structure come from your upload, not from the
+                            style tile — with a "more built-up" material/texture applied. It can't
+                            invent new roads or buildings beyond what the layout already implies.
+                            Runs on CPU here, so it takes about 40–60 seconds.
                           </p>
                           <label style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>
-                            Blend toward developed: <span style={{ color: 'var(--accent)', fontFamily: 'var(--font-mono)' }}>{Math.round(urbanizeIntensity * 100)}%</span>
-                            <input type="range" min={0} max={1} step={0.05} value={urbanizeIntensity}
+                            Style strength: <span style={{ color: 'var(--accent)', fontFamily: 'var(--font-mono)' }}>{Math.round(urbanizeIntensity * 100)}%</span>
+                            <input type="range" min={0.1} max={1} step={0.05} value={urbanizeIntensity}
                               onChange={e => setUrbanizeIntensity(parseFloat(e.target.value))}
                               style={{ display: 'block', width: 220, marginTop: 4 }} />
                           </label>
                           <button className="btn" style={{ maxWidth: '320px', background: 'transparent', border: '1px solid var(--border)', color: 'var(--text)' }} onClick={handleUrbanize} disabled={urbanizeLoading}>
-                            {urbanizeLoading ? 'Projecting...' : 'Show Urbanization Projection'}
+                            {urbanizeLoading ? 'Projecting… (~40–60s)' : 'Show Urbanization Projection'}
                           </button>
                           {urbanizeError && (
                             <div style={{
@@ -538,7 +539,7 @@ export default function App() {
                           {urbanizeImg && (
                             <div style={{ width: '100%' }}>
                               <div style={{ color: 'var(--muted)', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px', textAlign: 'center' }}>
-                                Urbanization projection ({Math.round(urbanizeIntensity * 100)}% blend)
+                                Same land, urbanization projection ({Math.round(urbanizeIntensity * 100)}% style strength)
                               </div>
                               <img src={urbanizeImg} style={{ width: '100%', height: 'auto', borderRadius: '4px', border: '1px solid var(--border)' }} alt="Urbanization Projection" />
                             </div>

@@ -3,6 +3,7 @@ import math
 import json
 import io
 import base64
+import asyncio
 import torch
 import torch.nn.functional as F
 import psutil
@@ -11,7 +12,7 @@ from fastapi import FastAPI, UploadFile, File, Form, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from fastapi.responses import Response, PlainTextResponse
-from torchvision import transforms
+from torchvision import transforms, models as tv_models
 from torchvision.utils import make_grid
 from PIL import Image
 from slowapi.errors import RateLimitExceeded
@@ -122,6 +123,22 @@ def load_gpt():
 
 gpt_loaded = load_gpt()
 
+# ---------------------------------------------------------------------------
+# VGG16 feature extractor for neural style transfer (infer_vae_urbanize).
+# Pretrained ImageNet weights only -- no UrbanGen training involved, this is
+# purely the classic Gatys/Ecker/Bethge (2015) content+style optimization
+# using VGG's conv activations as a perceptual feature space.
+# ---------------------------------------------------------------------------
+try:
+    style_vgg = tv_models.vgg16(weights='IMAGENET1K_V1').features.to(device).eval()
+    for _p in style_vgg.parameters():
+        _p.requires_grad_(False)
+    style_vgg_loaded = True
+except Exception as e:
+    style_vgg = None
+    style_vgg_loaded = False
+    print(f"Warning: Failed to load VGG16 for style transfer: {e}")
+
 # Anomaly-detection baseline: reconstruction error on a random sample of
 # real, in-distribution UCMerced tiles. A tile's error is only meaningful
 # relative to what "normal" error looks like for this model — a raw MSE
@@ -182,34 +199,45 @@ def score_anomaly(mse):
     return z, level
 
 
-# "Urbanization projection": a small pool of REAL developed/built-up
-# UCMerced tiles (mu + preprocessed image, cached at startup). An uploaded
-# tile's own latent is linearly blended toward one of these real targets
-# (same latent-blend technique as infer_vae_interpolate) and decoded.
+# "Urbanization projection": neural style transfer (Gatys/Ecker/Bethge
+# 2015) using VGG16 features, NOT a VAE-latent technique.
 #
-# An earlier version blended toward the *mean* latent of developed-class
-# images instead of a real tile. That decoded to a flat, structureless
-# blob: an average of many real latents lands in a region of this narrow,
-# reconstruction-priority latent space (near-zero KL weight, see
-# models/vae.py) that doesn't correspond to any real tile, so the decoder
-# has never learned to render it well. Blending toward one specific REAL
-# tile's latent instead keeps every blend step anchored to something the
-# decoder actually knows how to decode -- alpha=1 reproduces that real
-# tile exactly.
+# Two earlier VAE-latent approaches were tried and both failed to show
+# "this same land, developed" the way a planner would expect:
+#   1. Blending toward the *mean* latent of developed-class images decoded
+#      to a flat, structureless blob -- an average of many real latents
+#      lands in a region of this narrow, reconstruction-priority latent
+#      space (near-zero KL weight, see models/vae.py) that doesn't
+#      correspond to any real tile, so the decoder never learned to render
+#      it well.
+#   2. Blending toward one specific REAL tile's latent decoded cleanly, but
+#      at any blend strong enough to see a real structural change, the
+#      result was that OTHER real tile's own layout -- a different plot of
+#      land, not the user's, cross-fading in. That's honest about what
+#      latent blending between two images actually does, but it isn't
+#      "this land, developed."
 #
-# The display step also needed to change: sharpen_vae_reconstruction
-# always restores the SOURCE image's own edges (correct for plain
-# reconstruction), which meant the projection's structure never visibly
-# changed even as the underlying latent shifted -- see
-# crossfade_vae_projection below.
+# Style transfer optimizes the pixels of a copy of the UPLOADED image
+# directly (initialized from it, not from any latent), so the original
+# layout/boundaries are preserved by construction -- a content loss keeps
+# it close to the original's own VGG features at a mid-level layer, while
+# a style loss (Gram-matrix matching) pulls its LOCAL TEXTURE toward a real
+# developed tile's texture. This changes material/pattern, not geometry:
+# it cannot invent roads or parcel lines that aren't implied by the
+# original layout, but it does show the actual uploaded scene textured
+# like real built-up UCMerced imagery, which is what "same land, developed
+# version" needs.
 DEVELOPED_CLASSES = ["denseresidential", "mediumresidential", "buildings", "intersection", "freeway"]
-URBANIZATION_TARGETS = []  # list of (mu, source_tensor) for real developed tiles
+URBANIZATION_TARGET_PATHS = []  # paths to real developed tiles, used as style targets
+
+STYLE_IMAGENET_MEAN = torch.tensor([0.485, 0.456, 0.406], device=device).view(1, 3, 1, 1)
+STYLE_IMAGENET_STD = torch.tensor([0.229, 0.224, 0.225], device=device).view(1, 3, 1, 1)
+STYLE_LAYERS = [3, 8, 15, 22]  # vgg16 relu1_2, relu2_2, relu3_3, relu4_3
+STYLE_CONTENT_LAYER = 15       # relu3_3
 
 
 def compute_urbanization_targets(n_targets=12):
-    global URBANIZATION_TARGETS
-    if not vae_loaded:
-        return
+    global URBANIZATION_TARGET_PATHS
     from dataset import DATASET_PATH
     import random
     random.seed(2)
@@ -218,19 +246,64 @@ def compute_urbanization_targets(n_targets=12):
     for cls in DEVELOPED_CLASSES:
         candidates = list((DATASET_PATH / cls).glob("*.tif"))
         paths.extend(random.sample(candidates, min(per_class, len(candidates))))
+    URBANIZATION_TARGET_PATHS = paths
     if not paths:
         print("Urbanization targets skipped: dataset missing or empty.")
-        return
+    else:
+        print(f"Urbanization targets ready: {len(paths)} real developed tiles.")
 
-    targets = []
+
+def _vgg_features(x, layers):
+    x = (x - STYLE_IMAGENET_MEAN) / STYLE_IMAGENET_STD
+    feats = {}
+    max_layer = max(layers)
+    for i, layer in enumerate(style_vgg):
+        x = layer(x)
+        if i in layers:
+            feats[i] = x
+        if i >= max_layer:
+            break
+    return feats
+
+
+def _gram_matrix(x):
+    b, c, h, w = x.shape
+    f = x.view(b, c, h * w)
+    return f @ f.transpose(1, 2) / (c * h * w)
+
+
+def run_urbanization_style_transfer(content_img, target_img, size=200, steps=120,
+                                     content_weight=3.0, style_weight=5e4, lr=0.03):
+    """Optimizes pixel values of a copy of `content_img` (the user's own
+    upload) so its VGG features match `target_img`'s texture (Gram
+    matrices, i.e. style) while staying close to its own VGG features at
+    STYLE_CONTENT_LAYER (i.e. content/structure). Runs on CPU in this
+    deployment -- ~40-60s for the default step count, so callers should run
+    it off the event loop (see infer_vae_urbanize) and the frontend should
+    show a "this takes about a minute" loading state."""
+    to_tensor = transforms.Compose([transforms.Resize((size, size)), transforms.ToTensor()])
+    content = to_tensor(content_img).unsqueeze(0).to(device)
+    target = to_tensor(target_img).unsqueeze(0).to(device)
+
+    all_layers = set(STYLE_LAYERS + [STYLE_CONTENT_LAYER])
     with torch.no_grad():
-        for path in paths:
-            img = Image.open(path).convert('RGB')
-            x = vae_transform(img).unsqueeze(0).to(device)
-            mu, _ = vae.encode(x)
-            targets.append((mu, x))
-    URBANIZATION_TARGETS = targets
-    print(f"Urbanization targets computed: {len(targets)} real developed tiles.")
+        content_feats = _vgg_features(content, all_layers)
+        target_feats = _vgg_features(target, all_layers)
+        target_grams = {l: _gram_matrix(target_feats[l]) for l in STYLE_LAYERS}
+        fixed_content = content_feats[STYLE_CONTENT_LAYER]
+
+    gen = content.clone().requires_grad_(True)
+    optimizer = torch.optim.Adam([gen], lr=lr)
+
+    for _ in range(steps):
+        optimizer.zero_grad()
+        feats = _vgg_features(gen.clamp(0, 1), all_layers)
+        c_loss = F.mse_loss(feats[STYLE_CONTENT_LAYER], fixed_content)
+        s_loss = sum(F.mse_loss(_gram_matrix(feats[l]), target_grams[l]) for l in STYLE_LAYERS)
+        (content_weight * c_loss + style_weight * s_loss).backward()
+        optimizer.step()
+
+    return gen.clamp(0, 1).detach()
 
 
 ae_transform = transforms.Compose([
@@ -299,30 +372,6 @@ def sharpen_vae_reconstruction(recon, source, output_size=512):
     return enhanced.clamp(-1.0, 1.0)
 
 
-def crossfade_vae_projection(recon, source, target, alpha, output_size=512,
-                              recon_weight=0.8, color_weight=0.2, detail_weight=0.75):
-    """Display blend for infer_vae_urbanize: cross-fades BOTH the color and
-    edge detail of the source and target real images by `alpha`, on top of
-    the decoded in-between latent.
-
-    sharpen_vae_reconstruction (above) always restores the SOURCE image's
-    own edges, which is correct for plain reconstruction but means the
-    displayed structure never visibly changes even as the underlying latent
-    shifts -- the projection would look like "the same field, slightly
-    tinted" at every alpha. Fading the edges toward the target's real
-    structure too means roofs/roads actually emerge as alpha increases, and
-    alpha=1 reproduces the target tile exactly (recon at alpha=1 already
-    decodes close to it, and color/detail fully match it).
-    """
-    recon_up = F.interpolate(recon, size=(output_size, output_size), mode="bicubic", align_corners=False)
-    source_up = F.interpolate(source, size=(output_size, output_size), mode="bicubic", align_corners=False)
-    target_up = F.interpolate(target, size=(output_size, output_size), mode="bicubic", align_corners=False)
-    source_detail = source_up - F.avg_pool2d(source_up, kernel_size=5, stride=1, padding=2)
-    target_detail = target_up - F.avg_pool2d(target_up, kernel_size=5, stride=1, padding=2)
-    blended_color = (1 - alpha) * source_up + alpha * target_up
-    blended_detail = (1 - alpha) * source_detail + alpha * target_detail
-    enhanced = recon_weight * recon_up + color_weight * blended_color + detail_weight * blended_detail
-    return enhanced.clamp(-1.0, 1.0)
 
 
 @app.get("/status")
@@ -485,34 +534,31 @@ async def infer_vae_interpolate(request: Request, file: UploadFile = File(...)):
 @app.post("/infer/vae/urbanize", dependencies=GUARDED)
 @limiter.limit(RATE_LIMIT)
 async def infer_vae_urbanize(request: Request, file: UploadFile = File(...), alpha: float = Form(0.6)):
-    """Projects the uploaded tile toward a more built-up appearance: linearly
-    blends the tile's posterior mean with a randomly picked REAL developed/
-    built-up tile's latent (see compute_urbanization_targets), weighted by
-    `alpha` (0 = original tile, 1 = fully that real developed tile), then
-    decodes -- the same latent-blend technique as infer_vae_interpolate,
-    just always blending toward a developed-class tile instead of any
-    random real tile.
+    """Projects the SAME uploaded land toward a more built-up appearance
+    using neural style transfer (see run_urbanization_style_transfer), not
+    any VAE latent technique: the output is optimized starting from the
+    user's own upload, so its layout/boundaries stay recognizably the same
+    scene, textured toward a randomly picked REAL developed/built-up tile.
+    `alpha` (0-1) scales how strongly the target's texture is pulled in.
 
-    Displays with crossfade_vae_projection rather than
-    sharpen_vae_reconstruction so the structure itself visibly shifts
-    toward the target as alpha increases, not just its color: this is a
-    real-image-guided visual projection, not an architectural plan -- it
-    has no notion of roads, parcels, or zoning beyond what the target real
-    tile happens to contain."""
-    if not vae_loaded:
-        return Response(status_code=400, content="VAE not trained")
-    if not URBANIZATION_TARGETS:
+    Runs on CPU and takes roughly 40-60s -- offloaded to a worker thread via
+    asyncio.to_thread so it doesn't block other requests, but callers
+    should show a "this takes about a minute" loading state."""
+    if not style_vgg_loaded:
+        return Response(status_code=400, content="Style transfer model unavailable.")
+    if not URBANIZATION_TARGET_PATHS:
         return Response(status_code=400, content="Urbanization targets unavailable (dataset missing).")
     import random
-    alpha = max(0.0, min(alpha, 1.0))
+    alpha = max(0.05, min(alpha, 1.0))
     img = await read_image_upload(file)
-    clean_x = vae_transform(img).unsqueeze(0).to(device)
-    target_mu, target_x = random.choice(URBANIZATION_TARGETS)
-    with torch.no_grad():
-        mu, _ = vae.encode(clean_x)
-        new_z = (1 - alpha) * mu + alpha * target_mu
-        raw = vae.decode(new_z)
-        display = crossfade_vae_projection(raw, clean_x, target_x, alpha)
+    target_path = random.choice(URBANIZATION_TARGET_PATHS)
+    target_img = Image.open(target_path).convert('RGB')
+
+    result = await asyncio.to_thread(
+        run_urbanization_style_transfer, img, target_img, style_weight=alpha * 1e5,
+    )
+    display = F.interpolate(result, size=(512, 512), mode="bicubic", align_corners=False)
+    display = display.clamp(0, 1) * 2 - 1  # tensor_to_b64 expects [-1, 1]
     return {"urbanized": tensor_to_b64(display[0]), "alpha": alpha}
 
 
