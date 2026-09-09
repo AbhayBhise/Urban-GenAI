@@ -510,12 +510,13 @@ export default function App() {
                       {activeView === 'vae' && (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', alignItems: 'center', borderTop: '1px solid var(--border)', paddingTop: '15px' }}>
                           <p style={{ color: 'var(--muted)', fontSize: '0.8rem', lineHeight: 1.5, textAlign: 'center', maxWidth: '480px' }}>
-                            Blends this tile's latent toward the average latent of real developed/
-                            built-up tiles (denseresidential, buildings, intersections, freeways).
-                            This is a tone/texture shift illustrating land-use intensification, not
-                            an architectural plan — no roads, parcels, or zoning are modeled, and the
-                            shift is intentionally subtle since this checkpoint's decoder is soft at
-                            any latent.
+                            Blends this tile's latent toward a randomly picked REAL developed/
+                            built-up tile (denseresidential, buildings, intersections, freeways),
+                            cross-fading structure and color as the blend increases — at 100% this
+                            becomes that real tile. This is a real-image-guided visual projection
+                            illustrating land-use intensification, not an architectural plan: the
+                            structure that appears comes from an actual real tile, not a generated
+                            street plan.
                           </p>
                           <label style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>
                             Blend toward developed: <span style={{ color: 'var(--accent)', fontFamily: 'var(--font-mono)' }}>{Math.round(urbanizeIntensity * 100)}%</span>

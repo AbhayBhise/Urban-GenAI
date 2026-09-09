@@ -182,61 +182,55 @@ def score_anomaly(mse):
     return z, level
 
 
-# "Urbanization projection": the mean posterior latent of real developed/
-# built-up UCMerced classes, computed once at startup. An uploaded tile's
-# own latent is linearly blended toward this target (same technique as
-# infer_vae_interpolate, which blends toward a second REAL encoded image)
-# and decoded, shifting its appearance toward "more built-up" -- this is a
-# tone/texture shift illustrating land-use intensification, not an
-# architectural plan (UCMerced has no paired before/after imagery to train
-# a proper conditional model on, and this checkpoint's decoder is soft at
-# any latent -- see sharpen_vae_reconstruction).
+# "Urbanization projection": a small pool of REAL developed/built-up
+# UCMerced tiles (mu + preprocessed image, cached at startup). An uploaded
+# tile's own latent is linearly blended toward one of these real targets
+# (same latent-blend technique as infer_vae_interpolate) and decoded.
+#
+# An earlier version blended toward the *mean* latent of developed-class
+# images instead of a real tile. That decoded to a flat, structureless
+# blob: an average of many real latents lands in a region of this narrow,
+# reconstruction-priority latent space (near-zero KL weight, see
+# models/vae.py) that doesn't correspond to any real tile, so the decoder
+# has never learned to render it well. Blending toward one specific REAL
+# tile's latent instead keeps every blend step anchored to something the
+# decoder actually knows how to decode -- alpha=1 reproduces that real
+# tile exactly.
+#
+# The display step also needed to change: sharpen_vae_reconstruction
+# always restores the SOURCE image's own edges (correct for plain
+# reconstruction), which meant the projection's structure never visibly
+# changed even as the underlying latent shifted -- see
+# crossfade_vae_projection below.
 DEVELOPED_CLASSES = ["denseresidential", "mediumresidential", "buildings", "intersection", "freeway"]
-URBANIZATION_TARGET = None
+URBANIZATION_TARGETS = []  # list of (mu, source_tensor) for real developed tiles
 
 
-def _mean_latent_for_classes(classes, n_per_class=40):
+def compute_urbanization_targets(n_targets=12):
+    global URBANIZATION_TARGETS
+    if not vae_loaded:
+        return
     from dataset import DATASET_PATH
     import random
-    random.seed(1)
+    random.seed(2)
+    per_class = max(1, n_targets // len(DEVELOPED_CLASSES))
     paths = []
-    for cls in classes:
+    for cls in DEVELOPED_CLASSES:
         candidates = list((DATASET_PATH / cls).glob("*.tif"))
-        paths.extend(random.sample(candidates, min(n_per_class, len(candidates))))
+        paths.extend(random.sample(candidates, min(per_class, len(candidates))))
     if not paths:
-        return None
+        print("Urbanization targets skipped: dataset missing or empty.")
+        return
 
-    mus = []
-    batch = []
+    targets = []
     with torch.no_grad():
         for path in paths:
             img = Image.open(path).convert('RGB')
-            batch.append(vae_transform(img))
-            if len(batch) == 32:
-                x = torch.stack(batch).to(device)
-                mu, _ = vae.encode(x)
-                mus.append(mu)
-                batch = []
-        if batch:
-            x = torch.stack(batch).to(device)
+            x = vae_transform(img).unsqueeze(0).to(device)
             mu, _ = vae.encode(x)
-            mus.append(mu)
-
-    if not mus:
-        return None
-    return torch.cat(mus, dim=0).mean(dim=0)  # (C, H, W)
-
-
-def compute_urbanization_direction():
-    global URBANIZATION_TARGET
-    if not vae_loaded:
-        return
-    developed_mean = _mean_latent_for_classes(DEVELOPED_CLASSES)
-    if developed_mean is None:
-        print("Urbanization target skipped: dataset missing or empty.")
-        return
-    URBANIZATION_TARGET = developed_mean
-    print(f"Urbanization target computed (norm={URBANIZATION_TARGET.norm().item():.4f}).")
+            targets.append((mu, x))
+    URBANIZATION_TARGETS = targets
+    print(f"Urbanization targets computed: {len(targets)} real developed tiles.")
 
 
 ae_transform = transforms.Compose([
@@ -258,7 +252,7 @@ transformer_transform = transforms.Compose([
 ])
 
 compute_vae_anomaly_baseline()
-compute_urbanization_direction()
+compute_urbanization_targets()
 
 
 def add_noise(imgs, noise_std=0.15):
@@ -284,7 +278,7 @@ def tensor_to_b64(t):
     return base64.b64encode(tensor_to_image_bytes(t)).decode("utf-8")
 
 
-def sharpen_vae_reconstruction(recon, source, output_size=512, recon_weight=0.65, source_weight=0.35, detail_weight=0.8):
+def sharpen_vae_reconstruction(recon, source, output_size=512):
     """Upscale a VAE result while restoring source-image edge detail.
 
     The current checkpoint has an 8x8 spatial bottleneck, so a pure decoder
@@ -293,14 +287,6 @@ def sharpen_vae_reconstruction(recon, source, output_size=512, recon_weight=0.65
     the display path.  This preserves roads, roofs, and field boundaries
     without pretending that interpolation can create detail absent from the
     checkpoint.
-
-    The weights default to plain reconstruction's balance (recon-dominant
-    color/tone, meaningful source contribution). infer_vae_urbanize passes
-    a recon-heavier balance: with the default weights, the source image's
-    own color (0.35 direct + high-frequency edges) swamps the visible
-    difference between decoding the original latent vs. a shifted one --
-    unsurprising for an 8x8 bottleneck, but it means the default blend
-    hides the entire effect of shifting the latent.
     """
     recon_up = F.interpolate(recon, size=(output_size, output_size), mode="bicubic", align_corners=False)
     source_up = F.interpolate(source, size=(output_size, output_size), mode="bicubic", align_corners=False)
@@ -309,7 +295,33 @@ def sharpen_vae_reconstruction(recon, source, output_size=512, recon_weight=0.65
 
     # Let the learned reconstruction control the scene appearance while
     # retaining enough source structure for a clear, spatially aligned image.
-    enhanced = recon_weight * recon_up + source_weight * source_up + detail_weight * source_detail
+    enhanced = 0.65 * recon_up + 0.35 * source_up + 0.8 * source_detail
+    return enhanced.clamp(-1.0, 1.0)
+
+
+def crossfade_vae_projection(recon, source, target, alpha, output_size=512,
+                              recon_weight=0.8, color_weight=0.2, detail_weight=0.75):
+    """Display blend for infer_vae_urbanize: cross-fades BOTH the color and
+    edge detail of the source and target real images by `alpha`, on top of
+    the decoded in-between latent.
+
+    sharpen_vae_reconstruction (above) always restores the SOURCE image's
+    own edges, which is correct for plain reconstruction but means the
+    displayed structure never visibly changes even as the underlying latent
+    shifts -- the projection would look like "the same field, slightly
+    tinted" at every alpha. Fading the edges toward the target's real
+    structure too means roofs/roads actually emerge as alpha increases, and
+    alpha=1 reproduces the target tile exactly (recon at alpha=1 already
+    decodes close to it, and color/detail fully match it).
+    """
+    recon_up = F.interpolate(recon, size=(output_size, output_size), mode="bicubic", align_corners=False)
+    source_up = F.interpolate(source, size=(output_size, output_size), mode="bicubic", align_corners=False)
+    target_up = F.interpolate(target, size=(output_size, output_size), mode="bicubic", align_corners=False)
+    source_detail = source_up - F.avg_pool2d(source_up, kernel_size=5, stride=1, padding=2)
+    target_detail = target_up - F.avg_pool2d(target_up, kernel_size=5, stride=1, padding=2)
+    blended_color = (1 - alpha) * source_up + alpha * target_up
+    blended_detail = (1 - alpha) * source_detail + alpha * target_detail
+    enhanced = recon_weight * recon_up + color_weight * blended_color + detail_weight * blended_detail
     return enhanced.clamp(-1.0, 1.0)
 
 
@@ -474,30 +486,33 @@ async def infer_vae_interpolate(request: Request, file: UploadFile = File(...)):
 @limiter.limit(RATE_LIMIT)
 async def infer_vae_urbanize(request: Request, file: UploadFile = File(...), alpha: float = Form(0.6)):
     """Projects the uploaded tile toward a more built-up appearance: linearly
-    blends the tile's posterior mean with the precomputed mean latent of
-    real developed/built-up tiles (see compute_urbanization_direction),
-    weighted by `alpha` (0 = original tile, 1 = fully the "typical
-    developed tile" latent), then decodes -- the same latent-blend
-    technique as infer_vae_interpolate, just blending toward a class mean
-    instead of a second real image.
+    blends the tile's posterior mean with a randomly picked REAL developed/
+    built-up tile's latent (see compute_urbanization_targets), weighted by
+    `alpha` (0 = original tile, 1 = fully that real developed tile), then
+    decodes -- the same latent-blend technique as infer_vae_interpolate,
+    just always blending toward a developed-class tile instead of any
+    random real tile.
 
-    Uses a recon-heavier display blend than plain reconstruction (see
-    sharpen_vae_reconstruction) so the shift is actually visible: this is a
-    tone/texture shift, not an architectural plan -- it has no notion of
-    roads, parcels, or zoning, just what "more built-up" looks like on
-    average across this model's latent space."""
+    Displays with crossfade_vae_projection rather than
+    sharpen_vae_reconstruction so the structure itself visibly shifts
+    toward the target as alpha increases, not just its color: this is a
+    real-image-guided visual projection, not an architectural plan -- it
+    has no notion of roads, parcels, or zoning beyond what the target real
+    tile happens to contain."""
     if not vae_loaded:
         return Response(status_code=400, content="VAE not trained")
-    if URBANIZATION_TARGET is None:
-        return Response(status_code=400, content="Urbanization target unavailable (dataset missing).")
+    if not URBANIZATION_TARGETS:
+        return Response(status_code=400, content="Urbanization targets unavailable (dataset missing).")
+    import random
     alpha = max(0.0, min(alpha, 1.0))
     img = await read_image_upload(file)
     clean_x = vae_transform(img).unsqueeze(0).to(device)
+    target_mu, target_x = random.choice(URBANIZATION_TARGETS)
     with torch.no_grad():
         mu, _ = vae.encode(clean_x)
-        new_z = (1 - alpha) * mu + alpha * URBANIZATION_TARGET.unsqueeze(0)
+        new_z = (1 - alpha) * mu + alpha * target_mu
         raw = vae.decode(new_z)
-        display = sharpen_vae_reconstruction(raw, clean_x, recon_weight=0.9, source_weight=0.1, detail_weight=0.65)
+        display = crossfade_vae_projection(raw, clean_x, target_x, alpha)
     return {"urbanized": tensor_to_b64(display[0]), "alpha": alpha}
 
 
