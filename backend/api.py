@@ -228,6 +228,13 @@ def score_anomaly(mse):
 # like real built-up UCMerced imagery, which is what "same land, developed
 # version" needs.
 DEVELOPED_CLASSES = ["denseresidential", "mediumresidential", "buildings", "intersection", "freeway"]
+
+# Natural/low-development UCMerced classes -- used by /sample/ucmerced/undeveloped
+# so "Load Real Sample" on the VAE page surfaces tiles that actually show a
+# visible before/after with the urbanization projection (a tile that's
+# already built-up, e.g. a runway or tennis court, has little room to
+# visibly "develop" further).
+UNDEVELOPED_CLASSES = ["agricultural", "beach", "chaparral", "forest", "river"]
 URBANIZATION_TARGET_PATHS = []  # paths to real developed tiles, used as style targets
 
 STYLE_IMAGENET_MEAN = torch.tensor([0.485, 0.456, 0.406], device=device).view(1, 3, 1, 1)
@@ -499,10 +506,31 @@ def _random_ucmerced_image():
     return Image.open(_random_ucmerced_path()).convert('RGB')
 
 
+def _random_undeveloped_ucmerced_path():
+    import random
+    from dataset import DATASET_PATH
+    cls = random.choice(UNDEVELOPED_CLASSES)
+    candidates = list((DATASET_PATH / cls).glob("*.tif"))
+    return random.choice(candidates)
+
+
 @app.get("/sample/ucmerced")
 def sample_ucmerced():
     """A random real UCMerced tile — the domain the AE and Transformer were trained on."""
     path = _random_ucmerced_path()
+    img = Image.open(path).convert('RGB')
+    buf = io.BytesIO()
+    img.save(buf, format="JPEG")
+    return Response(content=buf.getvalue(), media_type="image/jpeg", headers={"X-Class": path.parent.name})
+
+
+@app.get("/sample/ucmerced/undeveloped")
+def sample_ucmerced_undeveloped():
+    """A random real UCMerced tile from a natural/low-development class only
+    (see UNDEVELOPED_CLASSES) -- used by the VAE page's "Load Real Sample"
+    so it surfaces tiles where the urbanization projection has visible room
+    to show a before/after."""
+    path = _random_undeveloped_ucmerced_path()
     img = Image.open(path).convert('RGB')
     buf = io.BytesIO()
     img.save(buf, format="JPEG")

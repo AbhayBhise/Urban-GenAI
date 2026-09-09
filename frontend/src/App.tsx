@@ -45,8 +45,8 @@ const MODEL_META: Record<string, {
     description: 'A pretrained ResNet18 encoder feeding a probabilistic spatial latent (mu, logvar; encode → reparameterize z = μ + σ·ε → decode), trained on UCMerced aerial tiles. Reports the KL divergence of the posterior from the prior N(0, I) — the exact term traded against reconstruction — and supports latent interpolation and reconstruction-error anomaly detection.',
     resultTitle: 'VAE Reconstruction',
     panelLabels: ['Original (Your Upload)', 'Reconstructed'],
-    sampleEndpoint: '/sample/ucmerced',
-    sampleHint: 'Trained on UCMerced aerial tiles (roads, buildings, fields, etc.) — upload a similar image, or load a real sample below.',
+    sampleEndpoint: '/sample/ucmerced/undeveloped',
+    sampleHint: 'Trained on UCMerced aerial tiles (roads, buildings, fields, etc.) — upload a similar image, or load a real (undeveloped) sample below to try the urbanization projection.',
     inferEndpoint: '/infer/vae',
   },
   classifier: {
@@ -430,7 +430,7 @@ export default function App() {
                     onClick={handleLoadSample}
                     disabled={loading}
                   >
-                    {loading ? 'Loading...' : 'Load Real Sample (UCMerced)'}
+                    {loading ? 'Loading...' : activeView === 'vae' ? 'Load Real Sample (Undeveloped)' : 'Load Real Sample (UCMerced)'}
                   </button>
                 </div>
               ) : (
