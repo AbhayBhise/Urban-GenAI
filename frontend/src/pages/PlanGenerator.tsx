@@ -171,7 +171,7 @@ export default function PlanGenerator() {
       </div>
 
       {error && (
-        <div className="card" style={{ borderColor: '#FF5252', color: '#FF5252', marginBottom: 24 }}>
+        <div className="card" style={{ borderColor: 'var(--danger)', color: 'var(--danger)', marginBottom: 24 }}>
           {error}
         </div>
       )}

@@ -51,8 +51,8 @@ const styles = `
   .class-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; }
   .class-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
     padding: 12px 10px; cursor: pointer; transition: all 0.18s; text-align: center; user-select: none; }
-  .class-card:hover { border-color: var(--accent); background: rgba(0,212,255,0.06); transform: translateY(-2px); }
-  .class-card.selected { border-color: var(--accent); background: rgba(0,212,255,0.12);
+  .class-card:hover { border-color: var(--accent); background: var(--accent-wash-light); transform: translateY(-2px); }
+  .class-card.selected { border-color: var(--accent); background: var(--accent-wash);
     box-shadow: 0 0 0 1px var(--accent); }
   .class-emoji { font-size: 1.8rem; display: block; margin-bottom: 6px; line-height: 1; }
   .class-name { font-size: 0.75rem; font-weight: 600; text-transform: capitalize;
@@ -114,14 +114,14 @@ const styles = `
   .view-tab { padding: 7px 16px; border-radius: 5px; border: 1px solid var(--border);
     background: transparent; color: var(--muted); font-family: var(--font-ui);
     font-size: 0.85rem; cursor: pointer; transition: all 0.18s; display: flex; align-items: center; gap: 6px; }
-  .view-tab.active { background: rgba(0,212,255,0.1); border-color: var(--accent); color: var(--accent); }
+  .view-tab.active { background: var(--active-tint); border-color: var(--accent); color: var(--accent); }
   .view-tab:hover:not(.active) { border-color: var(--muted); color: var(--text); }
 
   /* ---- not-trained banner ---- */
-  .not-trained-banner { background: rgba(255,183,77,0.08); border: 1px solid rgba(255,183,77,0.25);
+  .not-trained-banner { background: var(--warn-wash); border: 1px solid var(--warn);
     border-radius: 8px; padding: 20px 24px; display: flex; gap: 14px; align-items: flex-start; }
-  .ntb-icon { color: #FFB74D; flex-shrink: 0; margin-top: 2px; }
-  .ntb-title { font-weight: 600; color: #FFB74D; margin-bottom: 6px; }
+  .ntb-icon { color: var(--warn); flex-shrink: 0; margin-top: 2px; }
+  .ntb-title { font-weight: 600; color: var(--warn); margin-bottom: 6px; }
   .ntb-body { color: var(--muted); font-size: 0.88rem; line-height: 1.6; }
   .ntb-code { background: var(--bg); border: 1px solid var(--border); border-radius: 4px;
     padding: 10px 14px; font-family: var(--font-mono); font-size: 0.82rem; color: var(--accent);
@@ -350,8 +350,8 @@ export default function GAN({ isGanTrained }: { isGanTrained?: boolean }) {
 
         {/* Error */}
         {error && (
-          <div style={{ background: 'rgba(255,82,82,0.08)', border: '1px solid rgba(255,82,82,0.25)',
-            borderRadius: '8px', padding: '14px 18px', color: '#FF5252', fontSize: '0.9rem' }}>
+          <div style={{ background: 'var(--danger-wash)', border: '1px solid var(--danger)',
+            borderRadius: '8px', padding: '14px 18px', color: 'var(--danger)', fontSize: '0.9rem' }}>
             ⚠️ {error}
           </div>
         )}
