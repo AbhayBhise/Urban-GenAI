@@ -1,5 +1,6 @@
 // ClassifierArchitecture component
 import { Box, Arrow, ArrowheadDef, SyllabusTable, ProvenanceNote, DiagramBackground, COLORS } from '../lib/archDiagram';
+import { WorkflowAnimation } from '../lib/WorkflowAnimation';
 
 export default function ClassifierArchitecture() {
   return (
@@ -23,6 +24,20 @@ export default function ClassifierArchitecture() {
         The ResNet18 backbone starts from ImageNet-pretrained weights but is fine-tuned entirely on
         our data; the final classification layer is trained from scratch by us.
       </ProvenanceNote>
+
+      <WorkflowAnimation
+        title="Data flow — land tile in, zoning label out"
+        stages={[
+          { label: 'Input tile', sub: '224²×3' },
+          { label: 'ResNet18 backbone', sub: 'fine-tuned' },
+          { label: 'Global avg pool', sub: '→ 512-d' },
+          { label: 'Linear head', sub: '512 → 21' },
+          { label: 'Zoning label', sub: 'softmax, 1 of 21' },
+        ]}
+        note="A discriminative pass: the fine-tuned backbone extracts a 512-d feature vector, the from-scratch
+        linear head maps it to 21 land-use logits, and softmax gives the predicted zoning class. This label is
+        what the VAE and MiniGPT stages downstream act on. Held-out accuracy ≈ 98.1%."
+      />
 
       <div className="card" style={{ marginBottom: 20 }}>
         <div className="card-title">Architecture — Fine-Tuned ResNet18 Classifier</div>

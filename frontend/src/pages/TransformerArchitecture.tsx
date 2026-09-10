@@ -1,5 +1,6 @@
 // TransformerArchitecture component
 import { Box, Arrow, ArrowheadDef, SyllabusTable, ProvenanceNote, DiagramBackground, COLORS } from '../lib/archDiagram';
+import { WorkflowAnimation } from '../lib/WorkflowAnimation';
 
 export default function TransformerArchitecture() {
   return (
@@ -12,6 +13,22 @@ export default function TransformerArchitecture() {
         ourselves, via <code>train_gpt.py</code>. The checkpoint (<code>outputs/gpt/model.pth</code>) is
         entirely our own.
       </ProvenanceNote>
+
+      <WorkflowAnimation
+        title="Data flow — Pune land-use stats in, planning recommendation out"
+        stages={[
+          { label: 'Real Pune stats', sub: 'built-up %, roads…' },
+          { label: 'Prompt string', sub: 'char-tokenized' },
+          { label: 'Token + pos embed', sub: 'n_embd 256' },
+          { label: '4× causal blocks', sub: 'masked self-attn' },
+          { label: 'LM head', sub: 'next-char probs' },
+          { label: 'Recommendation', sub: 'sampled text' },
+        ]}
+        note="Real ward statistics are formatted into a prompt, tokenized one character at a time, and the
+        decoder-only transformer generates the recommendation character-by-character, each step attending only
+        to earlier positions (causal mask). Held-out perplexity ≈ 1.09 — the corpus is small and templated by
+        design, so the model reliably follows its structure (see the Evaluation page)."
+      />
 
       <div className="card" style={{ marginBottom: 20 }}>
         <div className="card-title">Architecture — Decoder-Only Transformer (MiniGPT)</div>

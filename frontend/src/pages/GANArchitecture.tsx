@@ -1,5 +1,6 @@
 // GANArchitecture component
 import { Box, Arrow, ArrowheadDef, SyllabusTable, ProvenanceNote, DiagramBackground, COLORS } from '../lib/archDiagram';
+import { WorkflowAnimation } from '../lib/WorkflowAnimation';
 
 export default function GANArchitecture() {
   return (
@@ -11,6 +12,22 @@ export default function GANArchitecture() {
         flagged as the top-priority untrained component in the project's own contributing guide;
         we trained it, verified the result, and committed the weights (<code>outputs/gan/generator_ema.pth</code>).
       </ProvenanceNote>
+
+      <WorkflowAnimation
+        title="Data flow — class label + noise in, synthetic tile out"
+        stages={[
+          { label: 'Noise z', sub: '128-dim' },
+          { label: 'Class label', sub: '1 of 21 → embed' },
+          { label: 'Generator', sub: '5× ConvTranspose' },
+          { label: 'Synthetic tile', sub: '128²×3' },
+          { label: 'Classifier check', sub: 'recognized?' },
+        ]}
+        note="A random vector and a chosen land-use class are fed to the generator, which paints a
+        128×128 tile of that class. At inference we use the EMA generator only — the discriminator is a
+        training-time critic. Generated tiles are scored by running them back through the Land-Use Classifier
+        (recognition rate ≈ 15% overall at 100 epochs; strong on texture-distinctive classes, weak on
+        fine grid geometry — see the Evaluation page)."
+      />
 
       <div className="card" style={{ marginBottom: 20 }}>
         <div className="card-title">Architecture — Class-Conditional DCGAN</div>
