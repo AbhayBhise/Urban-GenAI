@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { Upload, CheckCircle2, AlertCircle, Cpu, FileText, Layers, Image as ImageIcon, Database, HardDrive, ShieldCheck, Sparkles, KeyRound } from 'lucide-react';
+import { Upload, CheckCircle2, AlertCircle, Cpu, FileText, Layers, Image as ImageIcon, Database, HardDrive, ShieldCheck, Sparkles, KeyRound, BookOpen } from 'lucide-react';
 import DatasetExplorer from './pages/DatasetExplorer';
 import SystemInformation from './pages/SystemInformation';
 import ModelExplorer from './pages/ModelExplorer';
@@ -16,9 +16,10 @@ import AEArchitecture from './pages/AEArchitecture';
 import GANArchitecture from './pages/GANArchitecture';
 import TransformerArchitecture from './pages/TransformerArchitecture';
 import ClassifierArchitecture from './pages/ClassifierArchitecture';
+import Glossary from './pages/Glossary';
 import { apiFetch, getApiKey, setApiKey } from './lib/api';
 
-type ViewType = 'ae' | 'vae' | 'classifier' | 'plan-generator' | 'governance' | 'gan' | 'prediction' | 'datasets' | 'system' | 'model-explorer' | 'model-comparison' | 'training' | 'evaluation' | 'research';
+type ViewType = 'ae' | 'vae' | 'classifier' | 'plan-generator' | 'governance' | 'gan' | 'prediction' | 'datasets' | 'system' | 'model-explorer' | 'model-comparison' | 'training' | 'evaluation' | 'research' | 'glossary';
 
 // Image-inference views that share the upload UI below.
 const IMAGE_VIEWS = ['ae', 'vae', 'classifier'] as const;
@@ -278,6 +279,7 @@ export default function App() {
     { id: 'training', label: 'Training', icon: Cpu, active: true },
     { id: 'evaluation', label: 'Evaluation', icon: FileText, active: true },
     { id: 'research', label: 'Research', icon: Layers, active: true },
+    { id: 'glossary', label: 'Glossary', icon: BookOpen, active: true },
     { id: 'governance', label: 'Governance', icon: ShieldCheck, active: true },
     { id: 'datasets', label: 'Dataset Explorer', icon: Database, active: true },
     { id: 'system', label: 'System Info', icon: HardDrive, active: true },
@@ -418,6 +420,7 @@ export default function App() {
             {activeView === 'training' && <Training />}
             {activeView === 'evaluation' && <Evaluation />}
             {activeView === 'research' && <Research />}
+            {activeView === 'glossary' && <Glossary />}
             {activeView === 'plan-generator' && <TransformerArchitecture />}
             {activeView === 'plan-generator' && <PlanGenerator />}
             {activeView === 'governance' && <Governance />}
