@@ -187,16 +187,32 @@ def compute_vae_anomaly_baseline(n_samples=300):
 
 
 def score_anomaly(mse):
+    """Returns (z-score, level, percent_diff, reason). percent_diff is how far
+    this tile's reconstruction error sits from the 294-tile normal baseline,
+    as a signed percentage -- a much more readable number for a demo/report
+    than a raw z-score ("38% worse than normal" vs "z=1.4")."""
     if VAE_ANOMALY_MEAN is None or VAE_ANOMALY_STD in (None, 0):
-        return None, None
+        return None, None, None, None
     z = (mse - VAE_ANOMALY_MEAN) / VAE_ANOMALY_STD
+    percent_diff = ((mse - VAE_ANOMALY_MEAN) / VAE_ANOMALY_MEAN) * 100
     if z < 1.0:
         level = "Typical"
+        reason = (f"Reconstruction error is {percent_diff:+.0f}% vs. the normal baseline — "
+                  f"within the range the VAE learned from 294 real UCMerced tiles. This parcel's "
+                  f"visual pattern matches what's expected for real land use.")
     elif z < 2.5:
         level = "Unusual"
+        reason = (f"Reconstruction error is {percent_diff:+.0f}% vs. the normal baseline — "
+                  f"noticeably harder for the VAE to reconstruct than a typical tile. Worth a "
+                  f"second look: this could be an unusual land-use pattern, an atypical mix of "
+                  f"structures, or imagery quality issues.")
     else:
         level = "Highly Anomalous"
-    return z, level
+        reason = (f"Reconstruction error is {percent_diff:+.0f}% vs. the normal baseline — far "
+                  f"outside the range of real tiles the VAE learned from. This parcel's pattern "
+                  f"doesn't match expected land use for its type; flag for manual review "
+                  f"(e.g. unregistered construction, illegal land conversion, sensor artifacts).")
+    return z, level, percent_diff, reason
 
 
 # ---------------------------------------------------------------------------
@@ -424,17 +440,27 @@ def _tv_loss(x):
             + torch.abs(x[:, :, :, 1:] - x[:, :, :, :-1]).mean())
 
 
-def run_urbanization_style_transfer(content_img, target_img, size=200, steps=150,
+def run_urbanization_style_transfer(content_img, target_img, size=512, steps=250,
                                      content_weight=3.0, style_weight=5e4, tv_weight=8.0,
                                      grad_clip=1.0, lr=0.03):
     """Optimizes pixel values of a copy of `content_img` (the user's own
     upload) so its VGG features match `target_img`'s texture (Gram
     matrices, i.e. style) while staying close to its own VGG features at
     STYLE_CONTENT_LAYER (i.e. content/structure), regularized by _tv_loss
-    to keep the result spatially coherent (see its docstring). Runs on CPU
-    in this deployment -- ~50-70s for the default step count, so callers
-    should run it off the event loop (see infer_vae_urbanize) and the
-    frontend should show a "this takes about a minute" loading state.
+    to keep the result spatially coherent (see its docstring).
+
+    size=512 (native, matching the endpoint's previous *display* size)
+    replaces the original size=200 + bicubic-upscale-to-512 pipeline: that
+    combination was optimizing at 200x200 and then blindly upscaling,
+    which just enlarges the same blur rather than adding real detail —
+    visibly worse the larger/more zoomed-in it's displayed. Optimizing
+    natively at 512 costs ~9s on this GPU at steps=150; steps=250 (~15s)
+    gives the optimizer enough iterations to actually resolve texture
+    detail across the larger canvas rather than leaving it under-converged.
+    Both settings were re-verified (no white-streak/incoherent-noise
+    regressions) after this resolution change. On CPU this would cost
+    proportionally more than the original's ~50-70s estimate -- fine for
+    this GPU deployment, but revisit `size`/`steps` if ever run on CPU.
 
     tv_weight=8.0 (up from an initial 3.0) and grad_clip=1.0 were tuned
     against a content image with a naturally high-frequency texture
@@ -622,7 +648,7 @@ async def infer_vae(request: Request, file: UploadFile = File(...)):
         display_recon = sharpen_vae_reconstruction(recon, clean_x)
 
     kl_total, kl_per_dim = kl_divergence(mu, logvar)
-    anomaly_score, anomaly_level = score_anomaly(mse)
+    anomaly_score, anomaly_level, anomaly_percent_diff, anomaly_reason = score_anomaly(mse)
 
     return {
         "reconstructed": tensor_to_b64(display_recon[0]),
@@ -633,6 +659,8 @@ async def infer_vae(request: Request, file: UploadFile = File(...)):
         "mse": mse,
         "anomaly_score": anomaly_score,
         "anomaly_level": anomaly_level,
+        "anomaly_percent_diff": anomaly_percent_diff,
+        "anomaly_reason": anomaly_reason,
     }
 
 
@@ -740,9 +768,12 @@ async def infer_vae_urbanize(request: Request, file: UploadFile = File(...), alp
     scene, textured toward a randomly picked REAL developed/built-up tile.
     `alpha` (0-1) scales how strongly the target's texture is pulled in.
 
-    Runs on CPU and takes roughly 40-60s -- offloaded to a worker thread via
-    asyncio.to_thread so it doesn't block other requests, but callers
-    should show a "this takes about a minute" loading state."""
+    Optimizes natively at 512x512 (see run_urbanization_style_transfer) --
+    ~15s on this GPU deployment. Offloaded to a worker thread via
+    asyncio.to_thread so it doesn't block other requests; the frontend
+    still shows a brief loading state since this is well over a typical
+    request latency, just not the ~40-60s an earlier, lower-resolution
+    version of this endpoint took."""
     if not style_vgg_loaded:
         return Response(status_code=400, content="Style transfer model unavailable.")
     if not URBANIZATION_TARGET_PATHS:
@@ -756,8 +787,7 @@ async def infer_vae_urbanize(request: Request, file: UploadFile = File(...), alp
     result = await asyncio.to_thread(
         run_urbanization_style_transfer, img, target_img, style_weight=alpha * 1e5,
     )
-    display = F.interpolate(result, size=(512, 512), mode="bicubic", align_corners=False)
-    display = display.clamp(0, 1) * 2 - 1  # tensor_to_b64 expects [-1, 1]
+    display = result.clamp(0, 1) * 2 - 1  # tensor_to_b64 expects [-1, 1]
     return {"urbanized": tensor_to_b64(display[0]), "alpha": alpha}
 
 

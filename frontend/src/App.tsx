@@ -11,6 +11,7 @@ import Research from './pages/Research';
 import PlanGenerator from './pages/PlanGenerator';
 import Governance from './pages/Governance';
 import GAN from './pages/GAN';
+import VAEArchitecture from './pages/VAEArchitecture';
 import { apiFetch, getApiKey, setApiKey } from './lib/api';
 
 type ViewType = 'ae' | 'vae' | 'classifier' | 'plan-generator' | 'governance' | 'gan' | 'prediction' | 'datasets' | 'system' | 'model-explorer' | 'model-comparison' | 'training' | 'evaluation' | 'research';
@@ -41,8 +42,8 @@ const MODEL_META: Record<string, {
     inferEndpoint: '/infer/ae',
   },
   vae: {
-    title: 'Variational Autoencoder',
-    description: 'A pretrained ResNet18 encoder feeding a probabilistic spatial latent (mu, logvar; encode → reparameterize z = μ + σ·ε → decode), trained on UCMerced aerial tiles. Reports the KL divergence of the posterior from the prior N(0, I) — the exact term traded against reconstruction — and supports latent interpolation and reconstruction-error anomaly detection.',
+    title: 'Variational Autoencoder — Anomaly Detection & Latent Exploration',
+    description: 'Primary use in this project: flags land parcels whose reconstruction error deviates from a 294-tile normal baseline — a real anomaly-detection signal for parcels that don’t match expected patterns for their zone (informal construction, illegal land conversion, sensor artifacts). Also supports latent interpolation between two real tiles. This VAE reconstructs and blends real, encoded tiles — it does not invent new buildings or roads on arbitrary land (see architecture below for why, and what would).',
     resultTitle: 'VAE Reconstruction',
     panelLabels: ['Original (Your Upload)', 'Reconstructed'],
     sampleEndpoint: '/sample/ucmerced/undeveloped',
@@ -183,7 +184,11 @@ export default function App() {
           if (activeView === 'ae') {
             setMetrics({ mse: data.mse, psnr: data.psnr });
           } else if (activeView === 'vae') {
-            setMetrics({ mu: data.mu, logvar: data.logvar, kl: data.kl, klPerDim: data.kl_per_dim, mse: data.mse, anomalyScore: data.anomaly_score, anomalyLevel: data.anomaly_level });
+            setMetrics({
+              mu: data.mu, logvar: data.logvar, kl: data.kl, klPerDim: data.kl_per_dim, mse: data.mse,
+              anomalyScore: data.anomaly_score, anomalyLevel: data.anomaly_level,
+              anomalyPercentDiff: data.anomaly_percent_diff, anomalyReason: data.anomaly_reason,
+            });
           }
         }
       } else {
@@ -398,6 +403,8 @@ export default function App() {
               </div>
             )}
 
+            {activeView === 'vae' && <VAEArchitecture />}
+
             {activeView === 'datasets' && <DatasetExplorer />}
             {activeView === 'system' && <SystemInformation />}
             {activeView === 'model-explorer' && <ModelExplorer setActiveView={setActiveView} />}
@@ -491,6 +498,75 @@ export default function App() {
                         )}
                       </div>
 
+                      {/* Anomaly result: the headline output of the VAE in this project — a
+                          large, standalone banner with a plain-language reason and a percentage,
+                          not just a raw z-score buried in a metrics row. Shown immediately after
+                          the reconstruction, before interpolation/urbanization/random-sample. */}
+                      {activeView === 'vae' && metrics?.anomalyLevel && (
+                        <div style={{
+                          padding: '18px 22px', borderRadius: 8,
+                          background: metrics.anomalyLevel === 'Typical' ? 'rgba(0, 230, 118, 0.08)'
+                            : metrics.anomalyLevel === 'Unusual' ? 'rgba(255, 184, 77, 0.08)' : 'rgba(255, 82, 82, 0.08)',
+                          border: `1px solid ${metrics.anomalyLevel === 'Typical' ? 'rgba(0, 230, 118, 0.35)'
+                            : metrics.anomalyLevel === 'Unusual' ? 'rgba(255, 184, 77, 0.35)' : 'rgba(255, 82, 82, 0.35)'}`,
+                        }}>
+                          <div style={{ display: 'flex', alignItems: 'baseline', gap: 14, flexWrap: 'wrap', marginBottom: 8 }}>
+                            <span style={{
+                              fontSize: '1.3rem', fontWeight: 700, fontFamily: 'var(--font-mono)',
+                              color: metrics.anomalyLevel === 'Typical' ? 'var(--success)'
+                                : metrics.anomalyLevel === 'Unusual' ? '#FFB84D' : '#FF5252',
+                            }}>
+                              {metrics.anomalyLevel === 'Typical' ? '✓' : '⚠'} {metrics.anomalyLevel.toUpperCase()}
+                            </span>
+                            {metrics.anomalyPercentDiff != null && (
+                              <span style={{ fontSize: '1.1rem', fontFamily: 'var(--font-mono)', color: 'var(--text)' }}>
+                                {metrics.anomalyPercentDiff > 0 ? '+' : ''}{Number(metrics.anomalyPercentDiff).toFixed(0)}% reconstruction error vs. normal
+                              </span>
+                            )}
+                            <span style={{ fontSize: '0.8rem', color: 'var(--muted)', fontFamily: 'var(--font-mono)' }}>
+                              (z = {Number(metrics.anomalyScore).toFixed(2)})
+                            </span>
+                          </div>
+                          <div style={{ fontSize: '0.88rem', color: 'var(--text)', lineHeight: 1.55 }}>
+                            {metrics.anomalyReason}
+                          </div>
+                        </div>
+                      )}
+
+                      {metrics && (
+                        <div className="metrics-strip">
+                          {activeView === 'ae' ? (
+                            <>
+                              <div className="metric"><span className="metric-label">MSE Loss</span><span className="metric-value">{Number(metrics.mse).toFixed(5)}</span></div>
+                              <div className="metric"><span className="metric-label">PSNR</span><span className="metric-value">{Number(metrics.psnr).toFixed(2)} dB</span></div>
+                            </>
+                          ) : (
+                            <>
+                              <div className="metric"><span className="metric-label">μ Mean</span><span className="metric-value">{Number(metrics.mu).toFixed(4)}</span></div>
+                              <div className="metric"><span className="metric-label">log(var) Mean</span><span className="metric-value">{Number(metrics.logvar).toFixed(4)}</span></div>
+                              {metrics.kl != null && (
+                                <div className="metric">
+                                  <span className="metric-label">KL Divergence</span>
+                                  <span className="metric-value" style={{ color: 'var(--accent2)' }}>{Number(metrics.kl).toFixed(2)} nats</span>
+                                </div>
+                              )}
+                              {metrics.klPerDim != null && (
+                                <div className="metric"><span className="metric-label">KL / latent dim</span><span className="metric-value">{Number(metrics.klPerDim).toFixed(4)}</span></div>
+                              )}
+                            </>
+                          )}
+                        </div>
+                      )}
+                      {activeView === 'vae' && metrics?.kl != null && (
+                        <div style={{ color: 'var(--muted)', fontSize: '0.8rem', marginTop: '-10px', marginBottom: '10px', padding: '0 5px', lineHeight: 1.55 }}>
+                          <strong>KL divergence</strong> (shown above, in nats) measures how far the encoder's posterior q(z|x) sits from the
+                          prior N(0, I). The reparameterization trick z = μ + σ·ε makes this term differentiable so it can be trained.
+                          The objective is <code>reconstruction + β·KL</code>; this checkpoint uses a near-zero β to keep reconstructions sharp,
+                          so KL is reported but not minimised (it rises during training as the latent grows more informative — expected for a
+                          reconstruction-priority VAE).
+                        </div>
+                      )}
+
                       {activeView === 'vae' && (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', alignItems: 'center' }}>
                           <button className="btn" style={{ maxWidth: '320px', background: 'transparent', border: '1px solid var(--border)', color: 'var(--text)' }} onClick={handleInterpolate} disabled={interpLoading}>
@@ -517,7 +593,7 @@ export default function App() {
                             land — its boundaries and structure come from your upload, not from the
                             style tile — with a "more built-up" material/texture applied. It can't
                             invent new roads or buildings beyond what the layout already implies.
-                            Runs on CPU here, so it takes about 40–60 seconds.
+                            Optimized natively at 512×512 on GPU — takes about 15 seconds.
                           </p>
                           <label style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>
                             Style strength: <span style={{ color: 'var(--accent)', fontFamily: 'var(--font-mono)' }}>{Math.round(urbanizeIntensity * 100)}%</span>
@@ -526,7 +602,7 @@ export default function App() {
                               style={{ display: 'block', width: 220, marginTop: 4 }} />
                           </label>
                           <button className="btn" style={{ maxWidth: '320px', background: 'transparent', border: '1px solid var(--border)', color: 'var(--text)' }} onClick={handleUrbanize} disabled={urbanizeLoading}>
-                            {urbanizeLoading ? 'Projecting… (~40–60s)' : 'Show Urbanization Projection'}
+                            {urbanizeLoading ? 'Projecting… (~15s)' : 'Show Urbanization Projection'}
                           </button>
                           {urbanizeError && (
                             <div style={{
@@ -537,11 +613,14 @@ export default function App() {
                             </div>
                           )}
                           {urbanizeImg && (
-                            <div style={{ width: '100%' }}>
+                            <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                               <div style={{ color: 'var(--muted)', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px', textAlign: 'center' }}>
                                 Same land, urbanization projection ({Math.round(urbanizeIntensity * 100)}% style strength)
                               </div>
-                              <img src={urbanizeImg} style={{ width: '100%', height: 'auto', borderRadius: '4px', border: '1px solid var(--border)' }} alt="Urbanization Projection" />
+                              {/* Output is natively 512x512 — cap display at that so the browser
+                                  never upscales it past its real resolution (which is what made it
+                                  look blurrier the more this was zoomed/stretched). */}
+                              <img src={urbanizeImg} style={{ width: '100%', maxWidth: '512px', height: 'auto', borderRadius: '4px', border: '1px solid var(--border)' }} alt="Urbanization Projection" />
                             </div>
                           )}
                         </div>
@@ -648,54 +727,6 @@ export default function App() {
               </div>
             )}
 
-            {(activeView === 'ae' || activeView === 'vae') && metrics && (
-              <div className="metrics-strip">
-                {activeView === 'ae' ? (
-                  <>
-                    <div className="metric"><span className="metric-label">MSE Loss</span><span className="metric-value">{Number(metrics.mse).toFixed(5)}</span></div>
-                    <div className="metric"><span className="metric-label">PSNR</span><span className="metric-value">{Number(metrics.psnr).toFixed(2)} dB</span></div>
-                  </>
-                ) : (
-                  <>
-                    <div className="metric"><span className="metric-label">μ Mean</span><span className="metric-value">{Number(metrics.mu).toFixed(4)}</span></div>
-                    <div className="metric"><span className="metric-label">log(var) Mean</span><span className="metric-value">{Number(metrics.logvar).toFixed(4)}</span></div>
-                    {metrics.kl != null && (
-                      <div className="metric">
-                        <span className="metric-label">KL Divergence</span>
-                        <span className="metric-value" style={{ color: 'var(--accent2)' }}>{Number(metrics.kl).toFixed(2)} nats</span>
-                      </div>
-                    )}
-                    {metrics.klPerDim != null && (
-                      <div className="metric"><span className="metric-label">KL / latent dim</span><span className="metric-value">{Number(metrics.klPerDim).toFixed(4)}</span></div>
-                    )}
-                    {metrics.anomalyLevel && (
-                      <div className="metric">
-                        <span className="metric-label">Anomaly Check</span>
-                        <span
-                          className="metric-value"
-                          style={{
-                            color: metrics.anomalyLevel === 'Typical' ? 'var(--success)'
-                              : metrics.anomalyLevel === 'Unusual' ? '#FFB84D' : '#FF5252'
-                          }}
-                        >
-                          {metrics.anomalyLevel} (z={Number(metrics.anomalyScore).toFixed(2)})
-                        </span>
-                      </div>
-                    )}
-                  </>
-                )}
-              </div>
-            )}
-            {activeView === 'vae' && metrics?.kl != null && (
-              <div style={{ color: 'var(--muted)', fontSize: '0.8rem', marginTop: '-20px', marginBottom: '24px', padding: '0 5px', lineHeight: 1.55 }}>
-                <strong>KL divergence</strong> (shown above, in nats) measures how far the encoder's posterior q(z|x) sits from the
-                prior N(0, I). The reparameterization trick z = μ + σ·ε makes this term differentiable so it can be trained.
-                The objective is <code>reconstruction + β·KL</code>; this checkpoint uses a near-zero β to keep reconstructions sharp,
-                so KL is reported but not minimised (it rises during training as the latent grows more informative — expected for a
-                reconstruction-priority VAE). Use <strong>Show Land-Use Interpolation</strong> above to see the latent space itself:
-                the steps between two real encoded tiles decode to plausible blends, which is what "smooth latent space" means.
-              </div>
-            )}
 
             {history.length > 0 && (
               <div className="card">
