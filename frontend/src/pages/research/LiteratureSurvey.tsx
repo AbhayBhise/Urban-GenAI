@@ -225,13 +225,13 @@ const CATEGORIES = [
 ] as const;
 
 const CATEGORY_STYLES: Record<string, { bg: string; color: string; border: string }> = {
-  'Urban Digital Twin': { bg: 'rgba(0, 212, 255, 0.12)', color: '#00D4FF', border: 'rgba(0, 212, 255, 0.3)' },
-  'Generative Urban Design': { bg: 'rgba(123, 97, 255, 0.12)', color: '#9D85FF', border: 'rgba(123, 97, 255, 0.3)' },
-  'VAE-based Representation': { bg: 'rgba(0, 230, 118, 0.12)', color: '#00E676', border: 'rgba(0, 230, 118, 0.3)' },
-  'LLM-based Planning': { bg: 'rgba(255, 179, 0, 0.12)', color: '#FFB300', border: 'rgba(255, 179, 0, 0.3)' },
-  'GAN-based Generation': { bg: 'rgba(255, 82, 82, 0.12)', color: '#FF5252', border: 'rgba(255, 82, 82, 0.3)' },
-  'Diffusion Models': { bg: 'rgba(233, 30, 99, 0.12)', color: '#FF4081', border: 'rgba(233, 30, 99, 0.3)' },
-  'Multimodal Geospatial AI': { bg: 'rgba(0, 188, 212, 0.12)', color: '#26C6DA', border: 'rgba(0, 188, 212, 0.3)' },
+  'Urban Digital Twin': { bg: 'var(--accent-wash)', color: 'var(--accent)', border: 'var(--accent)' },
+  'Generative Urban Design': { bg: 'var(--accent2-wash)', color: 'var(--accent2)', border: 'var(--accent2)' },
+  'VAE-based Representation': { bg: 'var(--success-wash)', color: 'var(--success)', border: 'var(--success)' },
+  'LLM-based Planning': { bg: 'var(--warn-wash)', color: 'var(--warn)', border: 'var(--warn)' },
+  'GAN-based Generation': { bg: 'var(--danger-wash)', color: 'var(--danger)', border: 'var(--danger)' },
+  'Diffusion Models': { bg: 'var(--accent2-wash)', color: 'var(--cat-e)', border: 'var(--cat-e)' },
+  'Multimodal Geospatial AI': { bg: 'var(--accent-wash)', color: 'var(--cat-f)', border: 'var(--cat-f)' },
 };
 
 export default function LiteratureSurvey() {
@@ -266,7 +266,7 @@ export default function LiteratureSurvey() {
             <button
               onClick={() => setViewMode('cards')}
               style={{
-                background: viewMode === 'cards' ? 'rgba(0, 212, 255, 0.15)' : 'transparent',
+                background: viewMode === 'cards' ? 'var(--accent-wash)' : 'transparent',
                 color: viewMode === 'cards' ? 'var(--accent)' : 'var(--muted)',
                 border: 'none',
                 borderRadius: '4px',
@@ -284,7 +284,7 @@ export default function LiteratureSurvey() {
             <button
               onClick={() => setViewMode('table')}
               style={{
-                background: viewMode === 'table' ? 'rgba(0, 212, 255, 0.15)' : 'transparent',
+                background: viewMode === 'table' ? 'var(--accent-wash)' : 'transparent',
                 color: viewMode === 'table' ? 'var(--accent)' : 'var(--muted)',
                 border: 'none',
                 borderRadius: '4px',
@@ -329,8 +329,8 @@ export default function LiteratureSurvey() {
                   key={cat}
                   onClick={() => setSelectedCategory(cat)}
                   style={{
-                    background: isSelected ? 'var(--accent)' : 'rgba(30, 45, 64, 0.4)',
-                    color: isSelected ? '#000' : 'var(--text)',
+                    background: isSelected ? 'var(--accent)' : 'var(--surface-inset)',
+                    color: isSelected ? 'var(--btn-text)' : 'var(--text)',
                     border: `1px solid ${isSelected ? 'var(--accent)' : 'var(--border)'}`,
                     borderRadius: '4px',
                     padding: '5px 10px',
@@ -363,16 +363,16 @@ export default function LiteratureSurvey() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           {filteredData.map((item, idx) => {
             const isExpanded = expandedId === item.id;
-            const badge = CATEGORY_STYLES[item.category] || { bg: 'rgba(30, 45, 64, 0.6)', color: 'var(--text)', border: 'var(--border)' };
+            const badge = CATEGORY_STYLES[item.category] || { bg: 'var(--surface-inset)', color: 'var(--text)', border: 'var(--border)' };
 
             return (
               <div
                 key={item.id}
                 style={{
                   background: 'var(--surface)',
-                  border: isExpanded ? '1px solid rgba(0, 212, 255, 0.4)' : '1px solid var(--border)',
+                  border: isExpanded ? '1px solid var(--accent)' : '1px solid var(--border)',
                   borderRadius: '8px',
-                  boxShadow: isExpanded ? '0 4px 20px rgba(0, 212, 255, 0.06)' : 'none',
+                  boxShadow: isExpanded ? '0 4px 20px var(--accent-wash-light)' : 'none',
                   transition: 'all 0.2s ease',
                   overflow: 'hidden',
                 }}
@@ -386,12 +386,12 @@ export default function LiteratureSurvey() {
                     display: 'flex',
                     flexDirection: 'column',
                     gap: '10px',
-                    background: isExpanded ? 'rgba(0, 212, 255, 0.03)' : 'transparent',
+                    background: isExpanded ? 'var(--accent-wash-light)' : 'transparent',
                   }}
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '10px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: 'var(--accent)', background: 'rgba(0, 212, 255, 0.1)', padding: '3px 8px', borderRadius: '4px', fontWeight: 700 }}>
+                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: 'var(--accent)', background: 'var(--accent-wash)', padding: '3px 8px', borderRadius: '4px', fontWeight: 700 }}>
                         #{idx + 1}
                       </span>
                       <span
@@ -429,9 +429,9 @@ export default function LiteratureSurvey() {
                             gap: '4px',
                             textDecoration: 'none',
                             padding: '3px 8px',
-                            background: 'rgba(0, 212, 255, 0.08)',
+                            background: 'var(--accent-wash-light)',
                             borderRadius: '4px',
-                            border: '1px solid rgba(0, 212, 255, 0.2)',
+                            border: '1px solid var(--accent)',
                           }}
                         >
                           DOI <ExternalLink size={11} />
@@ -453,7 +453,7 @@ export default function LiteratureSurvey() {
                     </div>
                   </div>
 
-                  <h3 style={{ fontSize: '1.05rem', fontWeight: 600, color: '#FFF', lineHeight: 1.45, margin: 0 }}>
+                  <h3 style={{ fontSize: '1.05rem', fontWeight: 600, color: 'var(--text)', lineHeight: 1.45, margin: 0 }}>
                     {item.paper}
                   </h3>
 
@@ -476,7 +476,7 @@ export default function LiteratureSurvey() {
                     style={{
                       padding: '20px 24px',
                       borderTop: '1px solid var(--border)',
-                      background: 'rgba(8, 12, 20, 0.7)',
+                      background: 'var(--bg)',
                       display: 'flex',
                       flexDirection: 'column',
                       gap: '16px',
@@ -484,7 +484,7 @@ export default function LiteratureSurvey() {
                   >
                     {/* Row 1: Data Modalities & Capabilities */}
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
-                      <div style={{ background: 'rgba(15, 25, 35, 0.7)', border: '1px solid var(--border)', borderRadius: '6px', padding: '14px' }}>
+                      <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '6px', padding: '14px' }}>
                         <div style={{ fontSize: '0.74rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600, marginBottom: '6px' }}>
                           Input Data Modalities
                         </div>
@@ -493,7 +493,7 @@ export default function LiteratureSurvey() {
                         </div>
                       </div>
 
-                      <div style={{ background: 'rgba(15, 25, 35, 0.7)', border: '1px solid var(--border)', borderRadius: '6px', padding: '14px' }}>
+                      <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '6px', padding: '14px' }}>
                         <div style={{ fontSize: '0.74rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600, marginBottom: '6px' }}>
                           Generative vs. Evaluation Capability
                         </div>
@@ -509,16 +509,16 @@ export default function LiteratureSurvey() {
                       {/* Limitation Box */}
                       <div
                         style={{
-                          background: 'rgba(255, 82, 82, 0.05)',
-                          border: '1px solid rgba(255, 82, 82, 0.25)',
+                          background: 'var(--danger-wash)',
+                          border: '1px solid var(--danger)',
                           borderRadius: '6px',
                           padding: '16px',
                         }}
                       >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#FF5252', fontSize: '0.76rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--danger)', fontSize: '0.76rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>
                           <AlertCircle size={15} /> Literature Limitation / Gap Identified
                         </div>
-                        <p style={{ color: '#FF8A80', fontSize: '0.85rem', lineHeight: 1.55, margin: 0 }}>
+                        <p style={{ color: 'var(--danger)', fontSize: '0.85rem', lineHeight: 1.55, margin: 0 }}>
                           {item.limitationGap}
                         </p>
                       </div>
@@ -526,8 +526,8 @@ export default function LiteratureSurvey() {
                       {/* UrbanGen Relevance Box */}
                       <div
                         style={{
-                          background: 'rgba(0, 230, 118, 0.05)',
-                          border: '1px solid rgba(0, 230, 118, 0.25)',
+                          background: 'var(--success-wash)',
+                          border: '1px solid var(--success)',
                           borderRadius: '6px',
                           padding: '16px',
                         }}
@@ -553,7 +553,7 @@ export default function LiteratureSurvey() {
         <div style={{ overflowX: 'auto', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--surface)' }}>
           <table style={{ width: '100%', minWidth: '1380px', borderCollapse: 'collapse', fontSize: '0.86rem' }}>
             <thead>
-              <tr style={{ background: 'rgba(8, 12, 20, 0.95)', borderBottom: '2px solid var(--border)', textAlign: 'left', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', fontSize: '0.73rem', position: 'sticky', top: 0, zIndex: 2 }}>
+              <tr style={{ background: 'var(--surface-inset)', borderBottom: '2px solid var(--border)', textAlign: 'left', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', fontSize: '0.73rem', position: 'sticky', top: 0, zIndex: 2 }}>
                 <th style={{ padding: '16px 18px', width: '300px' }}>Study / Venue</th>
                 <th style={{ padding: '16px 14px', width: '80px', textAlign: 'center' }}>Year</th>
                 <th style={{ padding: '16px 16px', width: '200px' }}>Technology Stack</th>
@@ -564,13 +564,13 @@ export default function LiteratureSurvey() {
             </thead>
             <tbody>
               {filteredData.map((item, index) => {
-                const badge = CATEGORY_STYLES[item.category] || { bg: 'rgba(30, 45, 64, 0.6)', color: 'var(--text)', border: 'var(--border)' };
+                const badge = CATEGORY_STYLES[item.category] || { bg: 'var(--surface-inset)', color: 'var(--text)', border: 'var(--border)' };
                 return (
                   <tr
                     key={item.id}
                     style={{
                       borderBottom: '1px solid var(--border)',
-                      background: index % 2 === 0 ? 'transparent' : 'rgba(255, 255, 255, 0.012)',
+                      background: index % 2 === 0 ? 'transparent' : 'var(--hover-overlay)',
                       verticalAlign: 'top',
                     }}
                   >
@@ -592,7 +592,7 @@ export default function LiteratureSurvey() {
                           {item.category}
                         </span>
                       </div>
-                      <div style={{ fontWeight: 600, color: '#FFF', lineHeight: 1.45, marginBottom: '6px' }}>
+                      <div style={{ fontWeight: 600, color: 'var(--text)', lineHeight: 1.45, marginBottom: '6px' }}>
                         {item.paper}
                       </div>
                       <div style={{ fontSize: '0.78rem', color: 'var(--muted)' }}>
@@ -631,7 +631,7 @@ export default function LiteratureSurvey() {
                           <span
                             key={tIdx}
                             style={{
-                              background: 'rgba(30, 45, 64, 0.45)',
+                              background: 'var(--surface-inset)',
                               border: '1px solid var(--border)',
                               borderRadius: '4px',
                               padding: '2px 6px',
@@ -658,11 +658,11 @@ export default function LiteratureSurvey() {
                     <td style={{ padding: '16px 18px' }}>
                       <div
                         style={{
-                          background: 'rgba(255, 82, 82, 0.05)',
-                          borderLeft: '3px solid #FF5252',
+                          background: 'var(--danger-wash)',
+                          borderLeft: '3px solid var(--danger)',
                           borderRadius: '0 4px 4px 0',
                           padding: '8px 12px',
-                          color: '#FF8A80',
+                          color: 'var(--danger)',
                           fontSize: '0.82rem',
                           lineHeight: 1.5,
                         }}
@@ -675,7 +675,7 @@ export default function LiteratureSurvey() {
                     <td style={{ padding: '16px 18px' }}>
                       <div
                         style={{
-                          background: 'rgba(0, 230, 118, 0.05)',
+                          background: 'var(--success-wash)',
                           borderLeft: '3px solid var(--success)',
                           borderRadius: '0 4px 4px 0',
                           padding: '8px 12px',

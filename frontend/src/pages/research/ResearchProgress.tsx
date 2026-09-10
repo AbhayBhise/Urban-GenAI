@@ -147,7 +147,7 @@ export default function ResearchProgress() {
             <div
               key={i}
               style={{
-                background: 'rgba(8, 12, 20, 0.65)',
+                background: 'var(--bg)',
                 border: '1px solid var(--border)',
                 borderRadius: '6px',
                 padding: '14px',
@@ -179,7 +179,7 @@ export default function ResearchProgress() {
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: '24px', marginTop: '16px' }}>
           {/* AE Loss Chart */}
-          <div style={{ background: 'rgba(8, 12, 20, 0.5)', border: '1px solid var(--border)', borderRadius: '6px', padding: '16px' }}>
+          <div style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: '6px', padding: '16px' }}>
             <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--accent)', marginBottom: '8px' }}>
               Autoencoder Denoising Loss (MSE vs. Epoch)
             </div>
@@ -189,8 +189,8 @@ export default function ResearchProgress() {
                   <LineChart data={aeHistory}>
                     <XAxis dataKey="epoch" stroke="var(--muted)" fontSize={11} />
                     <YAxis stroke="var(--muted)" fontSize={11} domain={[0, 0.2]} />
-                    <Tooltip contentStyle={{ background: '#0F1923', border: '1px solid #1E2D40', fontSize: '11px' }} />
-                    <Line type="monotone" dataKey="loss" stroke="#00D4FF" dot={false} strokeWidth={2} name="Train MSE" />
+                    <Tooltip contentStyle={{ background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: '11px' }} />
+                    <Line type="monotone" dataKey="loss" stroke="var(--accent)" dot={false} strokeWidth={2} name="Train MSE" />
                   </LineChart>
                 </ResponsiveContainer>
               ) : (
@@ -205,7 +205,7 @@ export default function ResearchProgress() {
           </div>
 
           {/* VAE Loss Chart */}
-          <div style={{ background: 'rgba(8, 12, 20, 0.5)', border: '1px solid var(--border)', borderRadius: '6px', padding: '16px' }}>
+          <div style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: '6px', padding: '16px' }}>
             <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--accent2)', marginBottom: '8px' }}>
               Spatial VAE Reconstruction &amp; KL Convergence
             </div>
@@ -215,9 +215,9 @@ export default function ResearchProgress() {
                   <LineChart data={vaeHistory}>
                     <XAxis dataKey="epoch" stroke="var(--muted)" fontSize={11} />
                     <YAxis stroke="var(--muted)" fontSize={11} domain={[0, 0.25]} />
-                    <Tooltip contentStyle={{ background: '#0F1923', border: '1px solid #1E2D40', fontSize: '11px' }} />
-                    <Line type="monotone" dataKey="recon" stroke="#7B61FF" dot={false} strokeWidth={2} name="Recon Loss" />
-                    <Line type="monotone" dataKey="loss" stroke="#00E676" dot={false} strokeWidth={1.5} strokeDasharray="3 3" name="Total Loss" />
+                    <Tooltip contentStyle={{ background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: '11px' }} />
+                    <Line type="monotone" dataKey="recon" stroke="var(--accent2)" dot={false} strokeWidth={2} name="Recon Loss" />
+                    <Line type="monotone" dataKey="loss" stroke="var(--success)" dot={false} strokeWidth={1.5} strokeDasharray="3 3" name="Total Loss" />
                   </LineChart>
                 </ResponsiveContainer>
               ) : (
@@ -246,7 +246,7 @@ export default function ResearchProgress() {
               style={{
                 display: 'flex',
                 gap: '18px',
-                background: 'rgba(8, 12, 20, 0.5)',
+                background: 'var(--bg)',
                 border: '1px solid var(--border)',
                 borderRadius: '6px',
                 padding: '16px 20px',
@@ -258,7 +258,7 @@ export default function ResearchProgress() {
                   fontFamily: 'var(--font-mono)',
                   fontSize: '1.1rem',
                   fontWeight: 700,
-                  color: t.status === 'implemented' ? 'var(--success)' : t.status === 'in_development' ? '#FFB300' : 'var(--muted)',
+                  color: t.status === 'implemented' ? 'var(--success)' : t.status === 'in_development' ? 'var(--warn)' : 'var(--muted)',
                   minWidth: '32px',
                   paddingTop: '2px',
                 }}
@@ -273,17 +273,17 @@ export default function ResearchProgress() {
                   </div>
                   <div>
                     {t.status === 'implemented' && (
-                      <span style={{ background: 'rgba(0, 230, 118, 0.15)', color: 'var(--success)', border: '1px solid rgba(0, 230, 118, 0.3)', padding: '2px 8px', borderRadius: '4px', fontSize: '0.72rem', fontWeight: 600 }}>
+                      <span style={{ background: 'var(--success-wash)', color: 'var(--success)', border: '1px solid var(--success)', padding: '2px 8px', borderRadius: '4px', fontSize: '0.72rem', fontWeight: 600 }}>
                         {t.statusLabel}
                       </span>
                     )}
                     {t.status === 'in_development' && (
-                      <span style={{ background: 'rgba(255, 179, 0, 0.15)', color: '#FFB300', border: '1px solid rgba(255, 179, 0, 0.3)', padding: '2px 8px', borderRadius: '4px', fontSize: '0.72rem', fontWeight: 600 }}>
+                      <span style={{ background: 'var(--warn-wash)', color: 'var(--warn)', border: '1px solid var(--warn)', padding: '2px 8px', borderRadius: '4px', fontSize: '0.72rem', fontWeight: 600 }}>
                         {t.statusLabel}
                       </span>
                     )}
                     {t.status === 'planned' && (
-                      <span style={{ background: 'rgba(74, 96, 128, 0.15)', color: 'var(--muted)', border: '1px solid var(--border)', padding: '2px 8px', borderRadius: '4px', fontSize: '0.72rem', fontWeight: 600 }}>
+                      <span style={{ background: 'var(--surface-inset)', color: 'var(--muted)', border: '1px solid var(--border)', padding: '2px 8px', borderRadius: '4px', fontSize: '0.72rem', fontWeight: 600 }}>
                         {t.statusLabel}
                       </span>
                     )}

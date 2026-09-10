@@ -21,7 +21,7 @@ export default function SystemApproach() {
       <div className="card">
         <div className="card-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span>Dataset Architecture: The 5-Source City Stack Concept</span>
-          <span style={{ fontSize: '0.75rem', background: 'rgba(0, 212, 255, 0.15)', color: 'var(--accent)', padding: '3px 8px', borderRadius: '4px' }}>
+          <span style={{ fontSize: '0.75rem', background: 'var(--accent-wash)', color: 'var(--accent)', padding: '3px 8px', borderRadius: '4px' }}>
             Spatial Alignment Pipeline
           </span>
         </div>
@@ -32,7 +32,7 @@ export default function SystemApproach() {
         {/* Visual City Stack Alignment Flow */}
         <div
           style={{
-            background: 'rgba(8, 12, 20, 0.7)',
+            background: 'var(--bg)',
             border: '1px solid var(--border)',
             borderRadius: '8px',
             padding: '24px',
@@ -50,7 +50,7 @@ export default function SystemApproach() {
               <div
                 key={i}
                 style={{
-                  background: 'rgba(15, 25, 35, 0.9)',
+                  background: 'var(--surface)',
                   border: '1px solid var(--border)',
                   borderRadius: '6px',
                   padding: '12px',
@@ -64,7 +64,7 @@ export default function SystemApproach() {
                 <div style={{ color: 'var(--muted)', fontSize: '0.74rem' }}>{d.resolution}</div>
                 <div style={{ color: 'var(--muted)', fontSize: '0.72rem', marginTop: '4px', lineHeight: 1.3 }}>{d.channels}</div>
                 <div style={{ marginTop: 'auto', paddingTop: '8px' }}>
-                  <span style={{ fontSize: '0.7rem', color: d.status.includes('Active') ? 'var(--success)' : '#FFB300' }}>
+                  <span style={{ fontSize: '0.7rem', color: d.status.includes('Active') ? 'var(--success)' : 'var(--warn)' }}>
                     ● {d.status}
                   </span>
                 </div>
@@ -79,8 +79,8 @@ export default function SystemApproach() {
             </div>
             <div
               style={{
-                background: 'linear-gradient(90deg, rgba(0, 212, 255, 0.1) 0%, rgba(123, 97, 255, 0.1) 100%)',
-                border: '1px solid rgba(0, 212, 255, 0.4)',
+                background: 'linear-gradient(90deg, var(--accent-wash) 0%, var(--accent2-wash) 100%)',
+                border: '1px solid var(--accent)',
                 borderRadius: '6px',
                 padding: '12px 30px',
                 textAlign: 'center',
@@ -88,7 +88,7 @@ export default function SystemApproach() {
                 maxWidth: '680px',
               }}
             >
-              <div style={{ color: '#FFF', fontWeight: 700, fontSize: '0.95rem', letterSpacing: '0.04em' }}>
+              <div style={{ color: 'var(--text)', fontWeight: 700, fontSize: '0.95rem', letterSpacing: '0.04em' }}>
                 PUNE CITY STACK (Unified Multi-Channel Tensor: H × W × C)
               </div>
               <div style={{ color: 'var(--muted)', fontSize: '0.78rem', marginTop: '4px' }}>
@@ -99,7 +99,7 @@ export default function SystemApproach() {
         </div>
 
         {/* Current Active Repositories & Training Datasets */}
-        <div style={{ background: 'rgba(15, 25, 35, 0.6)', border: '1px solid var(--border)', borderRadius: '6px', padding: '16px' }}>
+        <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '6px', padding: '16px' }}>
           <div style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--accent2)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>
             Active Datasets Currently Powering Committed Checkpoints:
           </div>
@@ -132,14 +132,14 @@ export default function SystemApproach() {
             { id: 'ae', label: 'Autoencoder (AE)', badge: 'Implemented ✓', color: 'var(--success)' },
             { id: 'vae', label: 'Spatial VAE', badge: 'Implemented ✓', color: 'var(--success)' },
             { id: 'gpt', label: 'Transformer (MiniGPT)', badge: 'Implemented ✓', color: 'var(--success)' },
-            { id: 'gan', label: 'Spectral GAN', badge: 'In Development ◐', color: '#FFB300' },
+            { id: 'gan', label: 'Spectral GAN', badge: 'In Development ◐', color: 'var(--warn)' },
             { id: 'diffusion', label: 'Diffusion Model', badge: 'Planned ○', color: 'var(--muted)' },
           ].map(m => (
             <button
               key={m.id}
               onClick={() => setActiveModelTab(m.id as any)}
               style={{
-                background: activeModelTab === m.id ? 'rgba(0, 212, 255, 0.12)' : 'transparent',
+                background: activeModelTab === m.id ? 'var(--accent-wash)' : 'transparent',
                 color: activeModelTab === m.id ? 'var(--accent)' : 'var(--text)',
                 border: `1px solid ${activeModelTab === m.id ? 'var(--accent)' : 'var(--border)'}`,
                 borderRadius: '6px',
@@ -162,14 +162,14 @@ export default function SystemApproach() {
         {activeModelTab === 'ae' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
-              <div style={{ background: 'rgba(8, 12, 20, 0.6)', border: '1px solid var(--border)', borderRadius: '6px', padding: '16px' }}>
+              <div style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: '6px', padding: '16px' }}>
                 <div style={{ fontSize: '0.78rem', color: 'var(--muted)', textTransform: 'uppercase', marginBottom: '6px' }}>Role in Urban Planning</div>
                 <div style={{ fontSize: '0.9rem', color: 'var(--text)', lineHeight: 1.5 }}>
                   <strong>Representation Learning &amp; Pre-cleaning Denoising:</strong> Satellite and aerial imagery regularly suffers from atmospheric haze, sensor noise, and cloud shadows. The Denoising AE compresses high-resolution tiles to learn invariant spatial features and reconstruct clean ground surfaces before downstream zoning analysis.
                 </div>
               </div>
 
-              <div style={{ background: 'rgba(8, 12, 20, 0.6)', border: '1px solid var(--border)', borderRadius: '6px', padding: '16px' }}>
+              <div style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: '6px', padding: '16px' }}>
                 <div style={{ fontSize: '0.78rem', color: 'var(--muted)', textTransform: 'uppercase', marginBottom: '6px' }}>Architecture &amp; Bottleneck</div>
                 <div style={{ fontSize: '0.85rem', color: 'var(--text)', lineHeight: 1.5 }}>
                   <strong>Encoder:</strong> Pretrained ResNet18 backbone (conv1 through layer3), downsampling 16× into an <code style={{ color: 'var(--accent)' }}>8×8×256</code> feature bottleneck (16,384 dims).<br />
@@ -179,20 +179,20 @@ export default function SystemApproach() {
             </div>
 
             {/* AE Flow Diagram */}
-            <div style={{ background: 'rgba(15, 25, 35, 0.8)', border: '1px solid var(--border)', borderRadius: '6px', padding: '16px', textAlign: 'center' }}>
+            <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '6px', padding: '16px', textAlign: 'center' }}>
               <div style={{ fontSize: '0.78rem', color: 'var(--muted)', textTransform: 'uppercase', marginBottom: '8px' }}>
                 Execution Pipeline (Verified Checkpoint: outputs/ae/model.pth)
               </div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', flexWrap: 'wrap', fontFamily: 'var(--font-mono)', fontSize: '0.82rem', color: 'var(--text)' }}>
-                <span style={{ padding: '6px 12px', background: 'rgba(30, 45, 64, 0.5)', borderRadius: '4px' }}>Noisy Urban Tile (128×128×3)</span>
+                <span style={{ padding: '6px 12px', background: 'var(--surface-inset)', borderRadius: '4px' }}>Noisy Urban Tile (128×128×3)</span>
                 <ArrowRight size={14} color="var(--accent)" />
-                <span style={{ padding: '6px 12px', background: 'rgba(0, 212, 255, 0.15)', border: '1px solid var(--accent)', borderRadius: '4px', color: 'var(--accent)' }}>ResNet18 Encoder</span>
+                <span style={{ padding: '6px 12px', background: 'var(--accent-wash)', border: '1px solid var(--accent)', borderRadius: '4px', color: 'var(--accent)' }}>ResNet18 Encoder</span>
                 <ArrowRight size={14} color="var(--accent)" />
-                <span style={{ padding: '6px 12px', background: 'rgba(123, 97, 255, 0.15)', border: '1px solid var(--accent2)', borderRadius: '4px', color: 'var(--accent2)' }}>Latent Codes (8×8×256)</span>
+                <span style={{ padding: '6px 12px', background: 'var(--accent2-wash)', border: '1px solid var(--accent2)', borderRadius: '4px', color: 'var(--accent2)' }}>Latent Codes (8×8×256)</span>
                 <ArrowRight size={14} color="var(--accent)" />
-                <span style={{ padding: '6px 12px', background: 'rgba(0, 230, 118, 0.15)', border: '1px solid var(--success)', borderRadius: '4px', color: 'var(--success)' }}>Transposed-Conv Decoder</span>
+                <span style={{ padding: '6px 12px', background: 'var(--success-wash)', border: '1px solid var(--success)', borderRadius: '4px', color: 'var(--success)' }}>Transposed-Conv Decoder</span>
                 <ArrowRight size={14} color="var(--accent)" />
-                <span style={{ padding: '6px 12px', background: 'rgba(30, 45, 64, 0.5)', borderRadius: '4px' }}>Denoised Tile (128×128×3)</span>
+                <span style={{ padding: '6px 12px', background: 'var(--surface-inset)', borderRadius: '4px' }}>Denoised Tile (128×128×3)</span>
               </div>
               <div style={{ marginTop: '12px', fontSize: '0.8rem', color: 'var(--muted)' }}>
                 Verified Experiment: 50 epochs on UCMerced | Initial Loss: 0.1830 → Final Train MSE: 0.01977 | PSNR calculated per request.
@@ -204,14 +204,14 @@ export default function SystemApproach() {
         {activeModelTab === 'vae' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
-              <div style={{ background: 'rgba(8, 12, 20, 0.6)', border: '1px solid var(--border)', borderRadius: '6px', padding: '16px' }}>
+              <div style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: '6px', padding: '16px' }}>
                 <div style={{ fontSize: '0.78rem', color: 'var(--muted)', textTransform: 'uppercase', marginBottom: '6px' }}>Role in Urban Planning</div>
                 <div style={{ fontSize: '0.9rem', color: 'var(--text)', lineHeight: 1.5 }}>
                   <strong>Probabilistic Scenario Generation &amp; Anomaly Auditing:</strong> Enables planners to smoothly interpolate between diverse land uses (e.g. dense residential ↔ green parkland) along a continuous spatial latent manifold. It also scores reconstruction error against an empirical baseline of 300 real tiles to identify anomalous, unplanned developments.
                 </div>
               </div>
 
-              <div style={{ background: 'rgba(8, 12, 20, 0.6)', border: '1px solid var(--border)', borderRadius: '6px', padding: '16px' }}>
+              <div style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: '6px', padding: '16px' }}>
                 <div style={{ fontSize: '0.78rem', color: 'var(--muted)', textTransform: 'uppercase', marginBottom: '6px' }}>Architecture &amp; Loss Objective</div>
                 <div style={{ fontSize: '0.85rem', color: 'var(--text)', lineHeight: 1.5 }}>
                   <strong>Latent Structure:</strong> Spatial <code style={{ color: 'var(--accent)' }}>64×8×8 = 4,096</code> dimensions preserving road grids and parcel edges.<br />
@@ -221,20 +221,20 @@ export default function SystemApproach() {
             </div>
 
             {/* VAE Flow Diagram */}
-            <div style={{ background: 'rgba(15, 25, 35, 0.8)', border: '1px solid var(--border)', borderRadius: '6px', padding: '16px', textAlign: 'center' }}>
+            <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '6px', padding: '16px', textAlign: 'center' }}>
               <div style={{ fontSize: '0.78rem', color: 'var(--muted)', textTransform: 'uppercase', marginBottom: '8px' }}>
                 Probabilistic Pipeline (Verified Checkpoint: outputs/vae/model.pth)
               </div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', flexWrap: 'wrap', fontFamily: 'var(--font-mono)', fontSize: '0.82rem', color: 'var(--text)' }}>
-                <span style={{ padding: '6px 12px', background: 'rgba(30, 45, 64, 0.5)', borderRadius: '4px' }}>Input Tile (x)</span>
+                <span style={{ padding: '6px 12px', background: 'var(--surface-inset)', borderRadius: '4px' }}>Input Tile (x)</span>
                 <ArrowRight size={14} color="var(--accent)" />
-                <span style={{ padding: '6px 12px', background: 'rgba(0, 212, 255, 0.15)', border: '1px solid var(--accent)', borderRadius: '4px', color: 'var(--accent)' }}>Encoder → μ, log(σ²)</span>
+                <span style={{ padding: '6px 12px', background: 'var(--accent-wash)', border: '1px solid var(--accent)', borderRadius: '4px', color: 'var(--accent)' }}>Encoder → μ, log(σ²)</span>
                 <ArrowRight size={14} color="var(--accent)" />
-                <span style={{ padding: '6px 12px', background: 'rgba(123, 97, 255, 0.15)', border: '1px solid var(--accent2)', borderRadius: '4px', color: 'var(--accent2)' }}>z = μ + σ·ε (Reparameterize)</span>
+                <span style={{ padding: '6px 12px', background: 'var(--accent2-wash)', border: '1px solid var(--accent2)', borderRadius: '4px', color: 'var(--accent2)' }}>z = μ + σ·ε (Reparameterize)</span>
                 <ArrowRight size={14} color="var(--accent)" />
-                <span style={{ padding: '6px 12px', background: 'rgba(0, 230, 118, 0.15)', border: '1px solid var(--success)', borderRadius: '4px', color: 'var(--success)' }}>Spatial Decoder</span>
+                <span style={{ padding: '6px 12px', background: 'var(--success-wash)', border: '1px solid var(--success)', borderRadius: '4px', color: 'var(--success)' }}>Spatial Decoder</span>
                 <ArrowRight size={14} color="var(--accent)" />
-                <span style={{ padding: '6px 12px', background: 'rgba(30, 45, 64, 0.5)', borderRadius: '4px' }}>Reconstruction &amp; Interpolation</span>
+                <span style={{ padding: '6px 12px', background: 'var(--surface-inset)', borderRadius: '4px' }}>Reconstruction &amp; Interpolation</span>
               </div>
               <div style={{ marginTop: '12px', fontSize: '0.8rem', color: 'var(--muted)' }}>
                 Verified Experiment: 50 epochs | Train Recon Loss: 0.07524 | KL Divergence: 103.25 nats | Deterministic posterior mean used for inference.
@@ -246,14 +246,14 @@ export default function SystemApproach() {
         {activeModelTab === 'gpt' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
-              <div style={{ background: 'rgba(8, 12, 20, 0.6)', border: '1px solid var(--border)', borderRadius: '6px', padding: '16px' }}>
+              <div style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: '6px', padding: '16px' }}>
                 <div style={{ fontSize: '0.78rem', color: 'var(--muted)', textTransform: 'uppercase', marginBottom: '6px' }}>Role in Urban Planning</div>
                 <div style={{ fontSize: '0.9rem', color: 'var(--text)', lineHeight: 1.5 }}>
                   <strong>Advisory Planning Policy Drafting:</strong> Translates quantitative ward-level GIS metrics into structured, human-readable urban planning proposals for municipal review, covering permeable ground standards, setback mandates, and transit-oriented development (TOD).
                 </div>
               </div>
 
-              <div style={{ background: 'rgba(8, 12, 20, 0.6)', border: '1px solid var(--border)', borderRadius: '6px', padding: '16px' }}>
+              <div style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: '6px', padding: '16px' }}>
                 <div style={{ fontSize: '0.78rem', color: 'var(--muted)', textTransform: 'uppercase', marginBottom: '6px' }}>Architecture &amp; Corpus Grounding</div>
                 <div style={{ fontSize: '0.85rem', color: 'var(--text)', lineHeight: 1.5 }}>
                   <strong>Model:</strong> From-scratch 4-layer Decoder-only Transformer (<code style={{ color: 'var(--accent)' }}>n_embd=256, 4 heads, block_size=192</code>).<br />
@@ -262,7 +262,7 @@ export default function SystemApproach() {
               </div>
             </div>
 
-            <div style={{ background: 'rgba(15, 25, 35, 0.8)', border: '1px solid var(--border)', borderRadius: '6px', padding: '16px', textAlign: 'center' }}>
+            <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '6px', padding: '16px', textAlign: 'center' }}>
               <div style={{ fontSize: '0.8rem', color: 'var(--muted)' }}>
                 Seeded dynamically from real Pune ward statistics (<code style={{ color: 'var(--accent)' }}>PUNE_STATS</code>): dominant land-use, road length, waterways, and natural areas.
               </div>
@@ -272,8 +272,8 @@ export default function SystemApproach() {
 
         {activeModelTab === 'gan' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <div style={{ background: 'rgba(255, 179, 0, 0.05)', border: '1px solid rgba(255, 179, 0, 0.25)', borderRadius: '6px', padding: '16px' }}>
-              <div style={{ color: '#FFB300', fontWeight: 600, fontSize: '0.9rem', marginBottom: '4px' }}>
+            <div style={{ background: 'var(--warn-wash)', border: '1px solid var(--warn)', borderRadius: '6px', padding: '16px' }}>
+              <div style={{ color: 'var(--warn)', fontWeight: 600, fontSize: '0.9rem', marginBottom: '4px' }}>
                 Status: In Development (Code Complete, Training Standby)
               </div>
               <p style={{ color: 'var(--text)', fontSize: '0.85rem', lineHeight: 1.55 }}>
@@ -285,7 +285,7 @@ export default function SystemApproach() {
 
         {activeModelTab === 'diffusion' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <div style={{ background: 'rgba(8, 12, 20, 0.6)', border: '1px solid var(--border)', borderRadius: '6px', padding: '16px' }}>
+            <div style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: '6px', padding: '16px' }}>
               <div style={{ color: 'var(--muted)', fontWeight: 600, fontSize: '0.9rem', marginBottom: '4px' }}>
                 Status: Planned Roadmap (Phase 14)
               </div>
@@ -332,7 +332,7 @@ export default function SystemApproach() {
             <div
               key={i}
               style={{
-                background: 'rgba(8, 12, 20, 0.6)',
+                background: 'var(--bg)',
                 border: '1px solid var(--border)',
                 borderRadius: '6px',
                 padding: '16px',

@@ -153,12 +153,12 @@ const COMPARISON_ROWS: MatrixRow[] = [
 ];
 
 const CATEGORY_META = {
-  'Data Ingestion': { label: '01. Data Ingestion & Spatial Stacking', icon: Layers, color: '#00D4FF' },
-  'Neural Modeling': { label: '02. Neural Representation & Generation', icon: BrainCircuit, color: '#9D85FF' },
-  'Evaluation & Simulation': { label: '03. Impact Auditing & Anomaly Scoring', icon: Activity, color: '#00E676' },
-  'Planner Explanation': { label: '04. Natural Language Policy Explanation', icon: Compass, color: '#FFB300' },
-  'Digital Twin Visualization': { label: '05. Photorealistic Digital Twin Rendering', icon: Eye, color: '#FF4081' },
-  'Decision Cockpit': { label: '06. Human-in-the-Loop Governance', icon: CheckCircle2, color: '#26C6DA' },
+  'Data Ingestion': { label: '01. Data Ingestion & Spatial Stacking', icon: Layers, color: 'var(--cat-a)' },
+  'Neural Modeling': { label: '02. Neural Representation & Generation', icon: BrainCircuit, color: 'var(--cat-b)' },
+  'Evaluation & Simulation': { label: '03. Impact Auditing & Anomaly Scoring', icon: Activity, color: 'var(--cat-c)' },
+  'Planner Explanation': { label: '04. Natural Language Policy Explanation', icon: Compass, color: 'var(--cat-d)' },
+  'Digital Twin Visualization': { label: '05. Photorealistic Digital Twin Rendering', icon: Eye, color: 'var(--cat-e)' },
+  'Decision Cockpit': { label: '06. Human-in-the-Loop Governance', icon: CheckCircle2, color: 'var(--cat-f)' },
 };
 
 export default function ComparisonMatrix() {
@@ -186,7 +186,7 @@ export default function ComparisonMatrix() {
             <button
               onClick={() => setViewMode('grouped')}
               style={{
-                background: viewMode === 'grouped' ? 'rgba(0, 212, 255, 0.15)' : 'transparent',
+                background: viewMode === 'grouped' ? 'var(--accent-wash)' : 'transparent',
                 color: viewMode === 'grouped' ? 'var(--accent)' : 'var(--muted)',
                 border: 'none',
                 borderRadius: '4px',
@@ -204,7 +204,7 @@ export default function ComparisonMatrix() {
             <button
               onClick={() => setViewMode('cards')}
               style={{
-                background: viewMode === 'cards' ? 'rgba(0, 212, 255, 0.15)' : 'transparent',
+                background: viewMode === 'cards' ? 'var(--accent-wash)' : 'transparent',
                 color: viewMode === 'cards' ? 'var(--accent)' : 'var(--muted)',
                 border: 'none',
                 borderRadius: '4px',
@@ -236,8 +236,8 @@ export default function ComparisonMatrix() {
                 key={status}
                 onClick={() => setStatusFilter(status)}
                 style={{
-                  background: isSelected ? 'var(--accent)' : 'rgba(30, 45, 64, 0.4)',
-                  color: isSelected ? '#000' : 'var(--text)',
+                  background: isSelected ? 'var(--accent)' : 'var(--surface-inset)',
+                  color: isSelected ? 'var(--btn-text)' : 'var(--text)',
                   border: `1px solid ${isSelected ? 'var(--accent)' : 'var(--border)'}`,
                   borderRadius: '4px',
                   padding: '5px 12px',
@@ -259,7 +259,7 @@ export default function ComparisonMatrix() {
         <div style={{ overflowX: 'auto', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--surface)' }}>
           <table style={{ width: '100%', minWidth: '1100px', borderCollapse: 'collapse', fontSize: '0.86rem' }}>
             <thead>
-              <tr style={{ background: 'rgba(8, 12, 20, 0.95)', borderBottom: '2px solid var(--border)', textAlign: 'left', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', fontSize: '0.73rem', position: 'sticky', top: 0, zIndex: 2 }}>
+              <tr style={{ background: 'var(--surface-inset)', borderBottom: '2px solid var(--border)', textAlign: 'left', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', fontSize: '0.73rem', position: 'sticky', top: 0, zIndex: 2 }}>
                 <th style={{ padding: '16px 20px', width: '28%' }}>Urban Planning Capability</th>
                 <th style={{ padding: '16px 20px', width: '36%' }}>Existing Literature Landscape</th>
                 <th style={{ padding: '16px 20px', width: '36%' }}>UrbanGen AI Implementation &amp; Status</th>
@@ -275,7 +275,7 @@ export default function ComparisonMatrix() {
                 return (
                   <React.Fragment key={cat}>
                     {/* Category Divider Row */}
-                    <tr style={{ background: 'rgba(15, 25, 35, 0.95)', borderTop: '2px solid var(--border)', borderBottom: '1px solid var(--border)' }}>
+                    <tr style={{ background: 'var(--surface-inset)', borderTop: '2px solid var(--border)', borderBottom: '1px solid var(--border)' }}>
                       <td colSpan={3} style={{ padding: '12px 20px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: meta.color, fontWeight: 700, fontSize: '0.82rem', letterSpacing: '0.04em' }}>
                           <Icon size={16} />
@@ -293,12 +293,12 @@ export default function ComparisonMatrix() {
                         key={idx}
                         style={{
                           borderBottom: '1px solid var(--border)',
-                          background: idx % 2 === 0 ? 'transparent' : 'rgba(255, 255, 255, 0.012)',
+                          background: idx % 2 === 0 ? 'transparent' : 'var(--hover-overlay)',
                           verticalAlign: 'top',
                         }}
                       >
                         {/* Capability Name */}
-                        <td style={{ padding: '16px 20px', fontWeight: 600, color: '#FFF' }}>
+                        <td style={{ padding: '16px 20px', fontWeight: 600, color: 'var(--text)' }}>
                           <div style={{ lineHeight: 1.4 }}>{row.capability}</div>
                         </td>
 
@@ -307,9 +307,9 @@ export default function ComparisonMatrix() {
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
                             <span
                               style={{
-                                background: row.literatureStatus === 'Common' ? 'rgba(0, 230, 118, 0.1)' : row.literatureStatus === 'Partial' ? 'rgba(255, 179, 0, 0.1)' : 'rgba(255, 82, 82, 0.1)',
-                                color: row.literatureStatus === 'Common' ? 'var(--success)' : row.literatureStatus === 'Partial' ? '#FFB300' : '#FF5252',
-                                border: `1px solid ${row.literatureStatus === 'Common' ? 'rgba(0, 230, 118, 0.25)' : row.literatureStatus === 'Partial' ? 'rgba(255, 179, 0, 0.25)' : 'rgba(255, 82, 82, 0.25)'}`,
+                                background: row.literatureStatus === 'Common' ? 'var(--success-wash)' : row.literatureStatus === 'Partial' ? 'var(--warn-wash)' : 'var(--danger-wash)',
+                                color: row.literatureStatus === 'Common' ? 'var(--success)' : row.literatureStatus === 'Partial' ? 'var(--warn)' : 'var(--danger)',
+                                border: `1px solid ${row.literatureStatus === 'Common' ? 'var(--success)' : row.literatureStatus === 'Partial' ? 'var(--warn)' : 'var(--danger)'}`,
                                 padding: '1px 6px',
                                 borderRadius: '3px',
                                 fontSize: '0.68rem',
@@ -328,17 +328,17 @@ export default function ComparisonMatrix() {
                         <td style={{ padding: '16px 20px', lineHeight: 1.5 }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
                             {row.urbanGenStatus === 'Implemented' && (
-                              <span style={{ background: 'rgba(0, 230, 118, 0.15)', color: 'var(--success)', border: '1px solid rgba(0, 230, 118, 0.3)', padding: '2px 8px', borderRadius: '4px', fontSize: '0.72rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                              <span style={{ background: 'var(--success-wash)', color: 'var(--success)', border: '1px solid var(--success)', padding: '2px 8px', borderRadius: '4px', fontSize: '0.72rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                                 <CheckCircle2 size={12} /> Verified Implemented
                               </span>
                             )}
                             {row.urbanGenStatus === 'In Development' && (
-                              <span style={{ background: 'rgba(255, 179, 0, 0.15)', color: '#FFB300', border: '1px solid rgba(255, 179, 0, 0.3)', padding: '2px 8px', borderRadius: '4px', fontSize: '0.72rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                              <span style={{ background: 'var(--warn-wash)', color: 'var(--warn)', border: '1px solid var(--warn)', padding: '2px 8px', borderRadius: '4px', fontSize: '0.72rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                                 <Clock size={12} /> In Development
                               </span>
                             )}
                             {row.urbanGenStatus === 'Planned' && (
-                              <span style={{ background: 'rgba(74, 96, 128, 0.15)', color: 'var(--muted)', border: '1px solid var(--border)', padding: '2px 8px', borderRadius: '4px', fontSize: '0.72rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                              <span style={{ background: 'var(--surface-inset)', color: 'var(--muted)', border: '1px solid var(--border)', padding: '2px 8px', borderRadius: '4px', fontSize: '0.72rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                                 <Minus size={12} /> Planned Roadmap
                               </span>
                             )}
@@ -381,27 +381,27 @@ export default function ComparisonMatrix() {
                     <Icon size={14} /> {row.category}
                   </div>
                   {row.urbanGenStatus === 'Implemented' && (
-                    <span style={{ background: 'rgba(0, 230, 118, 0.15)', color: 'var(--success)', border: '1px solid rgba(0, 230, 118, 0.3)', padding: '2px 6px', borderRadius: '4px', fontSize: '0.68rem', fontWeight: 600 }}>
+                    <span style={{ background: 'var(--success-wash)', color: 'var(--success)', border: '1px solid var(--success)', padding: '2px 6px', borderRadius: '4px', fontSize: '0.68rem', fontWeight: 600 }}>
                       ✓ Implemented
                     </span>
                   )}
                   {row.urbanGenStatus === 'In Development' && (
-                    <span style={{ background: 'rgba(255, 179, 0, 0.15)', color: '#FFB300', border: '1px solid rgba(255, 179, 0, 0.3)', padding: '2px 6px', borderRadius: '4px', fontSize: '0.68rem', fontWeight: 600 }}>
+                    <span style={{ background: 'var(--warn-wash)', color: 'var(--warn)', border: '1px solid var(--warn)', padding: '2px 6px', borderRadius: '4px', fontSize: '0.68rem', fontWeight: 600 }}>
                       ◐ In Dev
                     </span>
                   )}
                   {row.urbanGenStatus === 'Planned' && (
-                    <span style={{ background: 'rgba(74, 96, 128, 0.15)', color: 'var(--muted)', border: '1px solid var(--border)', padding: '2px 6px', borderRadius: '4px', fontSize: '0.68rem', fontWeight: 600 }}>
+                    <span style={{ background: 'var(--surface-inset)', color: 'var(--muted)', border: '1px solid var(--border)', padding: '2px 6px', borderRadius: '4px', fontSize: '0.68rem', fontWeight: 600 }}>
                       ○ Planned
                     </span>
                   )}
                 </div>
 
-                <h4 style={{ fontSize: '0.98rem', fontWeight: 600, color: '#FFF', margin: 0 }}>
+                <h4 style={{ fontSize: '0.98rem', fontWeight: 600, color: 'var(--text)', margin: 0 }}>
                   {row.capability}
                 </h4>
 
-                <div style={{ background: 'rgba(8, 12, 20, 0.5)', border: '1px solid var(--border)', borderRadius: '6px', padding: '10px 12px' }}>
+                <div style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: '6px', padding: '10px 12px' }}>
                   <div style={{ fontSize: '0.72rem', color: 'var(--muted)', textTransform: 'uppercase', marginBottom: '2px' }}>
                     Existing Literature:
                   </div>
@@ -410,7 +410,7 @@ export default function ComparisonMatrix() {
                   </div>
                 </div>
 
-                <div style={{ background: 'rgba(0, 212, 255, 0.04)', border: '1px solid rgba(0, 212, 255, 0.2)', borderRadius: '6px', padding: '10px 12px', marginTop: 'auto' }}>
+                <div style={{ background: 'var(--accent-wash-light)', border: '1px solid var(--accent)', borderRadius: '6px', padding: '10px 12px', marginTop: 'auto' }}>
                   <div style={{ fontSize: '0.72rem', color: 'var(--accent)', textTransform: 'uppercase', fontWeight: 600, marginBottom: '2px' }}>
                     UrbanGen AI Approach:
                   </div>
