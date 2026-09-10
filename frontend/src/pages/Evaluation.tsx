@@ -245,7 +245,10 @@ function ClassifierPanel() {
   const { data: metrics, error } = useEval<ClassifierEvalMetrics>('/evaluate/classifier');
   if (error) return <ErrorCard error={error} />;
   if (!metrics) return <LoadingCard />;
-  const worst = Object.entries(metrics.per_class_accuracy).sort((a, b) => a[1] - b[1]).slice(0, 3);
+  const worst = Object.entries(metrics.per_class_accuracy)
+    .filter(([, a]) => a < 1)
+    .sort((a, b) => a[1] - b[1])
+    .slice(0, 3);
   return (
     <>
       <div className="metrics-strip">
@@ -264,11 +267,11 @@ function ClassifierPanel() {
             98.1% validation accuracy — most likely higher, since this sample can include images the model saw
             during training. Treat this as a diagnostic tool, not a re-measurement of the headline accuracy.
           </p>
-          {worst.length > 0 && (
-            <p style={{ margin: 0 }}>
-              Lowest-accuracy classes in this sample: {worst.map(([c, a]) => `${c} (${(a * 100).toFixed(0)}%)`).join(', ')}.
-            </p>
-          )}
+          <p style={{ margin: 0 }}>
+            {worst.length > 0
+              ? `Classes the model missed on in this sample: ${worst.map(([c, a]) => `${c} (${(a * 100).toFixed(0)}%)`).join(', ')}.`
+              : 'Every class scored 100% on this sample — consistent with the note above that the sample overlaps the training data.'}
+          </p>
         </div>
       </div>
 
@@ -309,10 +312,12 @@ function GANPanel() {
           </p>
           <p style={{ margin: 0 }}>
             An overall rate of {(metrics.overall_recognition_rate * 100).toFixed(0)}% quantitatively confirms
-            what the generated-sample grids show visually: at 100 epochs on this dataset size, some classes
-            (texture-distinctive ones like harbor) are recognizable, while classes needing precise repeated
-            geometry (residential grids, intersections) mostly aren't yet. This is an honest, expected
-            characteristic of GAN training at this scale, not a broken evaluation.
+            what the generated-sample grids show visually: at 100 epochs on this dataset size, the
+            broad-texture classes come through clearly (see which ones in the chart below), while classes
+            needing precise repeated geometry — residential grids, road intersections — mostly don't yet.
+            This is an honest, expected characteristic of GAN training at this scale, not a broken evaluation.
+            (Samples are drawn fresh from noise at each backend start, so the exact per-class figures shift
+            slightly between runs.)
           </p>
         </div>
       </div>
@@ -437,9 +442,23 @@ const TABS = [
   { id: 'classifier', label: 'Classifier', panel: ClassifierPanel },
 ] as const;
 
+type TabId = typeof TABS[number]['id'];
+
+function tabFromHash(): TabId {
+  const seg = window.location.hash.toLowerCase().replace(/^#\/?/, '').split('/')[1];
+  return (TABS.find(t => t.id === seg)?.id) ?? 'vae';
+}
+
 export default function Evaluation() {
-  const [tab, setTab] = useState<typeof TABS[number]['id']>('vae');
+  const [tab, setTab] = useState<TabId>(tabFromHash);
   const ActivePanel = TABS.find(t => t.id === tab)!.panel;
+
+  // Keep the sub-tab in the URL (#evaluation/gan) so a specific model's
+  // metrics can be linked directly in a demo.
+  useEffect(() => {
+    const base = window.location.hash.toLowerCase().replace(/^#\/?/, '').split('/')[0] || 'evaluation';
+    window.history.replaceState(null, '', tab === 'vae' ? `#${base}` : `#${base}/${tab}`);
+  }, [tab]);
 
   return (
     <div>
