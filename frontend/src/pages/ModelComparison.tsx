@@ -1,4 +1,4 @@
-import React from 'react';
+// ModelComparison component
 
 export default function ModelComparison() {
   return (

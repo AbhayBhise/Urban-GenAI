@@ -1,4 +1,4 @@
-import React from 'react';
+// TransparencyBanner component
 import { AlertCircle } from 'lucide-react';
 
 // EU AI Act Art. 50 transparency: AI-generated output must be labelled.

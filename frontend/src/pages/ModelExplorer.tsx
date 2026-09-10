@@ -1,4 +1,4 @@
-import React from 'react';
+// ModelExplorer component
 import { Layers, FileText, Cpu, ArrowRight } from 'lucide-react';
 
 interface ModelExplorerProps {
@@ -66,6 +66,76 @@ export default function ModelExplorer({ setActiveView }: ModelExplorerProps) {
           </button>
         </div>
       </div>
+
+      {/* Research Progress Cockpit Integration */}
+      <div
+        className="card"
+        style={{
+          marginTop: '30px',
+          background: 'linear-gradient(135deg, rgba(15, 25, 35, 0.9) 0%, rgba(8, 12, 20, 0.95) 100%)',
+          border: '1px solid rgba(0, 212, 255, 0.3)',
+          padding: '24px',
+        }}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px', marginBottom: '16px' }}>
+          <div>
+            <div style={{ fontSize: '0.8rem', color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600, marginBottom: '4px' }}>
+              Academic &amp; Systems Roadmap
+            </div>
+            <h2 style={{ fontSize: '1.25rem', fontWeight: 600, color: '#FFF' }}>
+              Research &amp; Innovation Progress
+            </h2>
+          </div>
+          <button
+            className="btn"
+            onClick={() => setActiveView('research')}
+            style={{
+              width: 'auto',
+              margin: 0,
+              padding: '10px 22px',
+              fontSize: '0.88rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+            }}
+          >
+            Explore Research &amp; Innovation <ArrowRight size={16} />
+          </button>
+        </div>
+
+        <p style={{ color: 'var(--muted)', fontSize: '0.88rem', lineHeight: 1.6, marginBottom: '18px' }}>
+          UrbanGen AI connects multi-source Earth observation with generative AI models for urban planning decision support. Real models are verified against committed checkpoints and empirical loss curves:
+        </p>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '10px' }}>
+          {[
+            { label: 'Data Pipeline', status: '✓ Active', color: 'var(--success)', bg: 'rgba(0, 230, 118, 0.1)' },
+            { label: 'Autoencoder', status: '✓ Trained', color: 'var(--success)', bg: 'rgba(0, 230, 118, 0.1)' },
+            { label: 'Spatial VAE', status: '✓ Trained', color: 'var(--success)', bg: 'rgba(0, 230, 118, 0.1)' },
+            { label: 'Spectral GAN', status: '◐ In Dev', color: '#FFB300', bg: 'rgba(255, 179, 0, 0.1)' },
+            { label: 'Prediction', status: '○ Planned', color: 'var(--muted)', bg: 'rgba(74, 96, 128, 0.1)' },
+            { label: 'MiniGPT Planner', status: '✓ Trained', color: 'var(--success)', bg: 'rgba(0, 230, 118, 0.1)' },
+            { label: 'Diffusion Vis', status: '○ Planned', color: 'var(--muted)', bg: 'rgba(74, 96, 128, 0.1)' },
+          ].map((item, idx) => (
+            <div
+              key={idx}
+              style={{
+                background: item.bg,
+                border: `1px solid ${item.color}33`,
+                borderRadius: '6px',
+                padding: '10px 12px',
+                textAlign: 'center',
+              }}
+            >
+              <div style={{ fontSize: '0.74rem', color: 'var(--text)', marginBottom: '4px' }}>{item.label}</div>
+              <div style={{ fontSize: '0.82rem', fontWeight: 600, color: item.color, fontFamily: 'var(--font-mono)' }}>
+                {item.status}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
+
