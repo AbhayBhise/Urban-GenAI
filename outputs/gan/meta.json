@@ -1,0 +1,31 @@
+{
+  "latent_dim": 128,
+  "num_classes": 21,
+  "class_names": [
+    "agricultural",
+    "airplane",
+    "baseballdiamond",
+    "beach",
+    "buildings",
+    "chaparral",
+    "denseresidential",
+    "forest",
+    "freeway",
+    "golfcourse",
+    "harbor",
+    "intersection",
+    "mediumresidential",
+    "mobilehomepark",
+    "overpass",
+    "parkinglot",
+    "river",
+    "runway",
+    "sparseresidential",
+    "storagetanks",
+    "tenniscourt"
+  ],
+  "epochs_trained": 100,
+  "batch_size": 32,
+  "lr": 0.0002,
+  "d_steps": 2
+}
