@@ -28,6 +28,15 @@ const isImageView = (v: ViewType) => (IMAGE_VIEWS as readonly string[]).includes
 // classifier training history is still stored under outputs/transformer/
 const HISTORY_KEY: Record<string, string> = { ae: 'ae', vae: 'vae', classifier: 'transformer' };
 
+const getInitialView = (): ViewType => {
+  const hash = window.location.hash.toLowerCase();
+  if (hash.startsWith('#research')) return 'research';
+  if (hash.startsWith('#governance')) return 'governance';
+  if (hash.startsWith('#plan')) return 'plan-generator';
+  if (hash.startsWith('#gan')) return 'gan';
+  return 'ae';
+};
+
 const MODEL_META: Record<string, {
   title: string;
   description: string;
@@ -67,7 +76,7 @@ const MODEL_META: Record<string, {
 };
 
 export default function App() {
-  const [activeView, setActiveView] = useState<ViewType>('ae');
+  const [activeView, setActiveView] = useState<ViewType>(getInitialView());
   const [status, setStatus] = useState<any>({});
 
   const [file, setFile] = useState<File | null>(null);
@@ -89,6 +98,18 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [apiKey, setApiKeyState] = useState(getApiKey());
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const handleHash = () => {
+      const hash = window.location.hash.toLowerCase();
+      if (hash.startsWith('#research')) setActiveView('research');
+      else if (hash.startsWith('#governance')) setActiveView('governance');
+      else if (hash.startsWith('#plan')) setActiveView('plan-generator');
+      else if (hash.startsWith('#gan')) setActiveView('gan');
+    };
+    window.addEventListener('hashchange', handleHash);
+    return () => window.removeEventListener('hashchange', handleHash);
+  }, []);
 
   useEffect(() => {
     apiFetch('/status')
@@ -278,8 +299,8 @@ export default function App() {
     { id: 'classifier', label: 'Land-Use Classifier', icon: Cpu, active: true },
     { id: 'training', label: 'Training', icon: Cpu, active: true },
     { id: 'evaluation', label: 'Evaluation', icon: FileText, active: true },
-    { id: 'research', label: 'Research', icon: Layers, active: true },
-    { id: 'glossary', label: 'Glossary', icon: BookOpen, active: true },
+    { id: 'research', label: 'Research & Innovation', icon: BookOpen, active: true, badge: 'Scoping' },
+    { id: 'glossary', label: 'Glossary', icon: FileText, active: true },
     { id: 'governance', label: 'Governance', icon: ShieldCheck, active: true },
     { id: 'datasets', label: 'Dataset Explorer', icon: Database, active: true },
     { id: 'system', label: 'System Info', icon: HardDrive, active: true },

@@ -1,4 +1,3 @@
-import React from 'react';
 import { Box, Arrow, ArrowheadDef, SyllabusTable, ProvenanceNote, COLORS } from '../lib/archDiagram';
 
 export default function VAEArchitecture() {
