@@ -43,7 +43,7 @@ const styles = `
   /* ---- header ---- */
   .gan-header { }
   .gan-title { font-size: 1.8rem; font-weight: 700; margin-bottom: 8px;
-    background: linear-gradient(135deg, #00D4FF 0%, #7B61FF 100%);
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
     -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
   .gan-subtitle { color: var(--muted); font-size: 0.95rem; line-height: 1.6; max-width: 680px; }
 
@@ -73,7 +73,7 @@ const styles = `
   .gan-btn { display: flex; align-items: center; gap: 7px; padding: 9px 20px; border-radius: 6px;
     border: none; font-family: var(--font-ui); font-size: 0.9rem; font-weight: 600;
     cursor: pointer; transition: all 0.18s; white-space: nowrap; }
-  .gan-btn-primary { background: linear-gradient(135deg, #00D4FF, #7B61FF); color: #000; }
+  .gan-btn-primary { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: var(--btn-text); }
   .gan-btn-primary:hover { opacity: 0.88; transform: translateY(-1px); }
   .gan-btn-primary:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
   .gan-btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
@@ -104,7 +104,7 @@ const styles = `
   .gen-image-wrap:hover .download-overlay { opacity: 1; }
   .dl-btn { background: rgba(0,0,0,0.7); border: none; border-radius: 4px; padding: 5px;
     cursor: pointer; color: #fff; display: flex; align-items: center; justify-content: center; }
-  .dl-btn:hover { background: var(--accent); color: #000; }
+  .dl-btn:hover { background: var(--accent); color: var(--btn-text); }
 
   .grid-view-wrap { border-radius: 8px; overflow: hidden; border: 1px solid var(--border); }
   .grid-view-img { width: 100%; height: auto; display: block; }

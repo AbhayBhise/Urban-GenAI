@@ -43,7 +43,7 @@ export default function Governance() {
             style={{
               width: 'auto', marginTop: 0, padding: '8px 16px',
               background: active === d.id ? 'var(--accent)' : 'transparent',
-              color: active === d.id ? '#000' : 'var(--text)',
+              color: active === d.id ? 'var(--btn-text)' : 'var(--text)',
               border: '1px solid var(--border)',
             }}
           >

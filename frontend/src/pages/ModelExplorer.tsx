@@ -72,8 +72,8 @@ export default function ModelExplorer({ setActiveView }: ModelExplorerProps) {
         className="card"
         style={{
           marginTop: '30px',
-          background: 'linear-gradient(135deg, rgba(15, 25, 35, 0.9) 0%, rgba(8, 12, 20, 0.95) 100%)',
-          border: '1px solid rgba(0, 212, 255, 0.3)',
+          background: 'linear-gradient(135deg, var(--accent-wash-light) 0%, var(--accent2-wash) 100%)',
+          border: '1px solid var(--accent)',
           padding: '24px',
         }}
       >
@@ -82,7 +82,7 @@ export default function ModelExplorer({ setActiveView }: ModelExplorerProps) {
             <div style={{ fontSize: '0.8rem', color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600, marginBottom: '4px' }}>
               Academic &amp; Systems Roadmap
             </div>
-            <h2 style={{ fontSize: '1.25rem', fontWeight: 600, color: '#FFF' }}>
+            <h2 style={{ fontSize: '1.25rem', fontWeight: 600, color: 'var(--text)' }}>
               Research &amp; Innovation Progress
             </h2>
           </div>
@@ -109,19 +109,19 @@ export default function ModelExplorer({ setActiveView }: ModelExplorerProps) {
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '10px' }}>
           {[
-            { label: 'Data Pipeline', status: '✓ Active', color: 'var(--success)', bg: 'rgba(0, 230, 118, 0.1)' },
-            { label: 'Autoencoder', status: '✓ Trained', color: 'var(--success)', bg: 'rgba(0, 230, 118, 0.1)' },
-            { label: 'Spatial VAE', status: '✓ Trained', color: 'var(--success)', bg: 'rgba(0, 230, 118, 0.1)' },
-            { label: 'Spectral GAN', status: '◐ In Dev', color: '#FFB300', bg: 'rgba(255, 179, 0, 0.1)' },
-            { label: 'Prediction', status: '○ Planned', color: 'var(--muted)', bg: 'rgba(74, 96, 128, 0.1)' },
-            { label: 'MiniGPT Planner', status: '✓ Trained', color: 'var(--success)', bg: 'rgba(0, 230, 118, 0.1)' },
-            { label: 'Diffusion Vis', status: '○ Planned', color: 'var(--muted)', bg: 'rgba(74, 96, 128, 0.1)' },
+            { label: 'Data Pipeline', status: '✓ Active', color: 'var(--success)', bg: 'var(--success-wash)' },
+            { label: 'Autoencoder', status: '✓ Trained', color: 'var(--success)', bg: 'var(--success-wash)' },
+            { label: 'Spatial VAE', status: '✓ Trained', color: 'var(--success)', bg: 'var(--success-wash)' },
+            { label: 'Spectral GAN', status: '◐ In Dev', color: 'var(--warn)', bg: 'var(--warn-wash)' },
+            { label: 'Prediction', status: '○ Planned', color: 'var(--muted)', bg: 'var(--surface-inset)' },
+            { label: 'MiniGPT Planner', status: '✓ Trained', color: 'var(--success)', bg: 'var(--success-wash)' },
+            { label: 'Diffusion Vis', status: '○ Planned', color: 'var(--muted)', bg: 'var(--surface-inset)' },
           ].map((item, idx) => (
             <div
               key={idx}
               style={{
                 background: item.bg,
-                border: `1px solid ${item.color}33`,
+                border: `1px solid ${item.color}`,
                 borderRadius: '6px',
                 padding: '10px 12px',
                 textAlign: 'center',
