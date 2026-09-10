@@ -305,22 +305,59 @@ def build():
        foot="Encoders start from ImageNet weights and are fine-tuned; all decoders, the GAN and MiniGPT are trained from scratch.")
 
     # 7 -----------------------------------------------------------------
-    table_slide(p, "Implementation Result — verified metrics",
-        ["Model", "Metric", "Result", "Plain-English reading"], [
-        ("Land-Use Classifier", "Validation accuracy", "98.1 %", "Reliable at naming the 21 zone types."),
-        ("Denoising AE", "PSNR / SSIM", "29.7 dB / 0.865", "Reconstruction is almost identical to the clean tile."),
-        ("Denoising AE", "Final training MSE", "0.01977", "Fell from 0.1830 at epoch 1 — clear convergence."),
-        ("Spatial VAE", "PSNR / SSIM", "19.5 dB / 0.43", "Deliberately soft — the 8x8 bottleneck limits detail."),
-        ("Spatial VAE", "Active latent dims", "63 of 64", "Latent space is healthy, not collapsed."),
-        ("Conditional GAN", "Classifier recognition rate", "~ 15 %", "Texture classes work; grid-geometry classes need more epochs."),
-        ("MiniGPT", "Held-out perplexity", "1.09", "Learns the templated corpus well (that is the intended job)."),
-        ("MiniGPT", "Bits per character", "0.12  (vs 6.0 random)", "Very confident next-character prediction."),
-    ], col_w=[2.7, 2.7, 2.5, 4.4], fs=10.5, title_fs=21,
-       foot="Computed once at backend startup and served live at /evaluate/<model>. AE/VAE over 105 held-out tiles across all 21 classes.")
+    table_slide(p, "Implementation Result — modules, losses & evaluation matrix",
+        ["Module", "Objective / loss function", "Final training loss",
+         "Evaluation metric (sample)", "Measured result", "Reading"], [
+        ("Denoising AE",
+         "MSE(recon, clean tile); input corrupted with Gaussian noise sigma = 0.15",
+         "0.01977 MSE  (from 0.1830 at epoch 1)",
+         "PSNR / SSIM / MSE  — 105 held-out tiles",
+         "29.7 dB / 0.865 / 0.0045",
+         "Near-lossless"),
+        ("Spatial VAE",
+         "0.7 L1 + 0.3 MSE  +  beta KL(q(z|x) || N(0,I)),  beta ~ 1e-4",
+         "recon 0.07524  ·  KL 103.25 nats",
+         "PSNR / SSIM / KL / active latent dims",
+         "19.5 dB / 0.43 / 106 nats / 63 of 64",
+         "Soft by design; latent healthy"),
+        ("Conditional GAN",
+         "Non-saturating BCE  +  label smoothing 0.9 / 0.1;  EMA generator 0.999",
+         "adversarial min-max — no single value",
+         "Classifier-recognition rate  — 168 generated tiles",
+         "~ 15 % overall",
+         "Texture OK; geometry immature"),
+        ("MiniGPT Transformer",
+         "Next-character cross-entropy (causal LM)",
+         "train 0.087  ·  held-out 0.083",
+         "Perplexity / bits-per-char  — 23,616 chars",
+         "1.09  /  0.12 bpc  (vs 6.0 random)",
+         "Learns corpus; generalises"),
+        ("Land-Use Classifier",
+         "Cross-entropy over 21 classes",
+         "0.1032 validation loss",
+         "Top-1 accuracy + 21x21 confusion matrix",
+         "98.1 % validation accuracy",
+         "Reliable; feeds VAE + GPT"),
+    ], col_w=[1.7, 3.0, 1.95, 2.35, 1.9, 1.45], fs=8.5, title_fs=19,
+       foot="All values are read live from committed checkpoints / training logs and served at /evaluate/<module>.")
+
+    table_slide(p, "Evaluation parameters — what each one means",
+        ["Parameter", "What it measures", "Better is", "Used for"], [
+        ("PSNR (dB)", "Pixel closeness of the reconstruction to the target image", "higher", "AE, VAE"),
+        ("SSIM (0-1)", "Structural similarity (edges, texture) to the target", "higher (-> 1)", "AE, VAE"),
+        ("MSE", "Mean squared pixel error", "lower", "AE, VAE"),
+        ("KL divergence (nats)", "How far the learned latent is from a standard Normal prior", "balanced — not 0, not huge", "VAE"),
+        ("Active latent dims", "Latent channels that carry real information (out of 64)", "higher", "VAE"),
+        ("Classifier-recognition rate", "Share of generated tiles the classifier recognises as their class", "higher", "GAN"),
+        ("Perplexity", "Effective number of choices per character (1 = perfect)", "lower (-> 1)", "MiniGPT"),
+        ("Bits per character", "Information per character vs 6.0 bits for a random guess", "lower", "MiniGPT"),
+        ("Top-1 accuracy", "Share of tiles given the correct land-use label", "higher", "Classifier"),
+    ], col_w=[2.7, 5.0, 2.65, 2.0], fs=10, title_fs=20,
+       foot="Each model is scored with the metric that model is actually judged by — not one metric forced onto all.")
 
     image_slide(p, "Implementation Result — live Evaluation dashboard",
         os.path.join(SHOT, "ppt_eval.png"),
-        "Evaluation page: one tab per model, each showing the metric it is judged by, computed on held-out data.")
+        "Evaluation page: one tab per module, each showing the metric it is judged by, computed on held-out data.")
 
     # 8 -----------------------------------------------------------------
     image_slide(p, "Output — a model page (Autoencoder)",
@@ -328,16 +365,21 @@ def build():
         "Each model has its own page: animated input-to-output flow, labelled architecture diagram, "
         "how-to-use steps, and how it fits the project.")
 
-    bullet_slide(p, "Output — what the user sees",
-        "Every model produces a concrete result the planner can read:",
-        [
-            ("Classifier", "— the predicted zone, e.g. 'dense residential', with confidence."),
-            ("Denoising AE", "— three panels: original, noisy input, cleaned reconstruction."),
-            ("VAE", "— a banner: Typical / Unusual / Highly Anomalous, with a percentage and a reason."),
-            ("GAN", "— a grid of freshly generated tiles, one per land-use class."),
-            ("MiniGPT", "— a short written recommendation (setbacks, permeable surface, flood buffer, parking cap) "
-             "built from that ward's real statistics."),
-        ])
+    table_slide(p, "Output — input and result for each module",
+        ["Module", "Input", "Output shown to the planner"], [
+        ("Land-Use Classifier", "One aerial tile (224x224)",
+         "Predicted zone (e.g. 'dense residential') + confidence + full 21-class bar"),
+        ("Denoising AE", "Aerial tile + added noise",
+         "Three panels: original  |  noisy input  |  cleaned reconstruction  (+ PSNR / SSIM)"),
+        ("Spatial VAE", "One aerial tile",
+         "Anomaly banner — Typical / Unusual / Highly Anomalous — with a % and a plain reason; "
+         "plus latent interpolation between two tiles"),
+        ("Conditional GAN", "A chosen class (1 of 21) + random noise",
+         "A grid of freshly generated 128x128 tiles for that class"),
+        ("MiniGPT Transformer", "Real Pune ward statistics (built-up %, road length, waterways)",
+         "A short written recommendation: setbacks, permeable surface, flood buffer, transit parking cap"),
+    ], col_w=[2.2, 3.4, 6.75], fs=10, title_fs=21,
+       foot="Every output is on its own model page in the app, with an animated input-to-output flow above it.")
 
     # 9 -----------------------------------------------------------------
     bullet_slide(p, "Conclusion",
