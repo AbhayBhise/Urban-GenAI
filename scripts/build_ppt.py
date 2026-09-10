@@ -341,6 +341,38 @@ def build():
     ], col_w=[1.7, 3.0, 1.95, 2.35, 1.9, 1.45], fs=8.5, title_fs=19,
        foot="All values are read live from committed checkpoints / training logs and served at /evaluate/<module>.")
 
+    table_slide(p, "Model Comparison — which model is better, and for what",
+        ["Model", "Domain / task", "Accuracy / best result", "Main error / limitation",
+         "Verdict — it is the better choice for..."], [
+        ("Denoising AE",
+         "Image restoration of aerial tiles",
+         "PSNR 29.7 dB, SSIM 0.865",
+         "Slight residual blur on very fine texture",
+         "Cleaning noisy imagery. U-Net skips beat a plain bottleneck: 25 -> 29.7 dB."),
+        ("Spatial VAE",
+         "Anomaly detection + latent scenario exploration",
+         "SSIM 0.43; 63 of 64 latent dims active",
+         "Reconstruction is soft (8x8 bottleneck)",
+         "Answering 'is this parcel normal for its zone?' — gives a probabilistic score the AE cannot."),
+        ("Conditional GAN",
+         "Generating new synthetic tiles per class",
+         "~15% recognised; beach / forest / built-up high",
+         "Grid-geometry classes near 0% at 100 epochs",
+         "Augmenting texture-rich classes. Not yet reliable for geometric classes — needs more epochs / data."),
+        ("MiniGPT",
+         "Text — planning recommendations",
+         "Perplexity 1.09, 0.12 bits/char",
+         "Narrow: templated corpus, not a general planner",
+         "Structured, grounded drafting from real ward statistics. Not for open-ended writing."),
+        ("Land-Use Classifier",
+         "Discriminative classification (21 zones)",
+         "98.1% validation accuracy",
+         "Some dense- vs medium-residential confusion",
+         "Most accurate model overall; a CNN (not generative) — it labels parcels for the other stages."),
+    ], col_w=[1.55, 2.5, 2.15, 2.6, 3.55], fs=8.5, title_fs=18,
+       foot="Head-to-head (same task, 128x128 tiles): AE beats VAE on fidelity (skips, no KL constraint); "
+            "VAE beats AE on giving an anomaly score + smooth interpolation. The five models are complementary, not competitors.")
+
     table_slide(p, "Evaluation parameters — what each one means",
         ["Parameter", "What it measures", "Better is", "Used for"], [
         ("PSNR (dB)", "Pixel closeness of the reconstruction to the target image", "higher", "AE, VAE"),
