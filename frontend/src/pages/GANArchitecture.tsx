@@ -1,4 +1,4 @@
-import React from 'react';
+// GANArchitecture component
 import { Box, Arrow, ArrowheadDef, SyllabusTable, ProvenanceNote, COLORS } from '../lib/archDiagram';
 
 export default function GANArchitecture() {

@@ -1,4 +1,4 @@
-import React from 'react';
+// TransformerArchitecture component
 import { Box, Arrow, ArrowheadDef, SyllabusTable, ProvenanceNote, COLORS } from '../lib/archDiagram';
 
 export default function TransformerArchitecture() {

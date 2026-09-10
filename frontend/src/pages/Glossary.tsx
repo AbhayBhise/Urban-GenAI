@@ -1,4 +1,4 @@
-import React from 'react';
+// Glossary component
 
 type Row = { term: string; name: string; meaning: string; model: string; code: string };
 
