@@ -11,8 +11,8 @@ export default function ResearchOverview({ onNavigateTab }: ResearchOverviewProp
       <div
         className="card"
         style={{
-          background: 'linear-gradient(135deg, rgba(0, 212, 255, 0.08) 0%, rgba(123, 97, 255, 0.08) 100%)',
-          border: '1px solid rgba(0, 212, 255, 0.25)',
+          background: 'linear-gradient(135deg, var(--accent-wash-light) 0%, var(--accent2-wash) 100%)',
+          border: '1px solid var(--accent)',
           padding: '28px',
           position: 'relative',
           overflow: 'hidden',
@@ -23,9 +23,9 @@ export default function ResearchOverview({ onNavigateTab }: ResearchOverviewProp
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
               <span
                 style={{
-                  background: 'rgba(0, 212, 255, 0.15)',
+                  background: 'var(--accent-wash)',
                   color: 'var(--accent)',
-                  border: '1px solid rgba(0, 212, 255, 0.3)',
+                  border: '1px solid var(--accent)',
                   padding: '4px 10px',
                   borderRadius: '4px',
                   fontSize: '0.75rem',
@@ -41,9 +41,9 @@ export default function ResearchOverview({ onNavigateTab }: ResearchOverviewProp
               </span>
               <span
                 style={{
-                  background: 'rgba(0, 230, 118, 0.1)',
+                  background: 'var(--success-wash)',
                   color: 'var(--success)',
-                  border: '1px solid rgba(0, 230, 118, 0.2)',
+                  border: '1px solid var(--success)',
                   padding: '4px 8px',
                   borderRadius: '4px',
                   fontSize: '0.72rem',
@@ -53,7 +53,7 @@ export default function ResearchOverview({ onNavigateTab }: ResearchOverviewProp
                 Phase 1 Active (Verified Pipeline)
               </span>
             </div>
-            <h2 style={{ fontSize: '1.6rem', fontWeight: 700, color: '#FFFFFF', marginBottom: '12px', lineHeight: 1.3 }}>
+            <h2 style={{ fontSize: '1.6rem', fontWeight: 700, color: 'var(--text)', marginBottom: '12px', lineHeight: 1.3 }}>
               UrbanGen AI: An AI-Assisted Generative Framework for Urban Digital Twins
             </h2>
             <p style={{ color: 'var(--text)', fontSize: '0.98rem', lineHeight: 1.7, marginBottom: '14px' }}>
@@ -66,7 +66,7 @@ export default function ResearchOverview({ onNavigateTab }: ResearchOverviewProp
 
           <div
             style={{
-              background: 'rgba(8, 12, 20, 0.75)',
+              background: 'var(--surface)',
               border: '1px solid var(--border)',
               borderRadius: '8px',
               padding: '16px 20px',
@@ -101,7 +101,7 @@ export default function ResearchOverview({ onNavigateTab }: ResearchOverviewProp
             </div>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.85rem' }}>
               <span>Spectral GAN</span>
-              <span style={{ color: '#FFB300', fontWeight: 600 }}>In Dev ◐</span>
+              <span style={{ color: 'var(--warn)', fontWeight: 600 }}>In Dev ◐</span>
             </div>
           </div>
         </div>
@@ -204,7 +204,7 @@ export default function ResearchOverview({ onNavigateTab }: ResearchOverviewProp
       <div
         className="card"
         style={{
-          background: 'rgba(15, 25, 35, 0.8)',
+          background: 'var(--surface)',
           borderLeft: '4px solid var(--accent)',
           display: 'flex',
           justifyContent: 'space-between',
@@ -262,12 +262,12 @@ export default function ResearchOverview({ onNavigateTab }: ResearchOverviewProp
       <div
         className="card"
         style={{
-          background: 'rgba(255, 179, 0, 0.04)',
-          border: '1px solid rgba(255, 179, 0, 0.25)',
+          background: 'var(--warn-wash)',
+          border: '1px solid var(--warn)',
           padding: '22px 24px',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#FFB300', marginBottom: '10px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--warn)', marginBottom: '10px' }}>
           <ShieldAlert size={20} />
           <h3 style={{ fontSize: '0.98rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
             Scientific Positioning &amp; Professional Urban Planning Disclaimer

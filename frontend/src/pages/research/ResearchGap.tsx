@@ -14,7 +14,7 @@ export default function ResearchGap() {
         </p>
         <div
           style={{
-            background: 'rgba(0, 212, 255, 0.06)',
+            background: 'var(--accent-wash-light)',
             borderLeft: '4px solid var(--accent)',
             padding: '14px 18px',
             borderRadius: '4px',
@@ -38,8 +38,8 @@ export default function ResearchGap() {
           {/* Fragmented Research Landscape */}
           <div
             style={{
-              background: 'rgba(255, 82, 82, 0.03)',
-              border: '1px solid rgba(255, 82, 82, 0.25)',
+              background: 'var(--danger-wash)',
+              border: '1px solid var(--danger)',
               borderRadius: '6px',
               padding: '20px',
               display: 'flex',
@@ -47,7 +47,7 @@ export default function ResearchGap() {
               gap: '12px',
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#FF5252', fontWeight: 600, fontSize: '0.95rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--danger)', fontWeight: 600, fontSize: '0.95rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
               <Split size={18} /> Current Academic &amp; Industry Landscape
             </div>
             <div style={{ fontSize: '0.85rem', color: 'var(--muted)', marginBottom: '8px' }}>
@@ -65,8 +65,8 @@ export default function ResearchGap() {
                 <div
                   key={i}
                   style={{
-                    background: 'rgba(8, 12, 20, 0.6)',
-                    border: '1px solid rgba(255, 82, 82, 0.2)',
+                    background: 'var(--bg)',
+                    border: '1px solid var(--danger)',
                     borderRadius: '4px',
                     padding: '10px 14px',
                   }}
@@ -77,7 +77,7 @@ export default function ResearchGap() {
               ))}
             </div>
 
-            <div style={{ textAlign: 'center', color: '#FF8A80', fontSize: '0.82rem', fontStyle: 'italic', marginTop: '10px', padding: '8px', borderTop: '1px dashed rgba(255, 82, 82, 0.3)' }}>
+            <div style={{ textAlign: 'center', color: 'var(--danger)', fontSize: '0.82rem', fontStyle: 'italic', marginTop: '10px', padding: '8px', borderTop: '1px dashed var(--danger)' }}>
               Result: Planners bear cognitive and administrative burden of manual data conversion across disparate software.
             </div>
           </div>
@@ -85,8 +85,8 @@ export default function ResearchGap() {
           {/* UrbanGen AI Unified Pipeline */}
           <div
             style={{
-              background: 'rgba(0, 230, 118, 0.03)',
-              border: '1px solid rgba(0, 230, 118, 0.25)',
+              background: 'var(--success-wash)',
+              border: '1px solid var(--success)',
               borderRadius: '6px',
               padding: '20px',
               display: 'flex',
@@ -113,8 +113,8 @@ export default function ResearchGap() {
                 <div
                   key={i}
                   style={{
-                    background: 'rgba(8, 12, 20, 0.7)',
-                    border: '1px solid rgba(0, 230, 118, 0.2)',
+                    background: 'var(--bg)',
+                    border: '1px solid var(--success)',
                     borderRadius: '4px',
                     padding: '10px 14px',
                   }}
@@ -125,7 +125,7 @@ export default function ResearchGap() {
               ))}
             </div>
 
-            <div style={{ textAlign: 'center', color: 'var(--success)', fontSize: '0.82rem', fontWeight: 500, marginTop: '10px', padding: '8px', borderTop: '1px dashed rgba(0, 230, 118, 0.3)' }}>
+            <div style={{ textAlign: 'center', color: 'var(--success)', fontSize: '0.82rem', fontWeight: 500, marginTop: '10px', padding: '8px', borderTop: '1px dashed var(--success)' }}>
               Benefit: Seamless transition from raw multispectral sensing to generative alternatives and explainable policy texts.
             </div>
           </div>
@@ -182,7 +182,7 @@ export default function ResearchGap() {
             <div
               key={i}
               style={{
-                background: 'rgba(8, 12, 20, 0.5)',
+                background: 'var(--bg)',
                 border: '1px solid var(--border)',
                 borderRadius: '6px',
                 padding: '16px',

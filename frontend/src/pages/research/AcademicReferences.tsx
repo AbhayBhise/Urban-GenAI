@@ -236,7 +236,7 @@ export default function AcademicReferences() {
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.78rem', color: 'var(--accent)', background: 'rgba(0, 212, 255, 0.1)', padding: '2px 6px', borderRadius: '4px' }}>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.78rem', color: 'var(--accent)', background: 'var(--accent-wash)', padding: '2px 6px', borderRadius: '4px' }}>
                   [{idx + 1}]
                 </span>
                 <h3 style={{ fontSize: '0.96rem', fontWeight: 600, color: 'var(--text)', lineHeight: 1.4 }}>
@@ -249,7 +249,7 @@ export default function AcademicReferences() {
                   onClick={() => copyBibtex(ref)}
                   title="Copy BibTeX Citation"
                   style={{
-                    background: 'rgba(30, 45, 64, 0.5)',
+                    background: 'var(--surface-inset)',
                     border: '1px solid var(--border)',
                     borderRadius: '4px',
                     padding: '4px 8px',
@@ -271,8 +271,8 @@ export default function AcademicReferences() {
                   rel="noreferrer"
                   title="Open Official DOI"
                   style={{
-                    background: 'rgba(0, 212, 255, 0.1)',
-                    border: '1px solid rgba(0, 212, 255, 0.3)',
+                    background: 'var(--accent-wash)',
+                    border: '1px solid var(--accent)',
                     borderRadius: '4px',
                     padding: '4px 8px',
                     color: 'var(--accent)',
@@ -293,7 +293,7 @@ export default function AcademicReferences() {
               <strong>{ref.authors}</strong> ({ref.year}). <em>{ref.venue}</em>. DOI: <code style={{ color: 'var(--accent)' }}>{ref.doi}</code>
             </div>
 
-            <div style={{ fontSize: '0.82rem', color: 'var(--text)', background: 'rgba(8, 12, 20, 0.5)', borderLeft: '3px solid var(--accent2)', padding: '6px 12px', borderRadius: '0 4px 4px 0', marginTop: '4px', lineHeight: 1.45 }}>
+            <div style={{ fontSize: '0.82rem', color: 'var(--text)', background: 'var(--bg)', borderLeft: '3px solid var(--accent2)', padding: '6px 12px', borderRadius: '0 4px 4px 0', marginTop: '4px', lineHeight: 1.45 }}>
               <span style={{ color: 'var(--accent2)', fontWeight: 600 }}>Relevance to UrbanGen AI: </span>
               {ref.relevance}
             </div>
@@ -307,13 +307,13 @@ export default function AcademicReferences() {
           Statutory Urban Planning Regulations &amp; AI Governance Frameworks
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '12px', marginTop: '12px' }}>
-          <div style={{ fontSize: '0.82rem', color: 'var(--muted)', background: 'rgba(8, 12, 20, 0.5)', padding: '10px 14px', borderRadius: '4px', border: '1px solid var(--border)' }}>
+          <div style={{ fontSize: '0.82rem', color: 'var(--muted)', background: 'var(--bg)', padding: '10px 14px', borderRadius: '4px', border: '1px solid var(--border)' }}>
             <strong style={{ color: 'var(--text)' }}>Pune DCPR (2017/2021)</strong>: Municipal Development Control and Promotion Regulations governing floor area ratios (FSI), setback distances, and environmental riparian buffer reservations along the Mula-Mutha riverfront.
           </div>
-          <div style={{ fontSize: '0.82rem', color: 'var(--muted)', background: 'rgba(8, 12, 20, 0.5)', padding: '10px 14px', borderRadius: '4px', border: '1px solid var(--border)' }}>
+          <div style={{ fontSize: '0.82rem', color: 'var(--muted)', background: 'var(--bg)', padding: '10px 14px', borderRadius: '4px', border: '1px solid var(--border)' }}>
             <strong style={{ color: 'var(--text)' }}>EU Artificial Intelligence Act (2024)</strong>: Regulation (EU) 2024/1689 classifying advisory spatial generative tools under limited-risk transparency requirements with mandatory AI disclosures.
           </div>
-          <div style={{ fontSize: '0.82rem', color: 'var(--muted)', background: 'rgba(8, 12, 20, 0.5)', padding: '10px 14px', borderRadius: '4px', border: '1px solid var(--border)' }}>
+          <div style={{ fontSize: '0.82rem', color: 'var(--muted)', background: 'var(--bg)', padding: '10px 14px', borderRadius: '4px', border: '1px solid var(--border)' }}>
             <strong style={{ color: 'var(--text)' }}>India DPDP Act (2023)</strong>: Digital Personal Data Protection Act ensuring geospatial analysis uses aggregated municipal data without personal identifiable information (PII).
           </div>
         </div>
