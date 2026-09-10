@@ -18,7 +18,7 @@ export default function GANArchitecture() {
         stages={[
           { label: 'Noise z', sub: '128-dim' },
           { label: 'Class label', sub: '1 of 21 → embed' },
-          { label: 'Generator', sub: '5× ConvTranspose' },
+          { label: 'Generator', sub: '4× ConvTranspose' },
           { label: 'Synthetic tile', sub: '128²×3' },
           { label: 'Classifier check', sub: 'recognized?' },
         ]}

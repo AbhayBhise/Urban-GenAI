@@ -365,7 +365,7 @@ def build():
          "input 128x128x3 -> 8x8x256 bottleneck -> 128x128x3", "50", "MSE(recon, clean), noise sigma 0.15"),
         ("Spatial VAE", "ResNet18 encoder + two 1x1 conv heads + 4 ConvTranspose decoder",
          "8x8x256 -> mu / log-var 8x8x64 -> z (4,096) -> 128x128x3", "50", "0.7 L1 + 0.3 MSE + beta KL (beta ~ 1e-4)"),
-        ("Conditional GAN", "G: Linear->8x8x512 + 5 ConvTranspose;  D: 5 spectral-norm Conv",
+        ("Conditional GAN", "G: Linear->8x8x512 + 4 ConvTranspose;  D: 5 spectral-norm Conv",
          "z 128 + class embed 64 -> 128x128x3", "100", "non-saturating BCE, label smoothing 0.9/0.1, EMA 0.999"),
         ("MiniGPT", "4 pre-norm Transformer blocks, 4 attention heads, causal mask, weight-tied head",
          "context 192 chars, n_embd 256, vocab 64, 3.23M params", "3,000 steps", "next-character cross-entropy"),
