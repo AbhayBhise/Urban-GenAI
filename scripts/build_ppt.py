@@ -260,6 +260,28 @@ def build():
              "loss maths and an ethics discussion."),
         ])
 
+    # 4b — Datasets ---------------------------------------------------------
+    table_slide(p, "Datasets & Preprocessing",
+        ["Dataset", "Size", "Used for", "Preprocessing"], [
+        ("UCMerced Land-Use", "21 classes x 100 = 2,100 aerial tiles",
+         "AE, VAE, GAN, Classifier — training + held-out evaluation",
+         "Resize 128x128 (AE/VAE/GAN) or 224x224 (Classifier); normalise to [-1,1]; 90/10 random split"),
+        ("EuroSAT (Sentinel-2)", "10 classes, ~27,000 tiles",
+         "Multispectral land-cover benchmark in the data pipeline",
+         "Resize 64x64; normalise to [-1,1]; 90/10 split"),
+        ("Pune PMC GIS (OSM)", "5 vector layers: buildings, roads, land-use, waterways, natural areas",
+         "Seeds the MiniGPT prompt with real ward statistics",
+         "GeoPandas load; CRS -> EPSG:3857; aggregate per ward"),
+        ("Urban-planning corpus", "~241,000 characters, hand-authored",
+         "MiniGPT training (character-level LM)",
+         "90/10 train/val split; vocabulary = 64 unique characters"),
+        ("VAE anomaly baseline", "294 real UCMerced tiles",
+         "Reference distribution for the reconstruction-error z-score",
+         "Mean / standard deviation of reconstruction error over the 294 tiles"),
+    ], col_w=[2.2, 2.7, 3.2, 4.25], fs=9, title_fs=20,
+       foot="Batch sizes: 32 (AE/VAE/GAN/Classifier), 64 (MiniGPT). Encoders start from ImageNet weights, "
+            "frozen for the first few epochs, then fine-tuned.")
+
     # 5 -----------------------------------------------------------------
     lit = [
         ("1", "2016", "IEEE Geoscience & Remote Sensing Magazine",
@@ -473,6 +495,51 @@ def build():
          "A short written recommendation: setbacks, permeable surface, flood buffer, transit parking cap"),
     ], col_w=[2.2, 3.4, 6.75], fs=10, title_fs=21,
        foot="Every output is on its own model page in the app, with an animated input-to-output flow above it.")
+
+    # 8b — Model mathematics -------------------------------------------------
+    _m = blank(p); header(_m, "Model Mathematics & Loss Functions")
+    _mb = _m.shapes.add_textbox(Inches(0.7), Inches(1.55), Inches(12), Inches(5.4))
+    _mb.text_frame.word_wrap = True
+    _txt(_mb.text_frame, [
+        [("Denoising AE   ", 13, True, ACCENT),
+         ("noisy input x' = x + N(0, 0.15^2).  Loss = MSE( decoder(x'), x ).  U-Net skips carry the "
+          "high-frequency detail the 8x8 bottleneck loses.", 12, False, INK)],
+        [("Variational AE   ", 13, True, ACCENT),
+         ("maximise the ELBO:  E_q[ log p(x|z) ] - beta * KL( q(z|x) || N(0,I) ).  Recon term = 0.7 L1 + 0.3 MSE.  "
+          "KL (diagonal Gaussian) = -0.5 * sum( 1 + log(sigma^2) - mu^2 - sigma^2 ).  Reparameterization: "
+          "z = mu + sigma . epsilon, epsilon ~ N(0,I) - keeps sampling differentiable.  beta ~ 1e-4 "
+          "(beta >= 0.02 collapses the latent).", 12, False, INK)],
+        [("Conditional GAN   ", 13, True, ACCENT),
+         ("min_G max_D  E[ log D(x,y) ] + E[ log(1 - D(G(z,y),y)) ].  G uses the non-saturating form.  "
+          "Spectral norm bounds D's Lipschitz constant; label smoothing (0.9) curbs D over-confidence; "
+          "EMA on G (0.999) for inference.", 12, False, INK)],
+        [("MiniGPT (Transformer)   ", 13, True, ACCENT),
+         ("Attention(Q,K,V) = softmax( Q K^T / sqrt(d_k) ) V, with a causal mask (position t sees only <= t).  "
+          "Loss = mean next-char cross-entropy  L = -(1/T) sum_t log p( x_{t+1} | x_{<=t} ).  Perplexity = exp(L).", 12, False, INK)],
+        [("Land-Use Classifier   ", 13, True, ACCENT),
+         ("softmax + cross-entropy over the 21 zoning classes.", 12, False, INK)],
+    ], space_after=9)
+
+    # 8c — Ethics ----------------------------------------------------------
+    _e = blank(p); header(_e, "Ethics, Fairness, Privacy, Transparency & Limitations")
+    _eb = _e.shapes.add_textbox(Inches(0.7), Inches(1.55), Inches(12), Inches(5.4))
+    _eb.text_frame.word_wrap = True
+    _txt(_eb.text_frame, [
+        [("Transparency   ", 13, True, ACCENT),
+         ("every model page shows its architecture, whether weights are pretrained or ours, and links the "
+          "checkpoint and training log. Metrics are measured live, never placeholders.", 12, False, INK)],
+        [("Privacy   ", 13, True, ACCENT),
+         ("only public aerial imagery and open GIS. No personal data. Uploads are processed in memory and "
+          "never written to disk. GDPR-aligned.", 12, False, INK)],
+        [("Fairness   ", 13, True, ACCENT),
+         ("per-class metrics are shown, not hidden behind an average; weak classes are named openly.", 12, False, INK)],
+        [("Human in the loop   ", 13, True, ACCENT),
+         ("outputs are candidate computational representations, not statutory plans; the planner stays in control.", 12, False, INK)],
+        [("Limitations   ", 13, True, WARN),
+         ("the VAE cannot invent geometry it has not seen; the GAN geometry is immature at 100 epochs; MiniGPT "
+          "is a template learner on a small corpus. All outputs need validation against Pune DCPR 2017/2021, "
+          "engineering and hydrology models, and public hearings.", 12, False, INK)],
+    ], space_after=10)
 
     # 9 -----------------------------------------------------------------
     _s = blank(p); header(_s, "Conclusion")
