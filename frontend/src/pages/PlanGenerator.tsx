@@ -95,7 +95,7 @@ export default function PlanGenerator() {
                 style={{
                   width: 'auto', marginTop: 0, padding: '6px 12px', fontSize: '0.8rem',
                   background: prompt === p ? 'var(--accent)' : 'transparent',
-                  color: prompt === p ? '#000' : 'var(--text)',
+                  color: prompt === p ? 'var(--btn-text)' : 'var(--text)',
                   border: '1px solid var(--border)',
                 }}
               >

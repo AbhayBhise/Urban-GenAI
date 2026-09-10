@@ -446,8 +446,8 @@ export default function App() {
         .card { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 20px; }
         .card-title { font-size: 1rem; font-weight: 500; margin-bottom: 15px; color: var(--accent2); display: flex; justify-content: space-between; gap: 12px; }
 
-        .upload-zone { border: 2px dashed var(--border); border-radius: 6px; padding: 40px 20px; text-align: center; cursor: pointer; transition: all 0.2s; background: rgba(30, 45, 64, 0.2); }
-        .upload-zone:hover { border-color: var(--accent); background: rgba(0, 212, 255, 0.05); }
+        .upload-zone { border: 2px dashed var(--border); border-radius: 6px; padding: 40px 20px; text-align: center; cursor: pointer; transition: all 0.2s; background: var(--surface-inset); }
+        .upload-zone:hover { border-color: var(--accent); background: var(--accent-wash-light); }
         .upload-icon { color: var(--accent); margin-bottom: 10px; width: 32px; height: 32px; }
 
         .image-preview { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 4px; border: 1px solid var(--border); }
@@ -463,7 +463,7 @@ export default function App() {
         .chart-container { height: 300px; width: 100%; }
 
         .predictions-list { display: flex; flex-direction: column; gap: 10px; }
-        .pred-item { display: flex; justify-content: space-between; align-items: center; background: rgba(30, 45, 64, 0.3); padding: 10px 15px; border-radius: 4px; }
+        .pred-item { display: flex; justify-content: space-between; align-items: center; background: var(--surface-inset); padding: 10px 15px; border-radius: 4px; }
         .pred-class { font-weight: 500; text-transform: capitalize; }
         .pred-prob { font-family: var(--font-mono); color: var(--accent); }
 
