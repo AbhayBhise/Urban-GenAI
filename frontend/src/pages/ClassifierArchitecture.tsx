@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Arrow, ArrowheadDef, SyllabusTable, ProvenanceNote, COLORS } from '../lib/archDiagram';
+import { Box, Arrow, ArrowheadDef, SyllabusTable, ProvenanceNote, DiagramBackground, COLORS } from '../lib/archDiagram';
 
 export default function ClassifierArchitecture() {
   return (
@@ -29,6 +29,7 @@ export default function ClassifierArchitecture() {
         <div style={{ width: '100%', overflowX: 'auto' }}>
           <svg viewBox="0 0 820 100" style={{ width: '100%', minWidth: 720, height: 'auto' }}>
             <defs><ArrowheadDef /></defs>
+            <DiagramBackground />
             <Box x={20} y={20} w={130} h={56} fill={COLORS.surface} stroke={COLORS.border} label="Input Tile" sub="224×224×3" />
             <Arrow x1={150} y1={48} x2={182} y2={48} />
             <Box x={182} y={20} w={220} h={56} fill={COLORS.surface} stroke={COLORS.accent2} label="ResNet18 (fine-tuned)" sub="ImageNet-pretrained backbone" labelColor={COLORS.accent2} />

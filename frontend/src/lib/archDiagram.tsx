@@ -46,6 +46,14 @@ export function Arrow({ x1, y1, x2, y2, color }: { x1: number; y1: number; x2: n
   );
 }
 
+/** These diagrams use fixed hex colors (not CSS variables) chosen for a
+ * dark canvas, so they stay legible as a self-contained "dark card" no
+ * matter which page theme (light or dark) surrounds them -- render this
+ * first, right after <defs>, so it fills the SVG behind every box/arrow. */
+export function DiagramBackground() {
+  return <rect x={0} y={0} width="100%" height="100%" fill={COLORS.bg} />;
+}
+
 /** Every diagram SVG must include this once in its <defs>. */
 export function ArrowheadDef() {
   return (

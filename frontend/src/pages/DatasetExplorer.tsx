@@ -38,7 +38,7 @@ export default function DatasetExplorer() {
             </div>
             {data?.pune_datasets?.exists ? 
               <span style={{ color: 'var(--success)', display: 'flex', alignItems: 'center', gap: '4px' }}><CheckCircle2 size={16} /> Available</span> :
-              <span style={{ color: '#FF5252', display: 'flex', alignItems: 'center', gap: '4px' }}><AlertCircle size={16} /> Missing</span>
+              <span style={{ color: 'var(--danger)', display: 'flex', alignItems: 'center', gap: '4px' }}><AlertCircle size={16} /> Missing</span>
             }
           </div>
           <div style={{ margin: '15px 0' }}>
@@ -64,7 +64,7 @@ export default function DatasetExplorer() {
             </div>
             {data?.ucmerced?.exists ? 
               <span style={{ color: 'var(--success)', display: 'flex', alignItems: 'center', gap: '4px' }}><CheckCircle2 size={16} /> Available</span> :
-              <span style={{ color: '#FF5252', display: 'flex', alignItems: 'center', gap: '4px' }}><AlertCircle size={16} /> Missing</span>
+              <span style={{ color: 'var(--danger)', display: 'flex', alignItems: 'center', gap: '4px' }}><AlertCircle size={16} /> Missing</span>
             }
           </div>
           <div style={{ margin: '15px 0' }}>

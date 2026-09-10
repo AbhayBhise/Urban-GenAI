@@ -57,7 +57,7 @@ export default function Evaluation() {
       </div>
 
       {error && (
-        <div className="card" style={{ borderColor: '#FF5252', color: '#FF5252', marginBottom: 24 }}>
+        <div className="card" style={{ borderColor: 'var(--danger)', color: 'var(--danger)', marginBottom: 24 }}>
           {error}
         </div>
       )}
@@ -89,7 +89,7 @@ export default function Evaluation() {
             </div>
             <div className="metric">
               <span className="metric-label">Active Latent Dims</span>
-              <span className="metric-value" style={{ color: metrics.latent.active_fraction > 0.5 ? 'var(--success)' : '#FFB84D' }}>
+              <span className="metric-value" style={{ color: metrics.latent.active_fraction > 0.5 ? 'var(--success)' : 'var(--warn)' }}>
                 {metrics.latent.active_dims} / {metrics.latent.total_dims}
               </span>
             </div>
@@ -157,7 +157,7 @@ export default function Evaluation() {
                     formatter={(v: number) => [`${v.toFixed(activeOption.key === 'mse' ? 4 : 2)}${activeOption.suffix}`, activeOption.label]}
                     contentStyle={{ backgroundColor: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '6px' }}
                     itemStyle={{ fontFamily: 'var(--font-mono)' }}
-                    cursor={{ fill: 'rgba(255,255,255,0.04)' }}
+                    cursor={{ fill: 'var(--hover-overlay)' }}
                   />
                   <Bar dataKey="value" radius={[0, 4, 4, 0]}>
                     {chartData.map((_, i) => (
