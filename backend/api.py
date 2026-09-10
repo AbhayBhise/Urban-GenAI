@@ -526,6 +526,269 @@ def add_noise(imgs, noise_std=0.15):
     return torch.clamp(imgs + noise_std * torch.randn_like(imgs), -1.0, 1.0)
 
 
+# ---------------------------------------------------------------------------
+# AE evaluation: same methodology as compute_vae_evaluation (per-class PSNR/
+# SSIM/MSE over a held-out-style sample) so the two reconstruction models
+# are reported on equal footing.
+# ---------------------------------------------------------------------------
+AE_EVAL_METRICS = {}
+
+
+def compute_ae_evaluation(n_per_class=5):
+    global AE_EVAL_METRICS
+    if not ae_loaded:
+        return
+    from dataset import DATASET_PATH, URBAN_CLASSES
+    import random
+    random.seed(4)
+
+    per_class = {}
+    all_mse, all_psnr, all_ssim = [], [], []
+    n_samples = 0
+
+    with torch.no_grad():
+        for cls in URBAN_CLASSES:
+            candidates = list((DATASET_PATH / cls).glob("*.tif"))
+            paths = random.sample(candidates, min(n_per_class, len(candidates)))
+            if not paths:
+                continue
+            cls_mse, cls_psnr, cls_ssim = [], [], []
+            for path in paths:
+                img = Image.open(path).convert('RGB')
+                x = ae_transform(img).unsqueeze(0).to(device)
+                noisy = add_noise(x)
+                recon = ae(noisy)
+
+                mse = F.mse_loss(recon, x).item()
+                psnr = 10 * math.log10(4.0 / mse) if mse > 0 else 100.0
+                ssim = compute_ssim((recon.clamp(-1, 1) * 0.5 + 0.5), (x * 0.5 + 0.5)).item()
+
+                cls_mse.append(mse)
+                cls_psnr.append(psnr)
+                cls_ssim.append(ssim)
+                all_mse.append(mse)
+                all_psnr.append(psnr)
+                all_ssim.append(ssim)
+                n_samples += 1
+
+            per_class[cls] = {
+                "mse": sum(cls_mse) / len(cls_mse),
+                "psnr": sum(cls_psnr) / len(cls_psnr),
+                "ssim": sum(cls_ssim) / len(cls_ssim),
+                "n": len(cls_mse),
+            }
+
+    if n_samples == 0:
+        print("AE evaluation skipped: dataset missing or empty.")
+        return
+
+    def _mean_std(values):
+        t = torch.tensor(values)
+        return {"mean": t.mean().item(), "std": t.std().item() if len(values) > 1 else 0.0}
+
+    AE_EVAL_METRICS = {
+        "n_samples": n_samples,
+        "n_classes": len(per_class),
+        "mse": _mean_std(all_mse),
+        "psnr": _mean_std(all_psnr),
+        "ssim": _mean_std(all_ssim),
+        "per_class": per_class,
+    }
+    print(f"AE evaluation computed over {n_samples} samples across {len(per_class)} classes: "
+          f"MSE={AE_EVAL_METRICS['mse']['mean']:.5f} PSNR={AE_EVAL_METRICS['psnr']['mean']:.2f}dB "
+          f"SSIM={AE_EVAL_METRICS['ssim']['mean']:.4f}")
+
+
+compute_ae_evaluation()
+
+
+# ---------------------------------------------------------------------------
+# Classifier evaluation: a confusion matrix + per-class accuracy over a
+# random sample. Uses the live-loaded classifier directly -- the original
+# train/val split from train_transformer.py isn't persisted, so this is a
+# representative accuracy check on real data, not a claim of reproducing
+# the exact reported validation-split number (98.1%).
+# ---------------------------------------------------------------------------
+CLASSIFIER_EVAL_METRICS = {}
+
+
+def compute_classifier_evaluation(n_per_class=5):
+    global CLASSIFIER_EVAL_METRICS
+    if not trans_loaded:
+        return
+    from dataset import DATASET_PATH, URBAN_CLASSES
+    import random
+    random.seed(5)
+
+    n_classes = len(URBAN_CLASSES)
+    confusion = [[0] * n_classes for _ in range(n_classes)]
+    correct = 0
+    total = 0
+
+    with torch.no_grad():
+        for true_idx, cls in enumerate(URBAN_CLASSES):
+            candidates = list((DATASET_PATH / cls).glob("*.tif"))
+            paths = random.sample(candidates, min(n_per_class, len(candidates)))
+            for path in paths:
+                img = Image.open(path).convert('RGB')
+                x = transformer_transform(img).unsqueeze(0).to(device)
+                logits = transformer(x)
+                pred_idx = int(logits.argmax(dim=1).item())
+                confusion[true_idx][pred_idx] += 1
+                if pred_idx == true_idx:
+                    correct += 1
+                total += 1
+
+    if total == 0:
+        print("Classifier evaluation skipped: dataset missing or empty.")
+        return
+
+    per_class_accuracy = {}
+    for i, cls in enumerate(URBAN_CLASSES):
+        row_total = sum(confusion[i])
+        per_class_accuracy[cls] = confusion[i][i] / row_total if row_total else 0.0
+
+    CLASSIFIER_EVAL_METRICS = {
+        "n_samples": total,
+        "classes": URBAN_CLASSES,
+        "accuracy": correct / total,
+        "confusion_matrix": confusion,
+        "per_class_accuracy": per_class_accuracy,
+    }
+    print(f"Classifier evaluation computed over {total} samples: "
+          f"accuracy={CLASSIFIER_EVAL_METRICS['accuracy']:.4f}")
+
+
+compute_classifier_evaluation()
+
+
+# ---------------------------------------------------------------------------
+# GAN evaluation: a classifier-based sample-quality proxy. Generate N
+# samples per class, run them through the separately-trained Land-Use
+# Classifier, and measure what fraction get classified as the intended
+# class. This is the same underlying idea as Inception Score -- using an
+# independent, already-trained classifier to judge whether generated
+# samples are recognizable -- adapted to reuse infrastructure this project
+# already has instead of adding a new Inception-network dependency.
+# ---------------------------------------------------------------------------
+GAN_EVAL_METRICS = {}
+
+
+def compute_gan_evaluation(n_per_class=8):
+    global GAN_EVAL_METRICS
+    if not (gan_loaded and trans_loaded):
+        return
+    from dataset import URBAN_CLASSES
+    n_classes = len(URBAN_CLASSES)
+
+    per_class = {}
+    total_correct = 0
+    total_n = 0
+
+    with torch.no_grad():
+        for class_idx, cls in enumerate(URBAN_CLASSES):
+            z = torch.randn(n_per_class, GAN_LATENT_DIM, device=device)
+            labels = torch.full((n_per_class,), class_idx, device=device, dtype=torch.long)
+            fake_imgs = gan_generator(z, labels)  # [-1, 1], 128x128
+
+            # Resize from the GAN's native 128x128 to the classifier's
+            # expected 224x224 input.
+            resized = F.interpolate(fake_imgs, size=(224, 224), mode='bilinear', align_corners=False)
+            logits = transformer(resized)
+            preds = logits.argmax(dim=1)
+            correct = int((preds == class_idx).sum().item())
+
+            per_class[cls] = {"recognized": correct, "n": n_per_class, "rate": correct / n_per_class}
+            total_correct += correct
+            total_n += n_per_class
+
+    GAN_EVAL_METRICS = {
+        "n_samples": total_n,
+        "n_classes": n_classes,
+        "overall_recognition_rate": total_correct / total_n if total_n else 0.0,
+        "per_class": per_class,
+    }
+    print(f"GAN evaluation computed over {total_n} generated samples: "
+          f"classifier-recognition rate={GAN_EVAL_METRICS['overall_recognition_rate']:.4f}")
+
+
+compute_gan_evaluation()
+
+
+# ---------------------------------------------------------------------------
+# MiniGPT evaluation: held-out cross-entropy, perplexity and bits-per-char
+# on the last 10% of the training corpus -- the exact split train_gpt.py
+# uses (n = int(0.9 * len(data)); val_data = data[n:]). Perplexity is the
+# standard intrinsic metric for a language model: the effective number of
+# equally-likely characters the model is choosing between at each step
+# (lower is better; 1.0 = perfect, vocab_size = no better than uniform).
+# The corpus here is small and highly templated, so a very low perplexity
+# largely reflects the model learning those templates -- surfaced honestly
+# in the frontend rather than presented as open-ended fluency.
+# ---------------------------------------------------------------------------
+GPT_EVAL_METRICS = {}
+
+
+def compute_gpt_evaluation():
+    global GPT_EVAL_METRICS
+    if not gpt_loaded:
+        return
+    corpus_path = os.path.join(os.path.dirname(__file__), "corpus", "urban_planning.txt")
+    if not os.path.exists(corpus_path):
+        print("MiniGPT evaluation skipped: corpus missing.")
+        return
+
+    text = open(corpus_path, encoding="utf-8").read()
+    ids = [gpt_stoi[c] for c in text if c in gpt_stoi]
+    data = torch.tensor(ids, dtype=torch.long)
+    n = int(0.9 * len(data))
+    val_data = data[n:]
+
+    block_size = gpt.cfg.block_size
+    if len(val_data) <= block_size + 1:
+        print("MiniGPT evaluation skipped: held-out slice too small.")
+        return
+
+    losses = []
+    n_chars = 0
+    gpt.eval()
+    with torch.no_grad():
+        for i in range(0, len(val_data) - block_size - 1, block_size):
+            x = val_data[i:i + block_size].unsqueeze(0).to(device)
+            y = val_data[i + 1:i + 1 + block_size].unsqueeze(0).to(device)
+            _, loss = gpt(x, y)
+            losses.append(loss.item() * block_size)
+            n_chars += block_size
+
+    mean_loss = sum(losses) / n_chars
+    history_path = os.path.join(GPT_DIR, "history.json")
+    final_train_loss = None
+    if os.path.exists(history_path):
+        try:
+            hist = json.load(open(history_path))
+            if hist:
+                final_train_loss = hist[-1].get("loss")
+        except Exception:
+            pass
+
+    GPT_EVAL_METRICS = {
+        "held_out_chars": n_chars,
+        "vocab_size": gpt.cfg.vocab_size,
+        "cross_entropy": mean_loss,
+        "perplexity": math.exp(mean_loss),
+        "bits_per_char": mean_loss / math.log(2),
+        "uniform_baseline_perplexity": float(gpt.cfg.vocab_size),
+        "final_train_loss": final_train_loss,
+        "n_params_millions": sum(p.numel() for p in gpt.parameters()) / 1e6,
+    }
+    print(f"MiniGPT evaluation computed over {n_chars} held-out chars: "
+          f"cross-entropy={mean_loss:.4f} perplexity={GPT_EVAL_METRICS['perplexity']:.3f} "
+          f"bits/char={GPT_EVAL_METRICS['bits_per_char']:.4f}")
+
+
+compute_gpt_evaluation()
+
+
 def tensor_to_image_bytes(t):
     if t.dim() == 4:
         grid = make_grid(t, nrow=t.size(0))
@@ -576,6 +839,44 @@ def get_vae_evaluation():
     if not VAE_EVAL_METRICS:
         return Response(status_code=400, content="VAE evaluation unavailable (model or dataset missing).")
     return VAE_EVAL_METRICS
+
+
+@app.get("/evaluate/ae")
+def get_ae_evaluation():
+    """Same per-class PSNR/SSIM/MSE methodology as /evaluate/vae, so the two
+    reconstruction models are reported on equal footing."""
+    if not AE_EVAL_METRICS:
+        return Response(status_code=400, content="AE evaluation unavailable (model or dataset missing).")
+    return AE_EVAL_METRICS
+
+
+@app.get("/evaluate/classifier")
+def get_classifier_evaluation():
+    """Confusion matrix + per-class accuracy over a random real-data sample
+    (see compute_classifier_evaluation)."""
+    if not CLASSIFIER_EVAL_METRICS:
+        return Response(status_code=400, content="Classifier evaluation unavailable (model or dataset missing).")
+    return CLASSIFIER_EVAL_METRICS
+
+
+@app.get("/evaluate/gan")
+def get_gan_evaluation():
+    """Classifier-based sample-quality proxy (see compute_gan_evaluation) --
+    what fraction of generated samples per class the independently-trained
+    Land-Use Classifier recognizes as that class."""
+    if not GAN_EVAL_METRICS:
+        return Response(status_code=400, content="GAN evaluation unavailable (GAN or Classifier not trained).")
+    return GAN_EVAL_METRICS
+
+
+@app.get("/evaluate/gpt")
+def get_gpt_evaluation():
+    """Held-out cross-entropy, perplexity and bits-per-char for MiniGPT on
+    the last 10% of the training corpus (see compute_gpt_evaluation) -- the
+    standard intrinsic language-model metric."""
+    if not GPT_EVAL_METRICS:
+        return Response(status_code=400, content="MiniGPT evaluation unavailable (model or corpus missing).")
+    return GPT_EVAL_METRICS
 
 
 @app.get("/status")
