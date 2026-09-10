@@ -103,7 +103,7 @@ function PerClassBarChart({ metrics }: { metrics: ReconEvalMetrics }) {
               itemStyle={{ fontFamily: 'var(--font-mono)' }}
               cursor={{ fill: 'var(--hover-overlay)' }}
             />
-            <Bar dataKey="value" radius={[0, 4, 4, 0]}>
+            <Bar dataKey="value" radius={[0, 4, 4, 0]} isAnimationActive={false}>
               {chartData.map((_, i) => <Cell key={i} fill="var(--accent)" />)}
             </Bar>
           </BarChart>
@@ -330,7 +330,7 @@ function GANPanel() {
                 itemStyle={{ fontFamily: 'var(--font-mono)' }}
                 cursor={{ fill: 'var(--hover-overlay)' }}
               />
-              <Bar dataKey="value" radius={[0, 4, 4, 0]}>
+              <Bar dataKey="value" radius={[0, 4, 4, 0]} isAnimationActive={false}>
                 {chartData.map((d, i) => (
                   <Cell key={i} fill={d.value >= 50 ? 'var(--success)' : d.value >= 20 ? 'var(--warn)' : 'var(--danger)'} />
                 ))}
@@ -402,7 +402,7 @@ function GPTPanel() {
                 itemStyle={{ fontFamily: 'var(--font-mono)' }}
                 cursor={{ fill: 'var(--hover-overlay)' }}
               />
-              <Bar dataKey="value" radius={[0, 4, 4, 0]}>
+              <Bar dataKey="value" radius={[0, 4, 4, 0]} isAnimationActive={false}>
                 <Cell fill="var(--muted)" />
                 <Cell fill="var(--accent)" />
               </Bar>
