@@ -348,7 +348,10 @@ export default function App() {
     { id: 'prediction', label: 'Prediction Engine', icon: CheckCircle2, active: false, badge: 'Soon' },
   ];
 
-  const statusKey = activeView === 'plan-generator' ? 'gpt' : activeView;
+  // backend /status reports the classifier under its legacy key 'transformer'
+  const statusKey = activeView === 'plan-generator' ? 'gpt'
+    : activeView === 'classifier' ? 'transformer'
+    : activeView;
 
   return (
     <>
