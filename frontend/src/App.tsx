@@ -375,6 +375,16 @@ export default function App() {
           --success-wash: rgba(28, 143, 82, 0.10);
           --warn-wash: rgba(166, 106, 8, 0.10);
           --danger-wash: rgba(187, 54, 54, 0.10);
+          --accent2-wash: rgba(91, 63, 209, 0.10);
+          --surface-inset: #EDF1F7;
+          /* 6-colour categorical palette (Research capability matrix etc.) --
+             deep enough to read on a white ground. */
+          --cat-a: #0E7C9B;
+          --cat-b: #6941C6;
+          --cat-c: #1C8F52;
+          --cat-d: #A66A08;
+          --cat-e: #C2185B;
+          --cat-f: #0F8A8A;
           --font-ui: 'Space Grotesk', sans-serif;
           --font-mono: 'JetBrains Mono', monospace;
         }
@@ -397,6 +407,14 @@ export default function App() {
           --success-wash: rgba(0, 230, 118, 0.10);
           --warn-wash: rgba(255, 184, 77, 0.10);
           --danger-wash: rgba(255, 82, 82, 0.10);
+          --accent2-wash: rgba(123, 97, 255, 0.14);
+          --surface-inset: #0A0F17;
+          --cat-a: #00D4FF;
+          --cat-b: #9D85FF;
+          --cat-c: #00E676;
+          --cat-d: #FFB300;
+          --cat-e: #FF4081;
+          --cat-f: #26C6DA;
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { background-color: var(--bg); color: var(--text); font-family: var(--font-ui); transition: background-color 0.15s, color 0.15s; }

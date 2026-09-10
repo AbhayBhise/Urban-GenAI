@@ -84,7 +84,7 @@ export default function Research() {
             {RESEARCH_TABS.find(t => t.id === activeTab)?.label}
           </span>
         </div>
-        <h1 className="panel-title" style={{ fontSize: '1.9rem', fontWeight: 700, letterSpacing: '-0.02em', color: '#FFF' }}>
+        <h1 className="panel-title" style={{ fontSize: '1.9rem', fontWeight: 700, letterSpacing: '-0.02em', color: 'var(--text)' }}>
           Research, Literature Survey &amp; Innovation
         </h1>
         <div className="panel-desc" style={{ maxWidth: '980px', fontSize: '0.94rem', lineHeight: 1.6 }}>
@@ -112,7 +112,7 @@ export default function Research() {
               key={tab.id}
               onClick={() => handleTabChange(tab.id)}
               style={{
-                background: isActive ? 'rgba(0, 212, 255, 0.12)' : 'rgba(15, 25, 35, 0.5)',
+                background: isActive ? 'var(--active-tint)' : 'var(--surface)',
                 color: isActive ? 'var(--accent)' : 'var(--text)',
                 border: `1px solid ${isActive ? 'var(--accent)' : 'var(--border)'}`,
                 borderRadius: '6px',
@@ -132,8 +132,8 @@ export default function Research() {
               {tab.badge && (
                 <span
                   style={{
-                    background: isActive ? 'rgba(0, 212, 255, 0.25)' : 'rgba(30, 45, 64, 0.6)',
-                    color: isActive ? '#FFF' : 'var(--muted)',
+                    background: isActive ? 'var(--accent-wash)' : 'var(--surface-inset)',
+                    color: isActive ? 'var(--accent)' : 'var(--muted)',
                     fontSize: '0.68rem',
                     padding: '2px 6px',
                     borderRadius: '4px',
