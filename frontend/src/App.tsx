@@ -29,15 +29,25 @@ const isImageView = (v: ViewType) => (IMAGE_VIEWS as readonly string[]).includes
 // classifier training history is still stored under outputs/transformer/
 const HISTORY_KEY: Record<string, string> = { ae: 'ae', vae: 'vae', classifier: 'transformer' };
 
-const getInitialView = (): ViewType => {
-  const hash = window.location.hash.toLowerCase();
-  if (hash.startsWith('#research')) return 'research';
-  if (hash.startsWith('#governance')) return 'governance';
-  if (hash.startsWith('#plan')) return 'plan-generator';
-  if (hash.startsWith('#gan')) return 'gan';
-  if (hash.length > 1) return 'ae'; // any other explicit hash still lands in the app, not the landing page
-  return 'landing';
+// Every routable view id, so any #hash can deep-link straight to its page
+// (handy for demos / bookmarks / sharing a specific model with a reviewer).
+const VALID_VIEWS: ViewType[] = ['landing', 'ae', 'vae', 'classifier', 'plan-generator', 'governance',
+  'gan', 'prediction', 'datasets', 'system', 'model-explorer', 'model-comparison', 'training',
+  'evaluation', 'research', 'glossary'];
+
+const viewFromHash = (): ViewType | null => {
+  const hash = window.location.hash.toLowerCase().replace(/^#\/?/, '').split('/')[0];
+  if (!hash) return null;
+  // prefixes kept for the older deep links (#research/..., #plan/...)
+  if (hash.startsWith('research')) return 'research';
+  if (hash.startsWith('governance')) return 'governance';
+  if (hash.startsWith('plan')) return 'plan-generator';
+  if (hash.startsWith('gan')) return 'gan';
+  const exact = VALID_VIEWS.find(v => v === hash);
+  return exact || 'ae';
 };
+
+const getInitialView = (): ViewType => viewFromHash() ?? 'landing';
 
 const MODEL_META: Record<string, {
   title: string;
@@ -115,15 +125,28 @@ export default function App() {
 
   useEffect(() => {
     const handleHash = () => {
-      const hash = window.location.hash.toLowerCase();
-      if (hash.startsWith('#research')) setActiveView('research');
-      else if (hash.startsWith('#governance')) setActiveView('governance');
-      else if (hash.startsWith('#plan')) setActiveView('plan-generator');
-      else if (hash.startsWith('#gan')) setActiveView('gan');
+      const v = viewFromHash();
+      if (v) setActiveView(v);
     };
     window.addEventListener('hashchange', handleHash);
     return () => window.removeEventListener('hashchange', handleHash);
   }, []);
+
+  // Keep the URL hash in sync with the active view so it can be bookmarked
+  // or shared. 'landing' clears the hash back to a bare URL.
+  useEffect(() => {
+    const current = window.location.hash.toLowerCase().replace(/^#\/?/, '').split('/')[0];
+    if (activeView === 'landing') {
+      if (current) window.history.replaceState(null, '', window.location.pathname + window.location.search);
+    } else if (current !== activeView && !(
+      (activeView === 'plan-generator' && current.startsWith('plan')) ||
+      (activeView === 'research' && current.startsWith('research')) ||
+      (activeView === 'governance' && current.startsWith('governance')) ||
+      (activeView === 'gan' && current.startsWith('gan'))
+    )) {
+      window.history.replaceState(null, '', `#${activeView}`);
+    }
+  }, [activeView]);
 
   useEffect(() => {
     apiFetch('/status')
