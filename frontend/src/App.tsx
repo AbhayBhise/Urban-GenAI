@@ -18,9 +18,10 @@ import TransformerArchitecture from './pages/TransformerArchitecture';
 import ClassifierArchitecture from './pages/ClassifierArchitecture';
 import Glossary from './pages/Glossary';
 import Landing from './pages/Landing';
+import FutureScope from './pages/FutureScope';
 import { apiFetch, getApiKey, setApiKey } from './lib/api';
 
-type ViewType = 'landing' | 'ae' | 'vae' | 'classifier' | 'plan-generator' | 'governance' | 'gan' | 'prediction' | 'datasets' | 'system' | 'model-explorer' | 'model-comparison' | 'training' | 'evaluation' | 'research' | 'glossary';
+type ViewType = 'landing' | 'ae' | 'vae' | 'classifier' | 'plan-generator' | 'governance' | 'gan' | 'prediction' | 'datasets' | 'system' | 'model-explorer' | 'model-comparison' | 'training' | 'evaluation' | 'research' | 'glossary' | 'future-scope';
 
 // Image-inference views that share the upload UI below.
 const IMAGE_VIEWS = ['ae', 'vae', 'classifier'] as const;
@@ -33,7 +34,7 @@ const HISTORY_KEY: Record<string, string> = { ae: 'ae', vae: 'vae', classifier: 
 // (handy for demos / bookmarks / sharing a specific model with a reviewer).
 const VALID_VIEWS: ViewType[] = ['landing', 'ae', 'vae', 'classifier', 'plan-generator', 'governance',
   'gan', 'prediction', 'datasets', 'system', 'model-explorer', 'model-comparison', 'training',
-  'evaluation', 'research', 'glossary'];
+  'evaluation', 'research', 'glossary', 'future-scope'];
 
 const viewFromHash = (): ViewType | null => {
   const hash = window.location.hash.toLowerCase().replace(/^#\/?/, '').split('/')[0];
@@ -339,6 +340,7 @@ export default function App() {
     { id: 'evaluation', label: 'Evaluation', icon: FileText, active: true },
     { id: 'research', label: 'Research & Innovation', icon: BookOpen, active: true, badge: 'Scoping' },
     { id: 'glossary', label: 'Glossary', icon: FileText, active: true },
+    { id: 'future-scope', label: 'Future Scope', icon: Sparkles, active: true },
     { id: 'governance', label: 'Governance', icon: ShieldCheck, active: true },
     { id: 'datasets', label: 'Dataset Explorer', icon: Database, active: true },
     { id: 'system', label: 'System Info', icon: HardDrive, active: true },
@@ -547,6 +549,7 @@ export default function App() {
             {activeView === 'evaluation' && <Evaluation />}
             {activeView === 'research' && <Research />}
             {activeView === 'glossary' && <Glossary />}
+            {activeView === 'future-scope' && <FutureScope />}
             {activeView === 'plan-generator' && <TransformerArchitecture />}
             {activeView === 'plan-generator' && <PlanGenerator />}
             {activeView === 'governance' && <Governance />}
