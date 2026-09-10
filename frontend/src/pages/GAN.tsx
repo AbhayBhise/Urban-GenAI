@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Sparkles, Shuffle, Grid3X3, Download, ChevronLeft, ChevronRight, Zap, Info } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { Sparkles, Shuffle, Grid3X3, Download, Zap, Info } from 'lucide-react';
 import { apiFetch } from '../lib/api';
 
 // UCMerced 21 classes with human-readable labels and icons
