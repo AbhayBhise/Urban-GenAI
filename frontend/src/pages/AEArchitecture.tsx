@@ -1,5 +1,6 @@
 // AEArchitecture component
 import { Box, Arrow, ArrowheadDef, SyllabusTable, ProvenanceNote, DiagramBackground, COLORS } from '../lib/archDiagram';
+import { WorkflowAnimation } from '../lib/WorkflowAnimation';
 
 export default function AEArchitecture() {
   return (
@@ -11,6 +12,20 @@ export default function AEArchitecture() {
         unfrozen); the entire skip-connected decoder is trained <strong>entirely from scratch</strong> by
         us. The checkpoint (<code>outputs/ae/model.pth</code>) is our own, committed to the repo.
       </ProvenanceNote>
+
+      <WorkflowAnimation
+        title="Data flow — noisy tile in, denoised tile out"
+        stages={[
+          { label: 'Noisy input', sub: '128²×3 + σ0.15' },
+          { label: 'ResNet18 encoder', sub: 's0 · s1 · s2' },
+          { label: 'Bottleneck', sub: '8×8×256' },
+          { label: 'Skip-connected decoder', sub: '4× ConvTranspose' },
+          { label: 'Reconstruction', sub: '128²×3, Tanh' },
+        ]}
+        note="Gaussian noise is added to the tile, the encoder compresses it while stashing three skip
+        activations, and the decoder rebuilds a clean tile using both the bottleneck and those skips. Measured
+        result: PSNR ≈ 29.7 dB, SSIM ≈ 0.86 (see the Evaluation page)."
+      />
 
       <div className="card" style={{ marginBottom: 20 }}>
         <div className="card-title">Architecture — U-Net Skip-Connected Denoising Autoencoder</div>

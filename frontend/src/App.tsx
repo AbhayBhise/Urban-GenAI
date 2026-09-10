@@ -17,9 +17,10 @@ import GANArchitecture from './pages/GANArchitecture';
 import TransformerArchitecture from './pages/TransformerArchitecture';
 import ClassifierArchitecture from './pages/ClassifierArchitecture';
 import Glossary from './pages/Glossary';
+import Landing from './pages/Landing';
 import { apiFetch, getApiKey, setApiKey } from './lib/api';
 
-type ViewType = 'ae' | 'vae' | 'classifier' | 'plan-generator' | 'governance' | 'gan' | 'prediction' | 'datasets' | 'system' | 'model-explorer' | 'model-comparison' | 'training' | 'evaluation' | 'research' | 'glossary';
+type ViewType = 'landing' | 'ae' | 'vae' | 'classifier' | 'plan-generator' | 'governance' | 'gan' | 'prediction' | 'datasets' | 'system' | 'model-explorer' | 'model-comparison' | 'training' | 'evaluation' | 'research' | 'glossary';
 
 // Image-inference views that share the upload UI below.
 const IMAGE_VIEWS = ['ae', 'vae', 'classifier'] as const;
@@ -34,7 +35,8 @@ const getInitialView = (): ViewType => {
   if (hash.startsWith('#governance')) return 'governance';
   if (hash.startsWith('#plan')) return 'plan-generator';
   if (hash.startsWith('#gan')) return 'gan';
-  return 'ae';
+  if (hash.length > 1) return 'ae'; // any other explicit hash still lands in the app, not the landing page
+  return 'landing';
 };
 
 const MODEL_META: Record<string, {
@@ -303,6 +305,7 @@ export default function App() {
   };
 
   const navItems: any[] = [
+    { id: 'landing', label: 'Home', icon: Sparkles, active: true },
     { id: 'model-explorer', label: 'Model Explorer', icon: Layers, active: true },
     { id: 'model-comparison', label: 'Model Comparison', icon: FileText, active: true },
     { id: 'ae', label: 'Autoencoder', icon: Layers, active: true },
@@ -492,6 +495,8 @@ export default function App() {
             {activeView === 'ae' && <AEArchitecture />}
             {activeView === 'vae' && <VAEArchitecture />}
             {activeView === 'classifier' && <ClassifierArchitecture />}
+
+            {activeView === 'landing' && <Landing onEnter={(v) => setActiveView(v as ViewType)} />}
 
             {activeView === 'datasets' && <DatasetExplorer />}
             {activeView === 'system' && <SystemInformation />}

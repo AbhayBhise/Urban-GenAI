@@ -1,4 +1,5 @@
 import { Box, Arrow, ArrowheadDef, SyllabusTable, ProvenanceNote, DiagramBackground, COLORS } from '../lib/archDiagram';
+import { WorkflowAnimation } from '../lib/WorkflowAnimation';
 
 export default function VAEArchitecture() {
   return (
@@ -11,6 +12,22 @@ export default function VAEArchitecture() {
         reparameterization path are all trained <strong>entirely from scratch</strong> by us.
         The resulting checkpoint (<code>outputs/vae/model.pth</code>) is our own, committed to the repo — not a downloaded model.
       </ProvenanceNote>
+
+      <WorkflowAnimation
+        title="Data flow — tile in, reconstruction + anomaly score out"
+        stages={[
+          { label: 'Input tile', sub: '128²×3' },
+          { label: 'ResNet18 encoder', sub: '→ 8×8×256' },
+          { label: 'μ / log σ² heads', sub: '8×8×64 each' },
+          { label: 'Reparameterize', sub: 'z = μ + σ⊙ε' },
+          { label: 'CNN decoder', sub: '16× upsample' },
+          { label: 'Reconstruction', sub: '+ error z-score' },
+        ]}
+        note="The encoder maps the tile to a Gaussian posterior, the reparameterization trick draws a
+        differentiable sample z, and the decoder reconstructs. Reconstruction error is then compared against a
+        294-tile baseline to flag the parcel as Typical / Unusual / Highly Anomalous — the project's primary use
+        of this model."
+      />
 
       <div className="card" style={{ marginBottom: 20 }}>
         <div className="card-title">Architecture — Spatial-Latent VAE with a Pretrained Encoder</div>
