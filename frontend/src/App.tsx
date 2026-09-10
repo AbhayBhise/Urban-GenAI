@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { Upload, CheckCircle2, AlertCircle, Cpu, FileText, Layers, Image as ImageIcon, Database, HardDrive, ShieldCheck, Sparkles, KeyRound, BookOpen } from 'lucide-react';
+import { Upload, CheckCircle2, AlertCircle, Cpu, FileText, Layers, Image as ImageIcon, Database, HardDrive, ShieldCheck, Sparkles, KeyRound, BookOpen, Sun, Moon } from 'lucide-react';
 import DatasetExplorer from './pages/DatasetExplorer';
 import SystemInformation from './pages/SystemInformation';
 import ModelExplorer from './pages/ModelExplorer';
@@ -97,7 +97,19 @@ export default function App() {
   const [history, setHistory] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [apiKey, setApiKeyState] = useState(getApiKey());
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+    try {
+      const saved = localStorage.getItem('urbangenai-theme');
+      if (saved === 'light' || saved === 'dark') return saved;
+    } catch {}
+    return 'dark'; // preserves this app's existing look for anyone who's used it before
+  });
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    try { localStorage.setItem('urbangenai-theme', theme); } catch {}
+  }, [theme]);
 
   useEffect(() => {
     const handleHash = () => {
@@ -313,7 +325,34 @@ export default function App() {
   return (
     <>
       <style dangerouslySetInnerHTML={{__html: `
+        /* Light theme (default) -- darker accent/success/warn/danger shades
+           than the dark theme uses, deliberately: the original bright
+           cyan/purple/green read fine on a near-black surface but fall well
+           short of readable contrast on a white one. Dark theme below keeps
+           the original, already-good values unchanged. */
         :root {
+          --bg: #F4F7FB;
+          --surface: #FFFFFF;
+          --border: #D7E0EA;
+          --accent: #04788F;
+          --accent2: #5B3FD1;
+          --text: #16283D;
+          --muted: #5B7285;
+          --success: #1C8F52;
+          --warn: #A66A08;
+          --danger: #BB3636;
+          --btn-text: #FFFFFF;
+          --hover-overlay: rgba(10, 35, 60, 0.05);
+          --active-tint: rgba(4, 120, 143, 0.10);
+          --accent-wash-light: rgba(4, 120, 143, 0.06);
+          --accent-wash: rgba(4, 120, 143, 0.12);
+          --success-wash: rgba(28, 143, 82, 0.10);
+          --warn-wash: rgba(166, 106, 8, 0.10);
+          --danger-wash: rgba(187, 54, 54, 0.10);
+          --font-ui: 'Space Grotesk', sans-serif;
+          --font-mono: 'JetBrains Mono', monospace;
+        }
+        :root[data-theme="dark"] {
           --bg: #080C14;
           --surface: #0F1923;
           --border: #1E2D40;
@@ -322,27 +361,37 @@ export default function App() {
           --text: #E8EDF5;
           --muted: #4A6080;
           --success: #00E676;
-          --font-ui: 'Space Grotesk', sans-serif;
-          --font-mono: 'JetBrains Mono', monospace;
+          --warn: #FFB84D;
+          --danger: #FF5252;
+          --btn-text: #000000;
+          --hover-overlay: rgba(255, 255, 255, 0.05);
+          --active-tint: rgba(0, 212, 255, 0.10);
+          --accent-wash-light: rgba(0, 212, 255, 0.06);
+          --accent-wash: rgba(0, 212, 255, 0.12);
+          --success-wash: rgba(0, 230, 118, 0.10);
+          --warn-wash: rgba(255, 184, 77, 0.10);
+          --danger-wash: rgba(255, 82, 82, 0.10);
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { background-color: var(--bg); color: var(--text); font-family: var(--font-ui); }
+        body { background-color: var(--bg); color: var(--text); font-family: var(--font-ui); transition: background-color 0.15s, color 0.15s; }
         .app-container { display: flex; height: 100vh; overflow: hidden; }
         .sidebar { width: 240px; background-color: var(--surface); border-right: 1px solid var(--border); padding: 20px 0; display: flex; flex-direction: column; overflow-y: auto; }
         .logo-area { padding: 0 20px 20px; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
         .logo-text { font-size: 1.25rem; font-weight: 700; color: var(--accent); letter-spacing: 0.05em; display: flex; align-items: center; gap: 10px; }
         .nav-list { display: flex; flex-direction: column; gap: 5px; padding: 0 10px; }
         .nav-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 15px; border-radius: 6px; cursor: pointer; transition: all 0.2s; color: var(--text); font-size: 0.9rem; }
-        .nav-item:hover:not(.disabled) { background-color: rgba(255,255,255,0.05); }
-        .nav-item.active { background-color: rgba(0, 212, 255, 0.1); color: var(--accent); border-left: 3px solid var(--accent); }
+        .nav-item:hover:not(.disabled) { background-color: var(--hover-overlay); }
+        .nav-item.active { background-color: var(--active-tint); color: var(--accent); border-left: 3px solid var(--accent); }
         .nav-item.disabled { color: var(--muted); cursor: not-allowed; }
         .nav-item-content { display: flex; align-items: center; gap: 10px; }
         .badge { background: var(--border); color: var(--muted); font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; }
 
         .main-content { flex: 1; display: flex; flex-direction: column; overflow-y: auto; }
         .topbar { padding: 15px 30px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: var(--surface); }
-        .status-chip { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; padding: 6px 12px; border-radius: 6px; background: rgba(0, 230, 118, 0.1); color: var(--success); border: 1px solid rgba(0, 230, 118, 0.2); }
-        .status-chip.error { background: rgba(255, 82, 82, 0.1); color: #FF5252; border-color: rgba(255, 82, 82, 0.2); }
+        .status-chip { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; padding: 6px 12px; border-radius: 6px; background: var(--success-wash); color: var(--success); border: 1px solid var(--success); }
+        .theme-toggle { display: flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface); color: var(--text); cursor: pointer; transition: border-color 0.15s, color 0.15s; }
+        .theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
+        .status-chip.error { background: var(--danger-wash); color: var(--danger); border-color: var(--danger); }
 
         .content-body { padding: 30px; max-width: 1200px; margin: 0 auto; width: 100%; }
         .panel-header { margin-bottom: 30px; }
@@ -358,7 +407,7 @@ export default function App() {
         .upload-icon { color: var(--accent); margin-bottom: 10px; width: 32px; height: 32px; }
 
         .image-preview { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 4px; border: 1px solid var(--border); }
-        .btn { background: var(--accent); color: #000; border: none; padding: 10px 20px; border-radius: 4px; font-family: var(--font-ui); font-weight: 600; cursor: pointer; width: 100%; margin-top: 15px; transition: opacity 0.2s; }
+        .btn { background: var(--accent); color: var(--btn-text); border: none; padding: 10px 20px; border-radius: 4px; font-family: var(--font-ui); font-weight: 600; cursor: pointer; width: 100%; margin-top: 15px; transition: opacity 0.2s; }
         .btn:hover { opacity: 0.9; }
         .btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
@@ -414,12 +463,22 @@ export default function App() {
         <div className="main-content">
           <div className="topbar">
             <div style={{ color: 'var(--muted)' }}>Terminal / {activeView}</div>
-            {status[statusKey] ? (
-              <div className={`status-chip ${status[statusKey] === 'Trained' ? '' : 'error'}`}>
-                {status[statusKey] === 'Trained' ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
-                {status[statusKey] === 'Trained' ? 'Trained ✓' : 'Not trained yet — run backend script'}
-              </div>
-            ) : null}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              {status[statusKey] ? (
+                <div className={`status-chip ${status[statusKey] === 'Trained' ? '' : 'error'}`}>
+                  {status[statusKey] === 'Trained' ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
+                  {status[statusKey] === 'Trained' ? 'Trained ✓' : 'Not trained yet — run backend script'}
+                </div>
+              ) : null}
+              <button
+                className="theme-toggle"
+                onClick={() => setTheme(t => t === 'dark' ? 'light' : 'dark')}
+                title={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
+                aria-label="Toggle color theme"
+              >
+                {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+              </button>
+            </div>
           </div>
 
           <div className="content-body">
@@ -537,16 +596,16 @@ export default function App() {
                       {activeView === 'vae' && metrics?.anomalyLevel && (
                         <div style={{
                           padding: '18px 22px', borderRadius: 8,
-                          background: metrics.anomalyLevel === 'Typical' ? 'rgba(0, 230, 118, 0.08)'
-                            : metrics.anomalyLevel === 'Unusual' ? 'rgba(255, 184, 77, 0.08)' : 'rgba(255, 82, 82, 0.08)',
-                          border: `1px solid ${metrics.anomalyLevel === 'Typical' ? 'rgba(0, 230, 118, 0.35)'
-                            : metrics.anomalyLevel === 'Unusual' ? 'rgba(255, 184, 77, 0.35)' : 'rgba(255, 82, 82, 0.35)'}`,
+                          background: metrics.anomalyLevel === 'Typical' ? 'var(--success-wash)'
+                            : metrics.anomalyLevel === 'Unusual' ? 'var(--warn-wash)' : 'var(--danger-wash)',
+                          border: `1px solid ${metrics.anomalyLevel === 'Typical' ? 'var(--success)'
+                            : metrics.anomalyLevel === 'Unusual' ? 'var(--warn)' : 'var(--danger)'}`,
                         }}>
                           <div style={{ display: 'flex', alignItems: 'baseline', gap: 14, flexWrap: 'wrap', marginBottom: 8 }}>
                             <span style={{
                               fontSize: '1.3rem', fontWeight: 700, fontFamily: 'var(--font-mono)',
                               color: metrics.anomalyLevel === 'Typical' ? 'var(--success)'
-                                : metrics.anomalyLevel === 'Unusual' ? '#FFB84D' : '#FF5252',
+                                : metrics.anomalyLevel === 'Unusual' ? 'var(--warn)' : 'var(--danger)',
                             }}>
                               {metrics.anomalyLevel === 'Typical' ? '✓' : '⚠'} {metrics.anomalyLevel.toUpperCase()}
                             </span>
@@ -638,7 +697,7 @@ export default function App() {
                           </button>
                           {urbanizeError && (
                             <div style={{
-                              border: '1px solid #FF5252', color: '#FF5252', borderRadius: '4px',
+                              border: '1px solid var(--danger)', color: 'var(--danger)', borderRadius: '4px',
                               padding: '10px 12px', fontSize: '0.85rem', width: '100%',
                             }}>
                               {urbanizeError}
@@ -682,7 +741,7 @@ export default function App() {
                 </button>
                 {randomGenError && (
                   <div style={{
-                    border: '1px solid #FF5252', color: '#FF5252', borderRadius: '4px',
+                    border: '1px solid var(--danger)', color: 'var(--danger)', borderRadius: '4px',
                     padding: '10px 12px', marginTop: '15px', fontSize: '0.85rem',
                   }}>
                     {randomGenError}
@@ -730,7 +789,7 @@ export default function App() {
                       {loading ? 'Querying...' : 'Ask RAG'}
                     </button>
                     {metrics && metrics.response && (
-                      <div style={{ padding: '15px', background: 'rgba(0, 212, 255, 0.1)', border: '1px solid var(--accent)', borderRadius: '4px', color: 'var(--text)' }}>
+                      <div style={{ padding: '15px', background: 'var(--active-tint)', border: '1px solid var(--accent)', borderRadius: '4px', color: 'var(--text)' }}>
                         <strong>Response:</strong> {metrics.response}
                       </div>
                     )}

@@ -1,5 +1,5 @@
 // GANArchitecture component
-import { Box, Arrow, ArrowheadDef, SyllabusTable, ProvenanceNote, COLORS } from '../lib/archDiagram';
+import { Box, Arrow, ArrowheadDef, SyllabusTable, ProvenanceNote, DiagramBackground, COLORS } from '../lib/archDiagram';
 
 export default function GANArchitecture() {
   return (
@@ -17,6 +17,7 @@ export default function GANArchitecture() {
         <div style={{ width: '100%', overflowX: 'auto' }}>
           <svg viewBox="0 0 940 420" style={{ width: '100%', minWidth: 840, height: 'auto' }}>
             <defs><ArrowheadDef /></defs>
+            <DiagramBackground />
 
             {/* ---- Generator (top) ---- */}
             <text x={20} y={12} fontSize="11" fontWeight={700} fill={COLORS.accent}>GENERATOR</text>

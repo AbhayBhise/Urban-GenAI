@@ -1,5 +1,5 @@
 // AEArchitecture component
-import { Box, Arrow, ArrowheadDef, SyllabusTable, ProvenanceNote, COLORS } from '../lib/archDiagram';
+import { Box, Arrow, ArrowheadDef, SyllabusTable, ProvenanceNote, DiagramBackground, COLORS } from '../lib/archDiagram';
 
 export default function AEArchitecture() {
   return (
@@ -17,6 +17,7 @@ export default function AEArchitecture() {
         <div style={{ width: '100%', overflowX: 'auto' }}>
           <svg viewBox="0 0 920 380" style={{ width: '100%', minWidth: 820, height: 'auto' }}>
             <defs><ArrowheadDef /></defs>
+            <DiagramBackground />
 
             {/* ---- Encoder (top row, left to right = decreasing resolution) ---- */}
             <text x={20} y={12} fontSize="11" fontWeight={700} fill={COLORS.accent2}>ENCODER — pretrained ResNet18</text>
