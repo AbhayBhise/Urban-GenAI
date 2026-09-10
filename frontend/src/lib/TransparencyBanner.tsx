@@ -6,9 +6,9 @@ export default function TransparencyBanner({ compact = false }: { compact?: bool
   return (
     <div style={{
       display: 'flex', alignItems: 'center', gap: 10,
-      background: 'rgba(255, 184, 77, 0.08)',
-      border: '1px solid rgba(255, 184, 77, 0.3)',
-      color: '#FFB84D', borderRadius: 6,
+      background: 'var(--warn-wash)',
+      border: '1px solid var(--warn)',
+      color: 'var(--warn)', borderRadius: 6,
       padding: compact ? '8px 12px' : '12px 16px',
       fontSize: compact ? '0.8rem' : '0.85rem', lineHeight: 1.5,
     }}>

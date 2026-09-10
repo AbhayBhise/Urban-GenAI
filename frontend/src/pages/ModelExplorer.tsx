@@ -42,13 +42,13 @@ export default function ModelExplorer({ setActiveView }: ModelExplorerProps) {
 
         <div className="card" style={{ cursor: 'pointer', transition: 'all 0.2s' }} onClick={() => setActiveView('plan-generator')}>
           <div className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <Cpu size={24} color="#00E676" />
+            <Cpu size={24} color="var(--success)" />
             Transformer (Urban Plan Generator)
           </div>
           <p style={{ color: 'var(--muted)', fontSize: '0.9rem', marginBottom: '20px' }}>
             A from-scratch decoder-only Transformer: causal self-attention + positional embeddings, generating urban-planning recommendations from land-use statistics.
           </p>
-          <button className="btn" style={{ background: 'transparent', border: '1px solid #00E676', color: '#00E676', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
+          <button className="btn" style={{ background: 'transparent', border: '1px solid var(--success)', color: 'var(--success)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
             Explore Transformer <ArrowRight size={16} />
           </button>
         </div>

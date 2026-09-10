@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Arrow, ArrowheadDef, SyllabusTable, ProvenanceNote, COLORS } from '../lib/archDiagram';
+import { Box, Arrow, ArrowheadDef, SyllabusTable, ProvenanceNote, DiagramBackground, COLORS } from '../lib/archDiagram';
 
 export default function VAEArchitecture() {
   return (
@@ -18,6 +18,7 @@ export default function VAEArchitecture() {
         <div style={{ width: '100%', overflowX: 'auto' }}>
           <svg viewBox="0 0 1180 430" style={{ width: '100%', minWidth: 900, height: 'auto' }}>
             <defs><ArrowheadDef /></defs>
+            <DiagramBackground />
 
             <Box x={20} y={20} w={120} h={56} fill={COLORS.surface} stroke={COLORS.border}
               label="Input Tile" sub="128×128×3" />
