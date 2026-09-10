@@ -475,19 +475,21 @@ def build():
        foot="Every output is on its own model page in the app, with an animated input-to-output flow above it.")
 
     # 9 -----------------------------------------------------------------
-    bullet_slide(p, "Conclusion",
-        "UrbanGenAI shows four generative models working together on one urban-planning task.",
-        [
-            ("It works end to end", "— from an aerial tile and GIS data to a written, grounded recommendation."),
-            ("It is honest", "— every number is measured live; limitations (GAN geometry, VAE softness) are "
-             "stated with evidence, not hidden."),
-            ("It is ours", "— the VAE decoder, the GAN and MiniGPT are trained fully from scratch; checkpoints are committed."),
-            ("It is responsible", "— only public data, planner stays in the loop, outputs are candidates that "
-             "still need statutory and engineering checks."),
-            ("Next steps", "— full 5-source City Stack, a diffusion model for photoreal renders, and surrogate "
-             "models for traffic, air quality and flood risk (see the Future Scope page)."),
-        ],
-        foot="Live demo order: Landing -> Model Explorer -> each model page -> Evaluation -> Future Scope.")
+    _s = blank(p); header(_s, "Conclusion")
+    _b = _s.shapes.add_textbox(Inches(0.7), Inches(1.9), Inches(12), Inches(4.4))
+    _b.text_frame.word_wrap = True
+    _txt(_b.text_frame, [[(
+        "UrbanGenAI brings four generative models — an autoencoder, a variational autoencoder, "
+        "a GAN and a from-scratch transformer — onto one urban-planning pipeline that runs end to "
+        "end, from an aerial tile to a written, data-grounded recommendation. Three of the four are "
+        "trained fully from scratch, with every checkpoint committed and every metric measured live, "
+        "so nothing is assumed. The limitations are stated with evidence rather than hidden, and the "
+        "outputs stay as planner-facing candidates that still need statutory and engineering checks. "
+        "It is a working, honest and reproducible decision-support tool, with a clear roadmap toward "
+        "the full multi-source City Stack and a diffusion model ahead.",
+        18, False, INK)]], space_after=0)
+    _f = _s.shapes.add_textbox(Inches(0.7), Inches(6.9), Inches(12), Inches(0.4))
+    _txt(_f.text_frame, [[("Live demo order: Landing -> Model Explorer -> each model page -> Evaluation -> Future Scope.", 11, False, MUTE)]])
 
     out = os.path.join(ROOT, "UrbanGenAI_Presentation.pptx")
     p.save(out)
