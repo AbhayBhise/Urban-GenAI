@@ -12,6 +12,10 @@ import PlanGenerator from './pages/PlanGenerator';
 import Governance from './pages/Governance';
 import GAN from './pages/GAN';
 import VAEArchitecture from './pages/VAEArchitecture';
+import AEArchitecture from './pages/AEArchitecture';
+import GANArchitecture from './pages/GANArchitecture';
+import TransformerArchitecture from './pages/TransformerArchitecture';
+import ClassifierArchitecture from './pages/ClassifierArchitecture';
 import { apiFetch, getApiKey, setApiKey } from './lib/api';
 
 type ViewType = 'ae' | 'vae' | 'classifier' | 'plan-generator' | 'governance' | 'gan' | 'prediction' | 'datasets' | 'system' | 'model-explorer' | 'model-comparison' | 'training' | 'evaluation' | 'research';
@@ -403,7 +407,9 @@ export default function App() {
               </div>
             )}
 
+            {activeView === 'ae' && <AEArchitecture />}
             {activeView === 'vae' && <VAEArchitecture />}
+            {activeView === 'classifier' && <ClassifierArchitecture />}
 
             {activeView === 'datasets' && <DatasetExplorer />}
             {activeView === 'system' && <SystemInformation />}
@@ -412,8 +418,10 @@ export default function App() {
             {activeView === 'training' && <Training />}
             {activeView === 'evaluation' && <Evaluation />}
             {activeView === 'research' && <Research />}
+            {activeView === 'plan-generator' && <TransformerArchitecture />}
             {activeView === 'plan-generator' && <PlanGenerator />}
             {activeView === 'governance' && <Governance />}
+            {activeView === 'gan' && <GANArchitecture />}
             {activeView === 'gan' && <GAN isGanTrained={status['gan'] === 'Trained'} />}
 
             {isImageView(activeView) && (
