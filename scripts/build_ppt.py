@@ -126,9 +126,13 @@ def table_slide(p, title, headers, rows, foot=None, col_w=None, fs=11, title_fs=
         r.font.size = Pt(fs + 1); r.font.bold = True; r.font.color.rgb = WHITE
     for i, row in enumerate(rows, start=1):
         for j, val in enumerate(row):
-            c = gt.cell(i, j); c.text = str(val)
+            c = gt.cell(i, j)
+            c.text = str(val) if str(val) else " "
             c.fill.solid(); c.fill.fore_color.rgb = WHITE if i % 2 else PANEL
-            r = c.text_frame.paragraphs[0].runs[0]
+            runs = c.text_frame.paragraphs[0].runs
+            if not runs:
+                continue
+            r = runs[0]
             r.font.size = Pt(fs); r.font.color.rgb = INK
             if j == 0:
                 r.font.bold = True
@@ -159,6 +163,43 @@ def pipeline_slide(p, title, stages, foot):
     fb = s.shapes.add_textbox(Inches(0.7), Inches(4.9), Inches(12), Inches(1.9))
     fb.text_frame.word_wrap = True
     _txt(fb.text_frame, [[(foot, 13, False, INK)]])
+    return s
+
+
+def layered_arch_slide(p, title, layers, foot):
+    """layers: list of (band_label, [component strings]).  Drawn top-to-bottom
+    as stacked bands, with a down-arrow between bands."""
+    s = blank(p); header(s, title)
+    n = len(layers)
+    top = Inches(1.45)
+    band_h = Inches((6.9 - 1.45) / n - 0.14)
+    gap = Inches(0.14)
+    y = top
+    for li, (label, comps) in enumerate(layers):
+        band = s.shapes.add_shape(1, Inches(0.6), y, Inches(12.1), band_h)
+        band.fill.solid(); band.fill.fore_color.rgb = PANEL
+        band.line.color.rgb = ACCENT; band.line.width = Pt(1); band.shadow.inherit = False
+        lb = s.shapes.add_textbox(Inches(0.75), y + Inches(0.06), Inches(2.5), band_h)
+        lb.text_frame.word_wrap = True
+        _txt(lb.text_frame, [[(label, 11.5, True, ACCENT2)]])
+        cx = Inches(3.15)
+        cw = Inches((12.1 - 2.7) / max(len(comps), 1) - 0.12)
+        for c in comps:
+            cb = s.shapes.add_shape(1, cx, y + Inches(0.1), cw, band_h - Inches(0.2))
+            cb.fill.solid(); cb.fill.fore_color.rgb = WHITE
+            cb.line.color.rgb = MUTE; cb.line.width = Pt(0.75); cb.shadow.inherit = False
+            tf = cb.text_frame; tf.word_wrap = True
+            tf.vertical_anchor = MSO_ANCHOR.MIDDLE
+            _txt(tf, [[(c, 9.5, False, INK)]], align=PP_ALIGN.CENTER, space_after=0)
+            cx = cx + cw + Inches(0.12)
+        if li < n - 1:
+            ar = s.shapes.add_shape(13, Inches(6.55), y + band_h - Inches(0.02),
+                                    Inches(0.22), gap + Inches(0.04))
+            ar.fill.solid(); ar.fill.fore_color.rgb = ACCENT2
+            ar.line.fill.background(); ar.shadow.inherit = False
+        y = y + band_h + gap
+    fb = s.shapes.add_textbox(Inches(0.6), Inches(7.0), Inches(12.1), Inches(0.4))
+    _txt(fb.text_frame, [[(foot, 10.5, False, MUTE)]])
     return s
 
 
@@ -277,19 +318,48 @@ def build():
         foot="Verify each DOI against IEEE Xplore before final submission.")
 
     # 6 -----------------------------------------------------------------
-    pipeline_slide(p, "System Architecture  (end-to-end pipeline)", [
-        ("Aerial tile\n+ Pune GIS", "128x128x3"),
-        ("Land-Use\nClassifier (CNN)", "-> 1 of 21 classes"),
-        ("Denoising\nAutoencoder", "clean tile"),
-        ("Variational\nAutoencoder", "anomaly score"),
-        ("Conditional\nGAN", "synthetic tiles"),
-        ("MiniGPT\nTransformer", "plan text"),
-        ("Planner\ndashboard", "decision support"),
-    ], foot="One shared pipeline. The classifier says what a parcel is; the AE cleans the image; the VAE "
-            "flags parcels that do not look normal for their zone; the GAN creates extra training data; "
-            "MiniGPT turns the numbers into a written recommendation grounded in real Pune statistics.")
+    layered_arch_slide(p, "System Architecture  (full project, layered)", [
+        ("1. Client", ["React SPA (Vite + TypeScript)", "API helper (adds operator key)"]),
+        ("2. API", ["FastAPI + Uvicorn — /infer, /evaluate, /generate, /status",
+                    "Security: API-key, rate-limit, CORS, upload validation"]),
+        ("3. Model services", ["Denoising AE", "Spatial VAE", "Conditional GAN", "MiniGPT", "Land-Use Classifier"]),
+        ("4. Evaluation", ["compute_*_evaluation() at startup", "/evaluate/<model> GET endpoints (cached)"]),
+        ("5. Data & artifacts", ["UCMerced / EuroSAT tiles", "Pune PMC GIS (GeoPandas)",
+                                 "outputs/*/model.pth + history.json", "corpus/urban_planning.txt"]),
+    ], foot="A request flows down (client -> API -> model -> data/checkpoint) and the result flows back up. "
+            "The evaluation layer is filled once at startup, then only read.")
 
-    table_slide(p, "Architecture detail — layers, epochs, dimensions at each stage",
+    table_slide(p, "System Architecture — components",
+        ["Layer", "Component", "Technology", "Responsibility"], [
+        ("1. Client", "React SPA", "React + TypeScript (Vite)",
+         "Landing page, one page per model, Evaluation and Comparison dashboards, light/dark theme"),
+        ("", "API helper", "fetch + localStorage",
+         "Adds the operator API key to each request; nothing else leaves the browser"),
+        ("2. API", "FastAPI app", "FastAPI + Uvicorn",
+         "REST endpoints: /infer/*, /evaluate/*, /generate/plan, /sample/*, /status, /history/*"),
+        ("", "Security middleware", "slowapi + custom deps",
+         "Optional API-key auth, rate limiting, CORS allow-list, image-upload validation"),
+        ("3. Model services", "5 PyTorch models", "PyTorch (torch, torchvision)",
+         "AE, VAE, GAN, MiniGPT, Classifier — each loads its checkpoint at startup, one forward pass per request"),
+        ("4. Evaluation", "compute_*_evaluation()", "runs once at startup",
+         "Held-out PSNR/SSIM/MSE, KL, perplexity, recognition rate, confusion matrix — cached in memory"),
+        ("5. Data & artifacts", "Datasets + GIS + checkpoints", "UCMerced, EuroSAT, GeoPandas/OSM, .pth",
+         "Training and held-out data; Pune GIS seeds the MiniGPT prompt; committed checkpoints are the source of truth"),
+    ], col_w=[1.55, 2.15, 2.75, 5.9], fs=9, title_fs=19,
+       foot="Uploads are processed in memory only and never written to disk; only public data and open GIS are used.")
+
+    table_slide(p, "System Architecture — request flow",
+        ["Step", "Path", "What happens"], [
+        ("0", "Startup (once)", "Every checkpoint is loaded and every /evaluate metric is computed and cached."),
+        ("1", "Browser  ->  FastAPI", "User uploads a tile / picks a class / asks for a plan (multipart or JSON)."),
+        ("2", "Security middleware", "API-key check (if enabled), rate-limit, CORS, validate image. Upload stays in memory."),
+        ("3", "Router  ->  model service", "The endpoint dispatches to the matching model (AE / VAE / GAN / MiniGPT / Classifier)."),
+        ("4", "Model service (in memory)", "Uses the pre-loaded checkpoint; runs one forward pass on CPU/GPU."),
+        ("5", "Post-processing", "Anomaly z-score vs baseline; PSNR/SSIM; softmax; decode generated text or image."),
+        ("6", "FastAPI  ->  Browser", "JSON (numbers, labels) or a base64 PNG; the React page renders the result."),
+    ], col_w=[0.7, 2.9, 8.75], fs=10, title_fs=19)
+
+    table_slide(p, "Architecture detail — model layers, epochs, dimensions",
         ["Model", "Structure (layers)", "Key dimensions", "Epochs", "Loss"], [
         ("Denoising AE", "ResNet18 encoder + 4 ConvTranspose decoder with U-Net skips",
          "input 128x128x3 -> 8x8x256 bottleneck -> 128x128x3", "50", "MSE(recon, clean), noise sigma 0.15"),
@@ -387,16 +457,7 @@ def build():
     ], col_w=[2.7, 5.0, 2.65, 2.0], fs=10, title_fs=20,
        foot="Each model is scored with the metric that model is actually judged by — not one metric forced onto all.")
 
-    image_slide(p, "Implementation Result — live Evaluation dashboard",
-        os.path.join(SHOT, "ppt_eval.png"),
-        "Evaluation page: one tab per module, each showing the metric it is judged by, computed on held-out data.")
-
     # 8 -----------------------------------------------------------------
-    image_slide(p, "Output — a model page (Autoencoder)",
-        os.path.join(SHOT, "ppt_ae.png"),
-        "Each model has its own page: animated input-to-output flow, labelled architecture diagram, "
-        "how-to-use steps, and how it fits the project.")
-
     table_slide(p, "Output — input and result for each module",
         ["Module", "Input", "Output shown to the planner"], [
         ("Land-Use Classifier", "One aerial tile (224x224)",
