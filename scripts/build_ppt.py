@@ -221,8 +221,12 @@ def build():
 
     # 2 -----------------------------------------------------------------
     bullet_slide(p, "Problem Statement",
-        "City planners have to weigh many things at once — new housing, traffic, flooding, "
-        "green cover, heat — and today the tools for this are split apart.",
+        "Planners in a fast-growing city like Pune must balance new housing, traffic, flood risk, "
+        "green cover and rising heat at once, at the scale of a whole ward. The data they need is "
+        "scattered across separate tools and formats; conventional GIS gives one fixed map instead "
+        "of options to compare; and general AI tools suggest ideas that are not grounded in a real "
+        "place. There is no single workspace that takes a planner from raw spatial data, through "
+        "generated and evaluated alternatives, to a recommendation they can act on.",
         [
             ("Data is scattered.", "Satellite images, land-cover maps, road networks, terrain and "
              "population all sit in different software and formats."),
