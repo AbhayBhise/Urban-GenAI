@@ -191,7 +191,12 @@ class DDPM(nn.Module):
             pred_x0 = pred_x0.clamp(-1.0, 1.0)
             
             # Direction pointing to x_t
-            dir_xt = torch.sqrt(1.0 - alpha_bar_prev - eta**2) * eps
+            # At the final reverse step alpha_bar_prev can equal 1.0.  For
+            # stochastic DDIM (eta > 0), the un-clamped expression becomes
+            # slightly negative and sqrt() emits NaN, which later becomes a
+            # black uint8 image in the API response.
+            direction_variance = torch.clamp(1.0 - alpha_bar_prev - eta**2, min=0.0)
+            dir_xt = torch.sqrt(direction_variance) * eps
             
             # Noise
             noise = torch.randn_like(img) if eta > 0 and i < len(times) - 1 else 0.0

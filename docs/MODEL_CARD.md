@@ -94,10 +94,11 @@ quantitative carbon comparison remains future work.
 
 | | |
 |---|---|
-| Architecture | Lightweight image- and class-conditioned DDPM U-Net with sinusoidal timestep embeddings, label embeddings, and a 1,000-step linear noise schedule; inference uses a 20-step deterministic DDIM sampler |
+| Architecture | Lightweight image- and class-conditioned DDPM U-Net with sinusoidal timestep embeddings, label embeddings, and a 1,000-step linear noise schedule; inference uses a 20-step DDIM sampler |
 | Training data | UCMerced LandUse, using the reproducible stratified split manifest in `outputs/splits/ucmerced_seed42.json` |
 | Objective | MSE noise prediction, `E[||epsilon - epsilon_theta(x_t,t,c)||^2]` |
-| Result | Source-conditioned checkpoint not yet trained; GPU retraining is required before reporting a result |
+| Result | 50-epoch CUDA checkpoint: final noise-prediction MSE 0.00421; best 0.00384 |
+| Training record | 16.63 min wall time; 28.51 W average GPU power; 61.37 W peak; 7.90 Wh estimated GPU-board energy |
 | Purpose in project | Generate a candidate urban-scene alternative from an uploaded tile and target land-use class |
 | Evaluation boundary | The available dataset has no paired before/after planning labels. The first valid report must include conditioned reconstruction loss and a human/land-use validity benchmark; no future-development accuracy is claimed |
 | Limitations | Small dataset and lightweight U-Net; generated tiles are advisory scenarios and require human/domain review |

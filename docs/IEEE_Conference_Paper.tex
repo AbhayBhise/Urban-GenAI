@@ -150,7 +150,7 @@ where $\alpha_t = 1 - \beta_t$ and $\bar{\alpha}_t = \prod_{s=1}^t \alpha_s$. Th
 \begin{equation}
 \mathcal{L}_{\text{diffusion}}(\boldsymbol{\theta}) = \mathbb{E}_{t, \mathbf{x}_0, s, \boldsymbol{\epsilon}, c}\Big[\big\|\boldsymbol{\epsilon} - \boldsymbol{\epsilon}_{\boldsymbol{\theta}}(\mathbf{x}_t, t, s, c)\big\|_2^2\Big]
 \end{equation}
-For rapid municipal decision support, synthesis accelerates via Denoising Diffusion Implicit Models (DDIM)~\cite{song2020denoising} with 20 deterministic sampling steps. The available UCMerced data does not contain paired before/after planning outcomes; therefore the source-conditioned checkpoint is explicitly marked as requiring GPU retraining, and no future-development accuracy is claimed in this paper.
+For rapid municipal decision support, synthesis accelerates via Denoising Diffusion Implicit Models (DDIM)~\cite{song2020denoising} with 20 sampling steps by default (the UI exposes $\eta$ for optional stochasticity). The available UCMerced data does not contain paired before/after planning outcomes; therefore this checkpoint is evaluated as a source-conditioned scenario generator, and no future-development accuracy is claimed.
 
 \subsection{Urban Plan Generator (MiniGPT Transformer)}
 To bridge quantitative visual spatial analysis with qualitative policy generation, UrbanGen AI implements a custom decoder-only autoregressive causal Transformer. The model features 4 pre-layer-normalization Transformer blocks, 4 attention heads, embedding dimension $d_{\text{model}} = 256$, and context window length $T=192$.
@@ -258,6 +258,15 @@ Trained for 120 epochs with Residual Upsampling Blocks (\texttt{ResUpBlock}), Pr
 
 As visualized in Fig.~\ref{fig:gan_samples}, the generator produces class-conditioned aerial research prototypes with recognizable broad land-use structure, but visual fidelity requires human inspection. The current seeded API evaluation of the augmented 120-epoch checkpoint achieved 100.0\% intended-class recognition over 168 generated samples using an independent classifier; therefore this metric is a quality proxy, not proof of photorealistic digital-twin synthesis.
 
+\subsection{Source-Conditioned Diffusion Convergence}
+The diffusion model was trained for 50 epochs on the fixed stratified UCMerced split using the RTX 4050 CUDA environment. Fig.~\ref{fig:diffusion_training} records the measured noise-prediction MSE, elapsed training time, and GPU power telemetry. The loss decreased from 0.36231 at epoch 1 to 0.00421 at epoch 50, with the best observed epoch loss of 0.00384. These values are the diffusion noise objective and should not be interpreted as pixel reconstruction error or as a guarantee of future-land-use correctness.
+
+\begin{figure*}[htbp]
+\centerline{\includegraphics[width=0.98\textwidth]{figures/fig_diffusion_training.png}}
+\caption{Measured Urban Scenario Diffusion training record: noise-prediction MSE, cumulative wall-clock time, and GPU power samples from the 50-epoch CUDA run.}
+\label{fig:diffusion_training}
+\end{figure*}
+
 \subsection{Cross-Module Quantitative Evaluation Matrix}
 To evaluate the end-to-end framework, Table~\ref{tab:eval_matrix} presents the consolidated empirical benchmark metrics across six models. Each value is accompanied by its actual evaluation protocol; representative runtime measurements are not presented as held-out generalization estimates.
 
@@ -274,7 +283,7 @@ To evaluate the end-to-end framework, Table~\ref{tab:eval_matrix} presents the c
 Spatial VAE & Latent Traversal \& Anomaly & Runtime PSNR & $\mathbf{30.92}$\,dB & MSE / SSIM & $0.00386$ / $0.9230$ \\
 ResNet-18 Classifier & Territorial Zoning Audit & Runtime accuracy & $\mathbf{100.0\%}$ (105 tiles) & Protocol & Representative sample \\
 Residual cDCGAN & Fast Aerial Tile Synthesis & Recognition Rate & $\mathbf{100.0\%}$ (168 tiles) & Final Loss (D / G) & $1.167$ / $1.250$ \\
-Urban Scenario Diffusion & Source-Conditioned Planning Visualization & Noise Pred MSE & Not reported; GPU retraining required & DDIM Sampler & $20$ Steps ($T=1000$) \\
+Urban Scenario Diffusion & Source-Conditioned Planning Visualization & Noise Pred MSE & $\mathbf{0.00421}$ final; $\mathbf{0.00384}$ best & DDIM Sampler & $20$ Steps ($T=1000$) \\
 MiniGPT Transformer & Urban Policy Advisory & Held-out loss & $\mathbf{0.0831}$ & Perplexity / BPC & $\mathbf{1.087}$ / $0.1199$ \\
 \bottomrule
 \end{tabular}
@@ -282,7 +291,7 @@ MiniGPT Transformer & Urban Policy Advisory & Held-out loss & $\mathbf{0.0831}$ 
 \end{table*}
 
 \subsection{Computational Efficiency and Carbon Footprint (Green AI Audit)}
-The system was developed and tested on a consumer NVIDIA RTX 4050 GPU. Recorded logs provide wall-time evidence for the AE and VAE runs; a reproducible power-monitoring pass is still required before energy or carbon values can be stated.
+The system was developed and tested on a consumer NVIDIA RTX 4050 GPU. The diffusion run additionally recorded power samples through \texttt{nvidia-smi} at approximately two-second intervals. Its energy value is an estimate of GPU-board energy from those samples, not a whole-system electricity or carbon measurement.
 
 \begin{table*}[!t]
 \caption{Comprehensive Training Time and Energy Consumption}
@@ -297,7 +306,7 @@ Denoising U-Net AE & 50 epochs & Runtime MSE $0.00448$ (PSNR $29.65$\,dB) & Edge
 Spatial VAE & 50 epochs & Runtime MSE $0.00386$ (PSNR $30.92$\,dB) & Latent space \& anomaly baseline \\
 ResNet-18 Classifier & 30 epochs & Runtime accuracy $100.0\%$ (105 tiles) & Zoning validation engine \\
 Residual cDCGAN & 120 epochs & $D=1.167, G=1.250$ ($100.0\%$ current proxy) & Rapid prospective sketching \\
-Urban Scenario Diffusion & Not yet trained & Source-conditioned DDPM; GPU retraining required & Planning visualization \\
+Urban Scenario Diffusion & 50 epochs & Final MSE $0.00421$; best $0.00384$; 16.63 min; 7.90 Wh GPU estimate & Planning visualization \\
 MiniGPT Transformer & 3,000 steps & Cross-Entropy $0.0831$ (PPL $1.087$) & Grounded policy formulation \\
 \midrule
 \textbf{Unified Framework} & \textbf{Systematic Pipeline} & \textbf{Consistent Benchmark Suite} & \textbf{Consumer GPU (RTX 4050)} \\
@@ -307,7 +316,7 @@ MiniGPT Transformer & 3,000 steps & Cross-Entropy $0.0831$ (PPL $1.087$) & Groun
 \end{table*}
 \FloatBarrier
 
-\footnotesize $^{\dagger}$Wall times recovered from the recorded training logs; the remaining model times and all energy values require a controlled instrumented rerun before numerical values can be published. Training horizons are reported per model because an image epoch, an autoregressive optimization step, and a GAN update are not equivalent units of computation. Cross-model comparison therefore uses task-appropriate metrics and a fixed evaluation protocol rather than claiming that identical epoch counts guarantee fairness.
+\footnotesize $^{\dagger}$The diffusion wall time and GPU energy are from the persisted CUDA telemetry record (476 power samples; average 28.51 W; peak 61.37 W). This is an estimated GPU-board energy value, not a whole-system carbon inventory. Other model energy values remain unreported. Training horizons are reported per model because an image epoch, an autoregressive optimization step, and a GAN update are not equivalent units of computation. Cross-model comparison therefore uses task-appropriate metrics and a fixed evaluation protocol rather than claiming that identical epoch counts guarantee fairness.
 
 \section{Ethical Considerations and Governance}
 Urban spatial interventions directly impact citizen welfare, mobility rights, and socioeconomic equality. We formalize explicit ethical safeguards into UrbanGen AI:
@@ -318,7 +327,7 @@ Urban spatial interventions directly impact citizen welfare, mobility rights, an
 \end{enumerate}
 
 \section{Conclusion and Future Work}
-This paper presented \textbf{UrbanGen AI}, a multi-model Generative AI architecture unifying aerial image restoration, land-use classification, spatial latent interpolation, unsupervised anomaly ranking, class-conditional tile generation, and contextual policy synthesis. The current implementation is a locally deployable research prototype; energy and carbon efficiency are not claimed because hardware-level measurements were not recorded with a reproducible protocol.
+This paper presented \textbf{UrbanGen AI}, a multi-model Generative AI architecture unifying aerial image restoration, land-use classification, spatial latent interpolation, unsupervised anomaly ranking, source-conditioned diffusion scenario generation, class-conditional tile generation, and contextual policy synthesis. The current implementation is a locally deployable research prototype. The diffusion run includes reproducible GPU power telemetry, while whole-system energy and carbon efficiency remain outside the reported claims.
 
 Future work will expand the pipeline to ingest multi-band ESA Sentinel-2 and NASA HLS satellite feeds, incorporate cross-attention vision-language models for multimodal query answering, and integrate physical microclimate fluid dynamic simulations for urban heat island mitigation.
 

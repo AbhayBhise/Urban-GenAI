@@ -90,6 +90,16 @@ diffusion_unet = DiffusionUNet(base_ch=32, num_classes=len(URBAN_CLASSES), condi
 diffusion_model = DDPM(diffusion_unet, timesteps=1000).to(device)
 diffusion_loaded = load_model_if_exists(diffusion_unet, '../outputs/diffusion_scenario/model.pth')
 
+
+def refresh_diffusion_checkpoint():
+    """Pick up a checkpoint produced after API startup without fake fallbacks."""
+    global diffusion_loaded
+    if not diffusion_loaded and os.path.exists('../outputs/diffusion_scenario/model.pth'):
+        diffusion_loaded = load_model_if_exists(
+            diffusion_unet, '../outputs/diffusion_scenario/model.pth'
+        )
+    return diffusion_loaded
+
 GAN_META: dict = {}
 _gan_meta_path = '../outputs/gan/meta.json'
 if os.path.exists(_gan_meta_path):
@@ -917,6 +927,7 @@ def get_gpt_evaluation():
 
 @app.get("/status")
 def get_status():
+    refresh_diffusion_checkpoint()
     return {
         "ae": "Trained" if ae_loaded else "Not trained yet",
         "vae": "Trained" if vae_loaded else "Not trained yet",
@@ -1450,7 +1461,7 @@ def get_privacy():
 async def infer_diffusion(request: Request, file: UploadFile = File(...),
                           class_name: str = Form(...), steps: int = Form(20),
                           eta: float = Form(0.0)):
-    if not diffusion_loaded:
+    if not refresh_diffusion_checkpoint():
         return Response(status_code=400, content="Urban scenario diffusion checkpoint unavailable. Train backend/train_diffusion.py on the GPU first.")
     if class_name not in URBAN_CLASSES:
         return Response(status_code=400, content=f"Unknown class {class_name}")
@@ -1478,6 +1489,7 @@ async def infer_diffusion(request: Request, file: UploadFile = File(...),
 
 @app.get("/evaluate/diffusion")
 def evaluate_diffusion():
+    refresh_diffusion_checkpoint()
     history_path = '../outputs/diffusion_scenario/history.json'
     history = []
     if os.path.exists(history_path):

@@ -20,9 +20,10 @@ import Glossary from './pages/Glossary';
 import Landing from './pages/Landing';
 import FutureScope from './pages/FutureScope';
 import SystemArchitecture from './pages/SystemArchitecture';
+import Diffusion from './pages/Diffusion';
 import { apiFetch, getApiKey, setApiKey } from './lib/api';
 
-type ViewType = 'landing' | 'ae' | 'vae' | 'classifier' | 'plan-generator' | 'governance' | 'gan' | 'prediction' | 'datasets' | 'system' | 'model-explorer' | 'model-comparison' | 'training' | 'evaluation' | 'research' | 'glossary' | 'future-scope' | 'system-architecture';
+type ViewType = 'landing' | 'ae' | 'vae' | 'classifier' | 'diffusion' | 'plan-generator' | 'governance' | 'gan' | 'prediction' | 'datasets' | 'system' | 'model-explorer' | 'model-comparison' | 'training' | 'evaluation' | 'research' | 'glossary' | 'future-scope' | 'system-architecture';
 
 // Image-inference views that share the upload UI below.
 const IMAGE_VIEWS = ['ae', 'vae', 'classifier'] as const;
@@ -35,7 +36,7 @@ const HISTORY_KEY: Record<string, string> = { ae: 'ae', vae: 'vae', classifier: 
 // (handy for demos / bookmarks / sharing a specific model with a reviewer).
 const VALID_VIEWS: ViewType[] = ['landing', 'ae', 'vae', 'classifier', 'plan-generator', 'governance',
   'gan', 'prediction', 'datasets', 'system', 'model-explorer', 'model-comparison', 'training',
-  'evaluation', 'research', 'glossary', 'future-scope', 'system-architecture'];
+  'evaluation', 'diffusion', 'research', 'glossary', 'future-scope', 'system-architecture'];
 
 const viewFromHash = (): ViewType | null => {
   const hash = window.location.hash.toLowerCase().replace(/^#\/?/, '').split('/')[0];
@@ -357,6 +358,7 @@ export default function App() {
     { id: 'system-architecture', label: 'System Architecture', icon: Layers, active: true },
     { id: 'ae', label: 'Autoencoder', icon: Layers, active: true },
     { id: 'vae', label: 'VAE', icon: FileText, active: true },
+    { id: 'diffusion', label: 'Diffusion Generator', icon: Sparkles, active: true },
     { id: 'plan-generator', label: 'Urban Plan Generator', icon: Sparkles, active: true },
     { id: 'classifier', label: 'Land-Use Classifier', icon: Cpu, active: true },
     { id: 'training', label: 'Training', icon: Cpu, active: true },
@@ -590,6 +592,7 @@ export default function App() {
             {activeView === 'glossary' && <Glossary />}
             {activeView === 'future-scope' && <FutureScope />}
             {activeView === 'system-architecture' && <SystemArchitecture />}
+            {activeView === 'diffusion' && <Diffusion />}
             {activeView === 'plan-generator' && <TransformerArchitecture />}
             {activeView === 'plan-generator' && <PlanGenerator />}
             {activeView === 'governance' && <Governance />}
