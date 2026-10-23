@@ -111,7 +111,7 @@ export default function AEArchitecture() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: '0.85rem', color: 'var(--text)' }}>
             <div>Classic denoising autoencoders (Vincent et al., 2008) use shallow, from-scratch encoders on small images. We use a pretrained ResNet18 instead — necessary here since our domain (aerial imagery) differs from ImageNet's natural photos, and we only have 2,100 training tiles to fine-tune with.</div>
             <div>We <strong>measured</strong> the bottleneck-only version of this exact model underperforming on structurally complex classes — 21dB PSNR on dense residential/harbor/mobile-home-park vs. 27–28dB on homogeneous classes like forest — and fixed it with U-Net-style skip connections (Ronneberger et al., 2015, originally proposed for biomedical segmentation, adapted here to denoising).</div>
-            <div>Verified, not assumed: retraining with skip connections closed the gap from 7.3dB down to 2.6dB, with the previously-worst classes gaining <strong>over 7dB each</strong> and the 21-class average moving 25dB → 29.7dB.</div>
+            <div>Verified behavior: skip connections give the decoder an unbottlenecked path to fine spatial detail. The current 21-class PSNR/SSIM measurements are shown live on the Evaluation page.</div>
           </div>
         </div>
       </div>

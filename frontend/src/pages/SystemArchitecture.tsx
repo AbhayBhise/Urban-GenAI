@@ -39,14 +39,14 @@ const LAYERS: Layer[] = [
   {
     n: 4, name: 'Evaluation Layer', icon: Activity, color: 'var(--cat-d)',
     parts: [
-      { name: 'compute_*_evaluation()', tech: 'runs once at startup', role: 'Held-out PSNR/SSIM/MSE, KL, perplexity, recognition rate, confusion matrix — cached in memory' },
+  { name: 'compute_*_evaluation()', tech: 'runs once at startup', role: 'Representative PSNR/SSIM/MSE, KL, recognition rate and confusion matrix plus held-out MiniGPT perplexity — cached in memory' },
       { name: '/evaluate/<model>', tech: 'GET endpoints', role: 'Serve the cached metrics to the frontend Evaluation dashboard and Model Comparison page' },
     ],
   },
   {
     n: 5, name: 'Data & Artifacts', icon: Database, color: 'var(--cat-f)',
     parts: [
-      { name: 'Image datasets', tech: 'UCMerced (21×100), EuroSAT', role: 'Training + held-out evaluation tiles' },
+  { name: 'Image datasets', tech: 'UCMerced (21×100), EuroSAT', role: 'Training data; runtime representative evaluation samples' },
       { name: 'Pune PMC GIS', tech: 'GeoPandas / OSM shapefiles', role: 'Buildings, roads, land-use, waterways — seed the MiniGPT prompt' },
       { name: 'Committed checkpoints', tech: 'outputs/*/model.pth + history.json', role: 'Loaded once at backend startup; the single source of truth for every claim' },
       { name: 'Text corpus', tech: 'backend/corpus/urban_planning.txt', role: 'Hand-authored MiniGPT training data (90/10 split)' },

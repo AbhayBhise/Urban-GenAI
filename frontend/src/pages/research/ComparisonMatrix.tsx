@@ -76,7 +76,7 @@ const COMPARISON_ROWS: MatrixRow[] = [
     literatureStatus: 'Common',
     literatureDetail: 'Established in computer vision (Autoencoders, SimCLR, MAE), but seldom applied to heterogeneous urban stacks.',
     urbanGenStatus: 'Implemented',
-    urbanGenDetail: 'ResNet18 Denoising Autoencoder (50 epochs, MSE 0.01977, 8×8×256 bottleneck).',
+    urbanGenDetail: 'ResNet18 Denoising Autoencoder (50 epochs, final train MSE 0.00585, 8×8×256 bottleneck).',
   },
   {
     capability: 'Probabilistic scenario generation',
@@ -118,7 +118,7 @@ const COMPARISON_ROWS: MatrixRow[] = [
     literatureStatus: 'Rare',
     literatureDetail: 'Zoning audits performed manually; reconstruction error rarely operationalized as an anomaly score.',
     urbanGenStatus: 'Implemented',
-    urbanGenDetail: 'Empirical anomaly z-scoring against 300 real tiles + 21-class zoning verification (98.1% accuracy).',
+    urbanGenDetail: 'Empirical anomaly z-scoring against 294 real tiles + 21-class zoning verification (98.1% validation accuracy).',
   },
 
   // 4. Planner Explanation

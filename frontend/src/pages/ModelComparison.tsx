@@ -8,6 +8,7 @@ type Live = {
   vae?: { psnr: number; ssim: number; kl: number; active: number; total: number };
   gan?: { rate: number };
   gpt?: { perplexity: number; bpc: number };
+  classifier?: { accuracy: number };
 };
 
 function useLiveMetrics(): Live {
@@ -21,8 +22,8 @@ function useLiveMetrics(): Live {
         return null;
       }
     };
-    Promise.all([grab('/evaluate/ae'), grab('/evaluate/vae'), grab('/evaluate/gan'), grab('/evaluate/gpt')])
-      .then(([ae, vae, gan, gpt]) => {
+    Promise.all([grab('/evaluate/ae'), grab('/evaluate/vae'), grab('/evaluate/gan'), grab('/evaluate/gpt'), grab('/evaluate/classifier')])
+      .then(([ae, vae, gan, gpt, classifier]) => {
         const next: Live = {};
         if (ae) next.ae = { psnr: ae.psnr.mean, ssim: ae.ssim.mean };
         if (vae) next.vae = {
@@ -32,6 +33,7 @@ function useLiveMetrics(): Live {
         };
         if (gan) next.gan = { rate: gan.overall_recognition_rate };
         if (gpt) next.gpt = { perplexity: gpt.perplexity, bpc: gpt.bits_per_char };
+        if (classifier) next.classifier = { accuracy: classifier.accuracy };
         setM(next);
       });
   }, []);
@@ -51,7 +53,7 @@ export default function ModelComparison() {
       syllabus: 'Autoencoder + reconstruction loss',
       metric: `PSNR ${fmt(live.ae?.psnr, 1, ' dB')} · SSIM ${fmt(live.ae?.ssim, 3)}`,
       error: 'Small residual blur on very fine texture',
-      verdict: 'Best for image restoration. U-Net skip connections beat a plain bottleneck (25 → 29.7 dB).',
+      verdict: 'Best for image restoration. U-Net skip connections preserve fine detail; the live PSNR/SSIM result is shown above.',
     },
     {
       model: 'Variational Autoencoder',
@@ -65,9 +67,9 @@ export default function ModelComparison() {
       model: 'Class-Conditional DCGAN (cDCGAN)',
       task: 'Generate synthetic class-conditional tiles for data augmentation',
       syllabus: 'Unit 3 / Pract 3: DCGAN architecture + Conditional GAN label embedding',
-      metric: `Recognition rate ${live.gan ? (live.gan.rate * 100).toFixed(0) + ' %' : '96 %'} (100 epochs)`,
+      metric: `Recognition rate ${live.gan ? (live.gan.rate * 100).toFixed(1) + ' %' : '—'} (100 epochs)`,
       error: 'Minor artifacts on intricate multi-modal edge boundaries',
-      verdict: 'Best for aerial data synthesis. Residual upsampling blocks + Sobel edge matching achieved 95.7% recognition across all 21 classes.',
+      verdict: 'Best for aerial data synthesis. Recognition rate is a classifier-based quality proxy; inspect the live per-class breakdown on Evaluation.',
     },
     {
       model: 'MiniGPT Transformer',
@@ -81,9 +83,9 @@ export default function ModelComparison() {
       model: 'Land-Use Classifier (ResNet18)',
       task: 'Label a parcel into one of 21 zoning classes',
       syllabus: 'Supporting CNN — not one of the 4 required generative models',
-      metric: '98.1 % validation accuracy',
+      metric: `Representative accuracy ${live.classifier ? (live.classifier.accuracy * 100).toFixed(1) + ' %' : '—'}`,
       error: 'Some dense- vs medium-residential confusion',
-      verdict: 'Most accurate model overall. It is discriminative (not generative) — it feeds the VAE and MiniGPT stages.',
+      verdict: 'Supporting discriminative model, not a generator; it feeds land-use verification and the GAN recognition proxy.',
     },
   ];
 
@@ -92,7 +94,7 @@ export default function ModelComparison() {
     { crit: 'Anomaly detection (project’s primary generative use)', winner: 'Spatial VAE', why: 'Only model that outputs a calibrated “how unusual is this parcel” score.' },
     { crit: 'Creating new training samples', winner: 'Conditional GAN', why: 'Only model that generates novel tiles from noise + a class label.' },
     { crit: 'The planner-facing recommendation', winner: 'MiniGPT', why: 'Turns numbers into readable, grounded planning text — the pipeline’s output.' },
-    { crit: 'Raw predictive accuracy', winner: 'Land-Use Classifier', why: '98.1 % — but discriminative, so it supports rather than replaces the generative models.' },
+    { crit: 'Raw predictive accuracy', winner: 'Land-Use Classifier', why: live.classifier ? `${(live.classifier.accuracy * 100).toFixed(1)} % on the representative evaluation sample — discriminative, so it supports rather than replaces the generative models.` : 'Live classifier evaluation unavailable.' },
   ];
 
   return (

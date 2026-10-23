@@ -813,7 +813,7 @@ export default function App() {
                     <div style={{ color: 'var(--muted)', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px', textAlign: 'center' }}>
                       Random learned-manifold sample
                     </div>
-                    <img src={randomGenImg} style={{ width: '100%', height: 'auto', borderRadius: '4px', border: '1px solid var(--border)' }} alt="Random prior sample" />
+                        <img src={randomGenImg} style={{ width: '100%', height: 'auto', borderRadius: '4px', border: '1px solid var(--border)' }} alt="Random learned-manifold sample" />
                   </div>
                 )}
               </div>

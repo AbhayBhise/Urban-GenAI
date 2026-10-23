@@ -488,29 +488,29 @@ function MatrixPanel() {
       syllabus: 'Unit 2 / Practical 2 (AE & Denoising)',
       role: 'Aerial Edge & Texture Restoration',
       primaryMetric: 'PSNR',
-      primaryVal: ae ? `${ae.psnr.mean.toFixed(2)} ± ${ae.psnr.std.toFixed(2)} dB` : '29.66 ± 1.10 dB',
+      primaryVal: ae ? `${ae.psnr.mean.toFixed(2)} ± ${ae.psnr.std.toFixed(2)} dB` : '—',
       secondaryMetric: 'SSIM',
-      secondaryVal: ae ? `${ae.ssim.mean.toFixed(3)} ± ${ae.ssim.std.toFixed(3)}` : '0.871 ± 0.03',
-      objective: 'Clean degraded tiles before zoning analysis (beats baseline bottleneck by +4.69 dB)',
+      secondaryVal: ae ? `${ae.ssim.mean.toFixed(3)} ± ${ae.ssim.std.toFixed(3)}` : '—',
+      objective: 'Clean degraded tiles before zoning analysis; compare against the live reconstruction metrics above.',
     },
     {
       module: 'Spatial Variational Autoencoder',
       syllabus: 'Unit 2 / Practical 2 (VAE & Latent Traversal)',
       role: 'Latent Interpolation & Anomaly Auditing',
       primaryMetric: 'SSIM',
-      primaryVal: vae ? `${vae.ssim.mean.toFixed(2)} ± ${vae.ssim.std.toFixed(2)}` : '0.68 ± 0.05',
+      primaryVal: vae ? `${vae.ssim.mean.toFixed(2)} ± ${vae.ssim.std.toFixed(2)}` : '—',
       secondaryMetric: 'Active Latent Dims / KL',
-      secondaryVal: vae ? `${vae.latent?.active_dims ?? 63}/${vae.latent?.total_dims ?? 64} (${vae.kl?.mean.toFixed(0) ?? 103} nats)` : '63 / 64 (103 nats)',
+      secondaryVal: vae ? `${vae.latent?.active_dims ?? '—'}/${vae.latent?.total_dims ?? '—'} (${vae.kl?.mean.toFixed(0) ?? '—'} nats)` : '—',
       objective: 'Probabilistic continuous latent morphing & anomaly z-score benchmarking',
     },
     {
       module: 'ResNet-18 Territorial Classifier',
       syllabus: 'Supporting CNN Feature Extractor',
       role: 'Land-Use & Zoning Classification',
-      primaryMetric: 'Validation Accuracy',
-      primaryVal: cls ? `${(cls.accuracy * 100).toFixed(1)}%` : '98.10%',
-      secondaryMetric: 'Cross-Entropy Loss',
-      secondaryVal: '0.104',
+      primaryMetric: 'Representative Accuracy',
+      primaryVal: cls ? `${(cls.accuracy * 100).toFixed(1)}%` : '—',
+      secondaryMetric: 'Validation Loss',
+      secondaryVal: 'From training history',
       objective: 'Automated 21-class territorial auditing for municipal zoning verification',
     },
     {
@@ -518,9 +518,9 @@ function MatrixPanel() {
       syllabus: 'Unit 3 / Practical 3 (DCGAN & cGAN)',
       role: 'Novel Class-Conditional Tile Synthesis',
       primaryMetric: 'Classifier Recognition Rate',
-      primaryVal: gan ? `${(gan.overall_recognition_rate * 100).toFixed(1)}%` : '95.7%',
-      secondaryMetric: 'Nash Equilibrium (D / G)',
-      secondaryVal: '1.032 / 2.681',
+      primaryVal: gan ? `${(gan.overall_recognition_rate * 100).toFixed(1)}%` : '—',
+      secondaryMetric: 'Final Training Losses (D / G)',
+      secondaryVal: 'From training history',
       objective: 'Synthesize synthetic aerial patches from Gaussian noise conditioned on class labels',
     },
     {
@@ -528,9 +528,9 @@ function MatrixPanel() {
       syllabus: 'Unit 4 / Practical 4 (Self-Attention & GPT)',
       role: 'Grounded Urban Planning Recommendations',
       primaryMetric: 'Held-out Perplexity',
-      primaryVal: gpt ? gpt.perplexity.toFixed(3) : '1.087',
+      primaryVal: gpt ? gpt.perplexity.toFixed(3) : '—',
       secondaryMetric: 'Information Rate',
-      secondaryVal: gpt ? `${gpt.bits_per_char.toFixed(3)} bits/char` : '0.120 bits/char',
+      secondaryVal: gpt ? `${gpt.bits_per_char.toFixed(3)} bits/char` : '—',
       objective: 'Draft regulatory planning policies conditioned on spatial classification signals',
     },
   ];
@@ -540,8 +540,10 @@ function MatrixPanel() {
       <div className="card" style={{ marginBottom: 24, borderLeft: '4px solid var(--accent)' }}>
         <div className="card-title">Comprehensive Multi-Model Evaluation Benchmark Matrix (IEEE Paper Table III)</div>
         <div style={{ color: 'var(--muted)', fontSize: '0.88rem', lineHeight: 1.65 }}>
-          This table unifies all evaluation metrics across the five core models, measured directly on held-out test splits.
-          Every metric is grounded in actual model evaluation data with no simulated or placeholder values.
+          This table unifies the live evaluation metrics exposed by the backend. Methodology differs by model:
+          reconstruction and classifier panels use representative per-class samples, GAN uses fresh generated tiles,
+          and MiniGPT uses its persisted held-out character split. A dash means the endpoint is unavailable; no fallback
+          value is displayed.
         </div>
       </div>
 
@@ -622,7 +624,7 @@ export default function Evaluation() {
       <div className="panel-header">
         <h1 className="panel-title">Model Evaluation</h1>
         <div className="panel-desc">
-          Real, measured performance for every model — computed once at backend startup on held-out data,
+          Real, measured performance for every model — computed once at backend startup using its documented evaluation method,
           not estimated. Each tab uses the metric that model is actually judged by: reconstruction quality
           (SSIM / PSNR) for the AE and VAE, a classifier-based recognition rate for the GAN, perplexity for
           MiniGPT, and a confusion matrix for the supporting Land-Use Classifier.

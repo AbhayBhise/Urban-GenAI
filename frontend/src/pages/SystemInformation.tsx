@@ -1,14 +1,13 @@
 import { useState, useEffect } from 'react';
 import { Cpu, HardDrive, Terminal } from 'lucide-react';
-
-const API_URL = 'http://localhost:8000';
+import { apiFetch } from '../lib/api';
 
 export default function SystemInformation() {
   const [sysInfo, setSysInfo] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`${API_URL}/system`)
+    apiFetch('/system')
       .then(res => res.json())
       .then(d => {
         setSysInfo(d);

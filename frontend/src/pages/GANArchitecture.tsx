@@ -20,13 +20,12 @@ export default function GANArchitecture() {
           { label: 'Class label', sub: '1 of 21 → embed' },
           { label: 'Generator', sub: '4× ResUpBlock' },
           { label: 'Synthetic tile', sub: '128²×3' },
-          { label: 'Classifier check', sub: '95.7% accuracy' },
+          { label: 'Classifier check', sub: 'live recognition proxy' },
         ]}
         note="A random vector and a chosen land-use class are fed to the generator, which paints a
         128×128 tile of that class. At inference we use the EMA generator only — the discriminator is a
         training-time critic. Generated tiles are scored by running them back through the Land-Use Classifier
-        (recognition rate reaches 95.7% overall across all 21 classes at 100 epochs, producing sharp, identifiable
-        structural geometry — see the Evaluation page)."
+         (recognition rate and per-class results are measured live on the Evaluation page)."
       />
 
       <div className="card" style={{ marginBottom: 20 }}>

@@ -1,14 +1,13 @@
 import { useState, useEffect } from 'react';
 import { Database, AlertCircle, CheckCircle2 } from 'lucide-react';
-
-const API_URL = 'http://localhost:8000';
+import { apiFetch } from '../lib/api';
 
 export default function DatasetExplorer() {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`${API_URL}/datasets`)
+    apiFetch('/datasets')
       .then(res => res.json())
       .then(d => {
         setData(d);

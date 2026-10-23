@@ -59,7 +59,7 @@ const TIMELINE: TimelineStep[] = [
     status: 'implemented',
     statusLabel: 'Verified ✓',
     description: 'ResNet18 backbone encoder compressing 128×128 tiles to 8×8×256 spatial latent codes for denoising.',
-    verification: '50 epochs trained; weights committed in outputs/ae/model.pth; final loss: 0.01977 MSE.',
+    verification: '50 epochs trained; weights committed in outputs/ae/model.pth; final recorded training MSE: 0.00585.',
   },
   {
     step: '07',
@@ -74,7 +74,7 @@ const TIMELINE: TimelineStep[] = [
     title: 'Scenario Evaluation & Anomaly Scoring',
     status: 'in_development',
     statusLabel: 'In Development ◐',
-    description: 'Empirical reconstruction-error z-scoring against 300 real tiles + ResNet18 21-class zoning verification.',
+    description: 'Empirical reconstruction-error z-scoring against 294 real tiles + ResNet18 21-class zoning verification.',
     verification: 'Z-score anomaly calculation active in backend/api.py; multi-criteria sustainability metrics planned.',
   },
   {
@@ -134,15 +134,15 @@ export default function ResearchProgress() {
             { label: 'Target Urban AOI', value: 'Pune (PMC Bounds)', sub: '516 km² | 7.4M Residents' },
             { label: 'Spatial Resolution', value: '128 × 128 px', sub: 'Aerial Tiles (UCMerced)' },
             { label: 'Land-Use Classes', value: '21 Classes', sub: 'Residential, Commercial, River, etc.' },
-            { label: 'AE Training Run', value: '50 Epochs', sub: 'Final MSE: 0.01977 (Clean)' },
+            { label: 'AE Training Run', value: '50 Epochs', sub: 'Final train MSE: 0.00585' },
             { label: 'AE Feature Bottleneck', value: '8 × 8 × 256', sub: '16,384 Spatial Codes' },
             { label: 'VAE Training Run', value: '50 Epochs', sub: 'Recon: 0.07524 | KL: 103.25' },
             { label: 'VAE Latent Space', value: '64 × 8 × 8', sub: '4,096 Spatial Dimensions' },
             { label: 'Zoning Classifier Val Acc', value: '98.1%', sub: 'Val Loss: 0.1032 (ResNet18)' },
             { label: 'MiniGPT Transformer', value: '4 Layers / 4 Heads', sub: '3,000 Steps | 192 Block Size' },
             { label: 'Training Hardware', value: 'NVIDIA RTX 4050', sub: 'Laptop GPU (~75 W)' },
-            { label: 'Total Retrain Budget', value: '~1.0 Hour', sub: 'All Models (~0.12 kWh)' },
-            { label: 'Estimated Carbon Footprint', value: '~0.08 kg CO₂e', sub: 'At ~0.7 kg/kWh Grid Intensity' },
+            { label: 'Total Retrain Budget', value: '~1.6 Hours', sub: 'All models (~0.19 kWh)' },
+            { label: 'Estimated Carbon Footprint', value: '~0.13 kg CO₂e', sub: 'At ~0.7 kg/kWh grid intensity' },
           ].map((m, i) => (
             <div
               key={i}
@@ -200,7 +200,7 @@ export default function ResearchProgress() {
               )}
             </div>
             <div style={{ fontSize: '0.75rem', color: 'var(--muted)', textAlign: 'center', marginTop: '6px' }}>
-              Loss falls rapidly from 0.1830 (Epoch 1) to 0.01977 (Epoch 50). Unfreezing encoder at Epoch 5.
+              Loss falls from 0.11551 (Epoch 1) to 0.00585 (Epoch 50). Unfreezing encoder at Epoch 5.
             </div>
           </div>
 

@@ -24,7 +24,7 @@ from models.vae import VAE, kl_divergence
 from models.classifier import UrbanClassifier
 from models.gpt import GPTConfig, MiniGPT
 from models.gan import Generator as GANGenerator, LATENT_DIM as GAN_LATENT_DIM, NUM_CLASSES as GAN_NUM_CLASSES
-from dataset import URBAN_CLASSES
+from dataset import DATASET_PATH, URBAN_CLASSES
 from rag_pipeline import PUNE_STATS, query_rag
 from security import (
     ALLOWED_ORIGINS, AUTH_ENABLED, RATE_LIMIT, limiter,
@@ -218,7 +218,7 @@ def score_anomaly(mse):
 # ---------------------------------------------------------------------------
 # VAE evaluation metrics: reconstruction quality (MSE/PSNR/SSIM) and latent
 # health (KL divergence, active-dimension count) computed once at startup
-# over a held-out sample spanning all 21 UCMerced classes, then served as-is
+# over a representative sample spanning all 21 UCMerced classes, then served as-is
 # by GET /evaluate/vae. This is the model's actual measured performance --
 # not a guess -- and the honest answer to "why is the reconstruction soft":
 # these numbers quantify exactly how soft, and the per-class breakdown shows
@@ -838,8 +838,8 @@ def sharpen_vae_reconstruction(recon, source, output_size=512):
 @app.get("/evaluate/vae")
 def get_vae_evaluation():
     """Reconstruction-quality and latent-health metrics computed once at
-    startup over a held-out sample spanning all 21 UCMerced classes (see
-    compute_vae_evaluation) -- the model's actual measured performance."""
+    startup over a representative sample spanning all 21 UCMerced classes.
+    This is measured runtime evaluation data, not a persisted held-out split."""
     if not VAE_EVAL_METRICS:
         return Response(status_code=400, content="VAE evaluation unavailable (model or dataset missing).")
     return VAE_EVAL_METRICS
@@ -847,8 +847,9 @@ def get_vae_evaluation():
 
 @app.get("/evaluate/ae")
 def get_ae_evaluation():
-    """Same per-class PSNR/SSIM/MSE methodology as /evaluate/vae, so the two
-    reconstruction models are reported on equal footing."""
+    """Same per-class PSNR/SSIM/MSE methodology as /evaluate/vae, using a
+    representative per-class sample so both reconstruction models are reported
+    on equal footing."""
     if not AE_EVAL_METRICS:
         return Response(status_code=400, content="AE evaluation unavailable (model or dataset missing).")
     return AE_EVAL_METRICS
@@ -1383,6 +1384,7 @@ def get_governance_doc(doc: str):
 
 @app.get("/datasets")
 def get_datasets():
+    ucmerced_path = DATASET_PATH
     datasets_info = {
         "pune_datasets": {
             "path": "../pune_datasets",
@@ -1390,9 +1392,17 @@ def get_datasets():
             "files": len(os.listdir("../pune_datasets")) if os.path.exists("../pune_datasets") else 0
         },
         "ucmerced": {
-            "path": "../UCMerced_LandUse",
-            "exists": os.path.exists("../UCMerced_LandUse"),
-            "classes": len(os.listdir("../UCMerced_LandUse/Images")) if os.path.exists("../UCMerced_LandUse/Images") else 0
+            "path": str(ucmerced_path),
+            "exists": ucmerced_path.exists(),
+            # UCMerced is stored as one directory per class at its root.
+            "classes": len([
+                p for p in ucmerced_path.iterdir() if p.is_dir()
+            ]) if ucmerced_path.exists() else 0,
+            "tiles": sum(
+                len(list(p.glob("*.tif")))
+                for p in ucmerced_path.iterdir()
+                if p.is_dir()
+            ) if ucmerced_path.exists() else 0,
         }
     }
     return datasets_info

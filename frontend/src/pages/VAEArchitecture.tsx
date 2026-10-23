@@ -127,7 +127,7 @@ export default function VAEArchitecture() {
         <div className="card">
           <div className="card-title">Contribution to UrbanGenAI</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: '0.85rem', color: 'var(--text)' }}>
-            <div>1. <strong>Land-Use Classifier</strong> identifies what a tile currently is (98.1% accuracy, 21 categories).</div>
+            <div>1. <strong>Land-Use Classifier</strong> identifies what a tile currently is (98.1% validation accuracy, 21 categories).</div>
             <div>2. <strong>This VAE</strong> scores its reconstruction error against a 294-tile baseline — <em>does this parcel look typical for what it claims to be?</em> Atypical parcels (unregistered construction, illegal conversion, sensor artifacts) reconstruct worse and get flagged.</div>
             <div>3. Flagged / typical parcels feed into the <strong>MiniGPT Plan Generator</strong> for text recommendations.</div>
             <div>4. <strong>Latent interpolation</strong> separately gives a continuous, explorable spectrum between two land-use states.</div>

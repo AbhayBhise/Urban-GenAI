@@ -69,7 +69,7 @@ function SurveyGridCanvas() {
 
 const PIPELINE = [
   {
-    id: 'classifier', icon: Cpu, title: 'Classify', subtitle: 'ResNet18 · 98.1% accuracy',
+    id: 'classifier', icon: Cpu, title: 'Classify', subtitle: 'ResNet18 · live evaluation',
     desc: 'Labels a land parcel into one of 21 UCMerced zoning categories.',
   },
   {
@@ -87,20 +87,32 @@ const PIPELINE = [
 ];
 
 const STATS = [
-  { value: '98.1%', label: 'Classifier accuracy' },
-  { value: '29.7 dB', label: 'AE reconstruction PSNR' },
+  { key: 'classifier', label: 'Classifier accuracy' },
+  { key: 'ae', label: 'AE reconstruction PSNR' },
   { value: '4', label: 'Models, one pipeline' },
-  { value: '2,100', label: 'UCMerced tiles trained on' },
 ];
 
 export default function Landing({ onEnter }: { onEnter: (view: string) => void }) {
   const [allTrained, setAllTrained] = useState<boolean | null>(null);
+  const [liveStats, setLiveStats] = useState<{ classifier?: number; aePsnr?: number; tiles?: number }>({});
 
   useEffect(() => {
     apiFetch('/status')
       .then(r => r.json())
       .then(d => setAllTrained(Object.values(d).every(v => v === 'Trained')))
       .catch(() => setAllTrained(null));
+  }, []);
+
+  useEffect(() => {
+    Promise.all([
+      apiFetch('/evaluate/classifier').then(r => r.ok ? r.json() : null),
+      apiFetch('/evaluate/ae').then(r => r.ok ? r.json() : null),
+      apiFetch('/datasets').then(r => r.ok ? r.json() : null),
+    ]).then(([classifier, ae, datasets]) => setLiveStats({
+      classifier: classifier?.accuracy,
+      aePsnr: ae?.psnr?.mean,
+      tiles: datasets?.ucmerced?.tiles,
+    })).catch(() => {});
   }, []);
 
   return (
@@ -157,16 +169,26 @@ export default function Landing({ onEnter }: { onEnter: (view: string) => void }
       <div style={{
         display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 32,
       }}>
-        {STATS.map(s => (
+        {STATS.map((s: any) => (
           <div key={s.label} className="card" style={{ textAlign: 'center' }}>
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.6rem', fontWeight: 700, color: 'var(--accent)', marginBottom: 4 }}>
-              {s.value}
+              {s.key === 'classifier' && liveStats.classifier != null ? `${(liveStats.classifier * 100).toFixed(1)}%` :
+                s.key === 'ae' && liveStats.aePsnr != null ? `${liveStats.aePsnr.toFixed(1)} dB` :
+                s.value ?? '—'}
             </div>
             <div style={{ fontSize: '0.78rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
               {s.label}
             </div>
           </div>
         ))}
+        <div className="card" style={{ textAlign: 'center' }}>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.6rem', fontWeight: 700, color: 'var(--accent)', marginBottom: 4 }}>
+            {liveStats.tiles != null ? liveStats.tiles.toLocaleString() : '—'}
+          </div>
+          <div style={{ fontSize: '0.78rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+            UCMerced tiles available
+          </div>
+        </div>
       </div>
 
       <div style={{ marginBottom: 16 }}>

@@ -105,7 +105,7 @@ export default function SystemApproach() {
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '12px' }}>
             <div style={{ fontSize: '0.82rem', color: 'var(--text)' }}>
-              <strong>1. UCMerced LandUse (21 classes, 2,100 tiles)</strong>: Used to train the Denoising Autoencoder (50 epochs), Spatial VAE (50 epochs), and Land-Use Classifier (30 epochs, 98.1% val accuracy).
+        <strong>1. UCMerced LandUse (21 classes, 2,100 tiles)</strong>: Used to train the Denoising Autoencoder (50 epochs), Spatial VAE (50 epochs), and Land-Use Classifier (30 epochs, 98.1% validation accuracy).
             </div>
             <div style={{ fontSize: '0.82rem', color: 'var(--text)' }}>
               <strong>2. EuroSAT Sentinel-2 (10 classes)</strong>: Supported in the dataset pipeline (<code style={{ color: 'var(--accent)' }}>backend/dataset.py</code>) for multi-spectral land cover benchmarking.
@@ -195,7 +195,7 @@ export default function SystemApproach() {
                 <span style={{ padding: '6px 12px', background: 'var(--surface-inset)', borderRadius: '4px' }}>Denoised Tile (128×128×3)</span>
               </div>
               <div style={{ marginTop: '12px', fontSize: '0.8rem', color: 'var(--muted)' }}>
-                Verified Experiment: 50 epochs on UCMerced | Initial Loss: 0.1830 → Final Train MSE: 0.01977 | PSNR calculated per request.
+        Verified Experiment: 50 epochs on UCMerced | Initial Loss: 0.11551 → Final Train MSE: 0.00585 | PSNR calculated per request.
               </div>
             </div>
           </div>
@@ -207,7 +207,7 @@ export default function SystemApproach() {
               <div style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: '6px', padding: '16px' }}>
                 <div style={{ fontSize: '0.78rem', color: 'var(--muted)', textTransform: 'uppercase', marginBottom: '6px' }}>Role in Urban Planning</div>
                 <div style={{ fontSize: '0.9rem', color: 'var(--text)', lineHeight: 1.5 }}>
-                  <strong>Probabilistic Scenario Generation &amp; Anomaly Auditing:</strong> Enables planners to smoothly interpolate between diverse land uses (e.g. dense residential ↔ green parkland) along a continuous spatial latent manifold. It also scores reconstruction error against an empirical baseline of 300 real tiles to identify anomalous, unplanned developments.
+        <strong>Probabilistic Scenario Generation &amp; Anomaly Auditing:</strong> Enables planners to smoothly interpolate between diverse land uses (e.g. dense residential ↔ green parkland) along a continuous spatial latent manifold. It also scores reconstruction error against an empirical baseline of 294 real tiles to identify anomalous, unplanned developments.
                 </div>
               </div>
 
