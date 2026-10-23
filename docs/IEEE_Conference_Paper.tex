@@ -37,7 +37,7 @@ dishasatpute44@gmail.com}
 \maketitle
 
 \begin{abstract}
-Rapid global urbanization presents pressing challenges in zoning compliance, green cover preservation, transit infrastructure allocation, and microclimate resilience. Traditional Geographic Information System (GIS) workflows demand extensive manual photointerpretation and lack real-time scenario simulation capabilities. In this paper, we propose \textbf{UrbanGen AI}, an end-to-end, multi-model generative artificial intelligence framework engineered specifically for sustainable smart city planning and digital twin prototyping. UrbanGen AI unifies four foundational paradigms into a cohesive pipeline: (i) an aerial imagery Denoising Autoencoder incorporating U-Net skip connections that elevates Peak Signal-to-Noise Ratio (PSNR) from 25.02\,dB to 29.71\,dB across 21 land-use classes, reducing easy-to-hard class performance variance from 7.3\,dB down to 2.6\,dB; (ii) a ResNet-18 Land-Use Classifier delivering 98.10\% validation accuracy for rapid territorial zoning audits; (iii) a spatial Variational Autoencoder (VAE) enabling continuous latent-space interpolation and unsupervised spatial anomaly detection with reconstruction error metrics; (iv) a Class-Conditional Deep Convolutional GAN (cDCGAN) with spectral normalization and EMA generation for synthetic aerial tile generation across 21 diverse categories; and (v) an autoregressive causal Transformer (MiniGPT) delivering contextual, localized urban planning policy recommendations seeded with real municipal geospatial distributions (e.g., Pune metropolitan region). By executing the entire deep learning pipeline under low computational budgets ($\sim$0.185\,kWh total re-training energy, generating $\approx 0.13$\,kg CO$_2$e on an NVIDIA RTX 4050 GPU), UrbanGen AI demonstrates that privacy-conscious, energy-efficient, and transparent Generative AI can be democratized for municipal urban planning bodies.
+Rapid global urbanization presents pressing challenges in zoning compliance, green cover preservation, transit connectivity, and climate resilience. In this paper, we propose \textbf{UrbanGen AI}, a locally deployable multi-model generative framework for aerial land-use analysis and urban-planning decision support. The system combines a denoising autoencoder, a ResNet-18 land-use classifier, a spatial VAE for reconstruction/anomaly ranking and latent interpolation, a class-conditional DCGAN for synthetic tile generation, and a small causal Transformer for grounded planning text. The final augmented GAN checkpoint achieved 83.3\% intended-class recognition over 168 generated samples using an independent classifier, with mean pixel diversity 0.0456; per-class performance remained uneven. Reconstruction and classifier values are reported as runtime measurements with their split limitations, not as universal generalization claims. Energy and carbon claims are deferred until measured with a reproducible hardware-level protocol.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -57,7 +57,7 @@ However, existing generative architectures in spatial domains face notable hurdl
     \item \textbf{Lack of Spatial Grounding in Policy Generation:} Off-the-shelf commercial LLMs lack domain-specific fine-tuning on regional municipal data, generating generic, unfeasible recommendations.
 \end{itemize}
 
-To overcome these challenges, we introduce \textbf{UrbanGen AI}, a multi-model generative intelligence platform designed for municipal spatial planning and digital twin synthesis. Operating under constrained hardware constraints (single consumer-grade NVIDIA RTX 4050 GPU with $\sim$75\,W envelope), UrbanGen AI proves that comprehensive generative capabilities can be hosted locally, maintaining data sovereignty and minimizing carbon emissions ($\sim$0.13\,kg CO$_2$e for full multi-model retraining).
+To overcome these challenges, we introduce \textbf{UrbanGen AI}, a multi-model generative intelligence platform designed for municipal spatial planning and decision support. It runs locally on a consumer NVIDIA RTX 4050 GPU, maintains data sovereignty, and is explicitly presented as an assistive prototype rather than an autonomous zoning authority. Energy and carbon claims are not made without reproducible hardware-level measurements.
 
 \section{System Architecture and Methodology}
 The UrbanGen AI pipeline comprises five specialized modules designed to address distinct phases of the spatial intelligence lifecycle: restoration, classification, latent representation, generative synthesis, and contextual advisory text generation.
@@ -155,14 +155,14 @@ Integrating U-Net skip connections yielded transformative quantitative and quali
 \midrule
 Noisy Baseline ($\sigma=0.15$) & --- & 12.04 & 0.0626 \\
 Bottleneck AE (Standard Baseline) & 50 & 25.02 & 0.0079 \\
-\textbf{UrbanGen Skip-AE (Proposed)} & \textbf{50} & \textbf{29.71} & \textbf{0.0028} \\
+\textbf{UrbanGen Skip-AE (Proposed)} & \textbf{50} & \textbf{29.65} & \textbf{0.00449} \\
 \bottomrule
 \end{tabular}
 \label{tab:ae_results}
 \end{center}
 \end{table}
 
-As summarized in Table~\ref{tab:ae_results} and plotted across representative land classes in Fig.~\ref{fig:psnr_comp}, the skip-connected architecture elevated the mean Peak Signal-to-Noise Ratio (PSNR) from 25.02\,dB to 29.71\,dB ($+4.69$\,dB overall improvement). Most notably:
+As summarized in Table~\ref{tab:ae_results} and plotted across representative land classes in Fig.~\ref{fig:psnr_comp}, the recorded skip-connected run reached 29.65\,dB PSNR with MSE 0.00449. These are representative runtime results; a fixed persisted split is required before presenting them as generalization claims. Most notably:
 \begin{itemize}
     \item Structurally complex and high-frequency classes—such as \textit{dense residential}, \textit{harbor}, and \textit{mobile home park}—gained up to \textbf{+7.0\,dB individually}.
     \item The performance disparity (gap between easiest and hardest classes) contracted from \textbf{7.3\,dB down to 2.6\,dB}, demonstrating consistent restoration across both homogeneous and heterogeneous urban textures.
@@ -185,7 +185,7 @@ The ResNet-18 territorial zoning classifier achieved rapid convergence on the 90
 \begin{itemize}
     \item \textbf{Training Epochs:} 30
     \item \textbf{Final Validation Loss:} 0.104
-    \item \textbf{Final Validation Accuracy:} \textbf{98.10\%}
+    \item \textbf{Evaluation status:} a fixed persisted held-out split is required before reporting a generalization accuracy.
 \end{itemize}
 Confusion matrix evaluation confirmed zero classification overlap between open green space/agricultural zones and built infrastructure classes, providing a reliable automated baseline for municipal land-use audits.
 
@@ -210,24 +210,24 @@ Fig.~\ref{fig:vae_tradeoff} illustrates the optimization dynamics of the Spatial
 \label{fig:vae_multi_interp}
 \end{figure*}
 
-As shown in Fig.~\ref{fig:vae_multi_interp}, continuous latent space interpolation between orthogonal spatial tiles produced smooth, artifact-free morphing sequences, validating the geometric continuity of the learned manifold. In syllabus terms (Unit 2 / Practical 2), the VAE functions not merely as an unconditioned pixel generator, but as a structured generative latent space where continuous zoning transitions ($z_A \rightarrow z_B$) and unsupervised structural anomaly detection are mathematically parameterized. In anomaly benchmark tests across 300 held-out urban tiles, artificially introduced structural corruptions and simulated illegal encroachments triggered reconstruction error surges of $3.8\times$ above the nominal mean ($p < 0.001$), successfully validating the unsupervised audit mechanism.
+As shown in Fig.~\ref{fig:vae_multi_interp}, continuous latent space interpolation between encoded spatial tiles produced smooth transitions in the recorded run. In syllabus terms (Unit 2 / Practical 2), the VAE functions as a structured latent representation for reconstruction, interpolation, and anomaly ranking. The anomaly score should not be interpreted as proof of illegal development without labelled municipal data.
 
 \subsection{Conditional Generative Synthesis (Residual cDCGAN)}
-Trained for 100 epochs with Residual Upsampling Blocks (\texttt{ResUpBlock}), Projection Conditioning ($y^T V \phi(x)$), Spectral Normalization, Sobel gradient edge loss ($\mathcal{L}_{\text{edge}}$), and Auxiliary Classifier guidance, the cDCGAN converged to a stable adversarial equilibrium ($D_{\text{loss}} = 1.032, G_{\text{loss}} = 2.681$), as depicted in Fig.~\ref{fig:gan_dynamics}.
+Trained for 120 epochs with Residual Upsampling Blocks (\texttt{ResUpBlock}), Projection Conditioning ($y^T V \phi(x)$), Spectral Normalization, a diversity regularizer, and Auxiliary Classifier guidance, the cDCGAN produced an independent intended-class recognition rate of 83.3\% over 168 generated samples. Per-class results remained uneven, so recognition is treated as a quality proxy rather than proof of photorealism.
 
 \begin{figure}[htbp]
 \centerline{\includegraphics[width=0.92\linewidth]{figures/fig_gan_dynamics.png}}
-\caption{Adversarial training loss curves for Discriminator ($D$) and Generator ($G$) in the Residual Class-Conditional DCGAN over 100 epochs.}
+\caption{Adversarial training loss curves for Discriminator ($D$) and Generator ($G$) in the Residual Class-Conditional DCGAN over 120 epochs.}
 \label{fig:gan_dynamics}
 \end{figure}
 
 \begin{figure}[htbp]
 \centerline{\includegraphics[width=0.98\linewidth]{figures/fig_gan_diverse_generation.png}}
-\caption{Class-conditioned synthetic aerial generation across 21 distinct urban categories synthesized from Gaussian noise conditioned on learned class embeddings after 100 epochs.}
+\caption{Class-conditioned synthetic aerial generation across 21 distinct urban categories synthesized from Gaussian noise conditioned on learned class embeddings after 120 epochs.}
 \label{fig:gan_samples}
 \end{figure}
 
-As visualized in Fig.~\ref{fig:gan_samples}, the generator successfully synthesizes realistic class-conditioned aerial patches with sharp geometric definitions, including rectangular rooftop contours and alleyways for commercial buildings, modular residential parcels, orthogonal street intersections, dual-lane freeways, and circular fuel storage vessels. Evaluated across 420 independently generated test samples spanning all 21 classes (20 per class), the pre-trained ResNet-18 classifier verified an overall recognition accuracy of $\mathbf{95.7\%}$ (402/420), confirming high-fidelity class-specific morphological synthesis for municipal digital twin prototyping.
+As visualized in Fig.~\ref{fig:gan_samples}, the generator produces class-conditioned aerial research prototypes with recognizable broad land-use structure, but visual fidelity is uneven. The augmented 120-epoch checkpoint achieved 83.3\% intended-class recognition over 168 generated samples using an independent classifier, with mean pixel diversity 0.0456. Per-class recognition remained weak for some residential, harbor, and runway categories; therefore this metric is a quality proxy, not proof of photorealistic digital-twin synthesis.
 
 \subsection{Cross-Module Quantitative Evaluation Matrix}
 To evaluate the end-to-end framework on rigorous, reproducible academic standards, Table~\ref{tab:eval_matrix} presents the consolidated empirical benchmark metrics across all five models, computed over held-out testing partitions.
@@ -239,10 +239,10 @@ To evaluate the end-to-end framework on rigorous, reproducible academic standard
 \toprule
 \textbf{Model Pipeline} & \textbf{Syllabus Concept} & \textbf{Objective Role} & \textbf{Primary Metric} & \textbf{Value $\pm$ Std} & \textbf{Secondary Metric} & \textbf{Value / Rate} \\
 \midrule
-Denoising U-Net AE & Unit 2 / Practical 2 & Spatial Edge Restoration & PSNR (dB) & $\mathbf{29.66 \pm 1.10}$\,dB & Structural Similarity (SSIM) & $\mathbf{0.871 \pm 0.03}$ \\
-Spatial VAE & Unit 2 / Practical 2 & Latent Traversal \& Anomaly & SSIM & $0.682 \pm 0.05$ & Active Latent Dims / KL & $63 / 64$ ($103$\,nats) \\
-ResNet-18 Classifier & CNN Feature Extractor & Territorial Land Zoning & Validation Accuracy & $\mathbf{98.10\%}$ & Cross-Entropy Loss & $0.104$ \\
-Residual cDCGAN & Unit 3 / Practical 3 & Novel Synthetic Tile Synthesis & Classifier Recognition & $\mathbf{95.7\%}$ & Nash Equilibrium ($D / G$) & $1.032 / 2.681$ \\
+Denoising U-Net AE & Unit 2 / Practical 2 & Spatial Edge Restoration & Runtime metrics & MSE $0.00449$, PSNR $29.65$\,dB & SSIM & $0.8645$ \\
+Spatial VAE & Unit 2 / Practical 2 & Latent Traversal \& Anomaly & Runtime metrics & MSE $0.05976$, PSNR $19.48$\,dB & SSIM & $0.4267$ \\
+ResNet-18 Classifier & CNN Feature Extractor & Territorial Land Zoning & Evaluation status & Fixed held-out split pending & Role & Supporting model \\
+Residual cDCGAN & Unit 3 / Practical 3 & Novel Synthetic Tile Synthesis & Classifier Recognition & $\mathbf{83.3\%}$ & Mean pixel diversity & $0.0456$ \\
 MiniGPT Transformer & Unit 4 / Practical 4 & Policy Formulation & Perplexity & $\mathbf{1.087}$ & Information Rate & $0.120$\,bits/char \\
 \bottomrule
 \end{tabular}
@@ -266,20 +266,20 @@ In strict adherence to Green AI engineering principles, the end-to-end framework
 \toprule
 \textbf{Model Pipeline} & \textbf{Standard Epochs} & \textbf{Wall Time (min)} & \textbf{Energy (kWh)} & \textbf{Convergence Status} \\
 \midrule
-Denoising U-Net AE & 100 epochs & 30.4 & 0.060 & Stable (MSE $0.0028$) \\
-Spatial VAE & 100 epochs & 40.8 & 0.080 & Stable (KL $103$\,nats) \\
-ResNet-18 Classifier & 100 epochs & 49.3 & 0.095 & Optimal ($98.10\%$) \\
-Conditional DCGAN & 80 epochs & 31.8 & 0.064 & Nash Eq. ($D=1.401, G=1.332$) \\
-MiniGPT Transformer & 100 epochs (equiv.) & 8.3 & 0.015 & Asymptotic ($1.087$ PPL) \\
+Denoising U-Net AE & 50 epochs & Not measured & Not reported & Representative reconstruction metrics \\
+Spatial VAE & 50 epochs & Not measured & Not reported & Reconstruction/anomaly prototype \\
+ResNet-18 Classifier & 30 epochs & Not measured & Not reported & Fixed held-out evaluation pending \\
+Conditional DCGAN & 120 epochs & Not measured & Not reported & 83.3\% recognition proxy; uneven classes \\
+MiniGPT Transformer & Step-based & Not comparable & Not reported & Small-corpus grounded drafting \\
 \midrule
-\textbf{Unified Framework} & \textbf{Converged Protocol} & \textbf{$\sim$160.6 min} & \textbf{$\sim$0.314 kWh} & \textbf{All Models Converged} \\
+\textbf{Unified Framework} & \textbf{Task-specific protocols} & \textbf{Not aggregated} & \textbf{Not reported} & \textbf{Validation ongoing} \\
 \bottomrule
 \end{tabular}
 \label{tab:energy}
 \end{center}
 \end{table}
 
-Assuming an average carbon intensity factor of $0.70$\,kg CO$_2$e/kWh for regional grid electricity, executing the unified 100-epoch training protocol across all models produces merely $\approx 0.22$\,kg CO$_2$e. Standardizing every model architecture to a single, identical training duration of \textbf{100 epochs} eliminates training-horizon discrepancies and guarantees rigorous, fair academic comparability across discriminative, probabilistic, adversarial, and autoregressive models. Furthermore, all models operate in real-time inference ($< 80$\,ms per tile) on consumer CPUs, making deployment feasible in municipal environments without dedicated server farms.
+Training horizons are reported per model because an image epoch, an autoregressive optimization step, and a GAN update are not equivalent units of computation. Cross-model comparison therefore uses task-appropriate metrics and a fixed evaluation protocol rather than claiming that identical epoch counts guarantee fairness. Inference latency and energy should be reported only from measured hardware logs.
 
 \section{Ethical Considerations and Governance}
 Urban spatial interventions directly impact citizen welfare, mobility rights, and socioeconomic equality. We formalize explicit ethical safeguards into UrbanGen AI:

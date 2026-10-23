@@ -14,13 +14,13 @@
 
 ### Abstract
 Rapid global urbanization presents pressing challenges in zoning compliance, green cover preservation, transit infrastructure allocation, and microclimate resilience. Traditional Geographic Information System (GIS) workflows demand extensive manual photointerpretation and lack real-time scenario simulation capabilities. In this paper, we propose **UrbanGen AI**, an end-to-end, multi-model generative artificial intelligence framework engineered specifically for sustainable smart city planning and digital twin prototyping. UrbanGen AI unifies four foundational paradigms into a cohesive pipeline: 
-1. An aerial imagery **Denoising Autoencoder** incorporating U-Net skip connections that elevates Peak Signal-to-Noise Ratio (PSNR) from **25.02 dB to 29.71 dB** across 21 land-use classes, reducing easy-to-hard class performance variance from 7.3 dB down to 2.6 dB;
-2. A **ResNet-18 Land-Use Classifier** delivering **98.10% validation accuracy** for rapid territorial zoning audits;
+1. An aerial imagery **Denoising Autoencoder** incorporating U-Net skip connections, evaluated with reconstruction metrics on representative UCMerced tiles;
+2. A **ResNet-18 Land-Use Classifier** for rapid territorial zoning audits, with accuracy reported alongside the evaluation split and sampling protocol;
 3. A spatial **Variational Autoencoder (VAE)** enabling continuous latent-space interpolation and unsupervised spatial anomaly detection with reconstruction error metrics;
 4. A **Class-Conditional Deep Convolutional GAN (cDCGAN)** with spectral normalization and EMA generator weights for synthetic aerial tile generation across diverse land categories; and
 5. An autoregressive causal **Transformer (MiniGPT)** delivering contextual, localized urban planning policy recommendations seeded with real municipal geospatial distributions (e.g., Pune metropolitan region).
 
-By executing the entire deep learning pipeline under low computational budgets (~0.185 kWh total re-training energy, emitting $\approx 0.13$ kg CO$_2$e on an NVIDIA RTX 4050 GPU), UrbanGen AI demonstrates that privacy-conscious, energy-efficient, and transparent Generative AI can be democratized for municipal urban planning bodies.
+The system is designed to run locally on a consumer NVIDIA RTX 4050 GPU. Energy and carbon claims are intentionally not reported until measured with a reproducible hardware-level protocol.
 
 **Keywords:** Generative Artificial Intelligence, Urban Planning, Remote Sensing, Denoising Autoencoder, Variational Autoencoder, Conditional GAN, Transformers, Smart Cities, Green AI.
 
@@ -37,7 +37,7 @@ However, existing generative architectures in spatial domains face notable hurdl
 - **Prohibitive Compute and Carbon Intensity:** Many modern generative frameworks require massive datacenter compute clusters, making them inaccessible to local municipal bodies and contradictory to environmental sustainability mandates.
 - **Lack of Spatial Grounding in Policy Generation:** Off-the-shelf commercial LLMs lack domain-specific fine-tuning on regional municipal data, generating generic, unfeasible recommendations.
 
-To overcome these challenges, we introduce **UrbanGen AI**, a multi-model generative intelligence platform designed for municipal spatial planning and digital twin synthesis. Operating under constrained hardware constraints (single consumer-grade NVIDIA RTX 4050 GPU with ~75 W envelope), UrbanGen AI proves that comprehensive generative capabilities can be hosted locally, maintaining data sovereignty and minimizing carbon emissions (~0.13 kg CO$_2$e for full multi-model retraining).
+To overcome these challenges, we introduce **UrbanGen AI**, a multi-model generative intelligence platform designed for municipal spatial planning and decision support. It runs locally on a consumer NVIDIA RTX 4050 GPU, maintains data sovereignty, and is explicitly presented as an assistive prototype rather than an autonomous zoning authority. Energy and carbon claims are not made without reproducible hardware-level measurements.
 
 ---
 
@@ -54,7 +54,7 @@ Input Aerial/Satellite Imagery
        ├─────────────────────────────────┐
        ▼                                 ▼
 [Module 2: ResNet-18 Classifier]  [Module 3: Spatial VAE]
-(Zoning audit: 98.10% Acc)       (Latent space interpolation & Anomaly detection)
+(Zoning audit)                    (Latent interpolation & anomaly ranking)
        │                                 │
        ▼                                 ▼
 [Module 5: MiniGPT Policy Engine] [Module 4: Conditional DCGAN]
@@ -97,7 +97,7 @@ To augment sparse aerial datasets and generate hypothetical planning scenarios o
 - **Generator ($G$):** Takes a latent Gaussian noise vector $\mathbf{z} \sim \mathcal{N}(0, \mathbf{I}_{128})$ concatenated with a learned class embedding $\mathbf{e}_y \in \mathbb{R}^{64}$. A projection block maps the 192-dimensional vector into an $8 \times 8 \times 512$ feature volume, followed by four transposed convolution blocks with Batch Normalization and ReLU activations, concluding with a $\text{Tanh}$ transfer function.
 - **Discriminator ($D$):** Receives image $x$ alongside a spatially broadcasted class map $\mathbf{E}_y \in \mathbb{R}^{1 \times 128 \times 128}$, forming a 4-channel input. Five successive spectral-normalized convolutional layers with LeakyReLU downsample features into an unconstrained adversarial scalar score.
 
-We adopt two Discriminator updates per Generator update, paired with soft label smoothing ($y_{\text{real}}=0.9, y_{\text{fake}}=0.1$) and Exponential Moving Average (EMA, decay 0.999) weight tracking on the Generator.
+We use soft label smoothing ($y_{\text{real}}=0.9, y_{\text{fake}}=0.1$), class-conditioning, a diversity regularizer, and Exponential Moving Average (EMA, decay 0.999) weight tracking on the Generator. The final augmented run used 120 epochs. Earlier paired feature and edge losses were removed because they compared each generated sample with an unrelated real tile and encouraged blurry class averages.
 
 ### E. Urban Plan Generator (MiniGPT Transformer)
 To bridge quantitative visual spatial analysis with qualitative policy generation, UrbanGen AI implements a custom decoder-only autoregressive causal Transformer. The model features 4 pre-layer-normalization Transformer blocks, 4 attention heads, embedding dimension $d_{\text{model}} = 256$, and context window length $T=192$.
@@ -122,7 +122,7 @@ All models were implemented in PyTorch 2.x and evaluated using the UCMerced Land
 |:---|:---:|:---:|:---:|
 | Noisy Baseline ($\sigma=0.15$) | — | 12.04 dB | 0.0626 |
 | Bottleneck AE (Standard Baseline) | 50 | 25.02 dB | 0.0079 |
-| **UrbanGen Skip-AE (Proposed)** | **50** | **29.71 dB** | **0.0028** |
+| **UrbanGen Skip-AE (Proposed)** | **50** | **29.65 dB** | **0.00449** |
 
 ![PSNR Comparison](figures/fig_psnr_comparison.png)
 *Fig. 2: Class-wise PSNR comparison showing restoration improvements of the proposed Skip-AE over the baseline bottleneck Autoencoder.*
@@ -139,8 +139,8 @@ All models were implemented in PyTorch 2.x and evaluated using the UCMerced Land
 
 - **Training Epochs:** 30
 - **Final Validation Loss:** 0.104
-- **Final Validation Accuracy:** **98.10%**
-- **Impact:** Confusion matrix evaluation confirmed zero classification overlap between open green space/agricultural zones and built infrastructure classes, providing a reliable automated baseline for municipal land-use audits.
+- **Evaluation status:** The classifier is a supporting land-use model. Its accuracy must be reported with a fixed, held-out split; the earlier representative-sample score is not treated as a generalization estimate.
+- **Impact:** It supplies class labels for zoning support and for the GAN recognition proxy, but does not replace planner review.
 
 ### D. Spatial VAE Multi-Objective Optimization & Latent Traversal
 
@@ -153,7 +153,7 @@ All models were implemented in PyTorch 2.x and evaluated using the UCMerced Land
 **Key Findings:**
 - Under our reconstruction-priority configuration ($\beta=10^{-4}$), reconstruction loss descends to 0.075, while KL divergence stabilizes at 103 nats as the spatial latent encoding captures granular structural representations.
 - Linear interpolation produces continuous, artifact-free morphing sequences without geometric tearing.
-- In anomaly benchmark tests across 300 held-out urban tiles, artificially introduced structural corruptions and simulated illegal encroachments triggered reconstruction error surges of **$3.8\times$ above the nominal mean ($p < 0.001$)**, validating the unsupervised audit mechanism.
+- The runtime baseline is computed from real UCMerced tiles (mean absolute reconstruction error approximately 0.0725 with standard deviation approximately 0.0463 in the recorded run). This supports anomaly ranking, not a causal claim that an image represents illegal development; such a claim requires labelled municipal data.
 
 ### E. Class-Conditional Deep Convolutional Synthesis (cDCGAN)
 
@@ -165,7 +165,7 @@ All models were implemented in PyTorch 2.x and evaluated using the UCMerced Land
 
 **Architectural Taxonomy & Academic Clarification:**
 - **Why is it called Conditional DCGAN?** It is both a **DCGAN** (Deep Convolutional GAN architecture using strided/fractionally-strided convolutions, batch norm, and no spatial pooling layers, per Radford et al., 2015) and a **Conditional GAN** (conditioning generator and discriminator on class embeddings, per Mirza & Osindero, 2014).
-- **Game-Theoretic Convergence & Loss:** In adversarial minimax optimization, the generator's loss converges to a non-zero **Nash equilibrium** ($G \approx 1.674, D \approx 0.465$). A generator loss approaching zero in a GAN indicates discriminator failure or mode collapse. The non-zero equilibrium confirms healthy adversarial competition.
+- **Independent checkpoint check:** The augmented 120-epoch checkpoint achieved **83.3% intended-class recognition** over 168 generated samples using the independent land-use classifier, with mean pixel diversity **0.0456**. Per-class recognition remained uneven (buildings 62.5%, dense residential 25.0%, harbor 0%, and runway 12.5%), so the result is a quality proxy rather than proof of photorealism.
 
 ---
 
@@ -173,11 +173,11 @@ All models were implemented in PyTorch 2.x and evaluated using the UCMerced Land
 
 | Model Pipeline | Syllabus Module | Objective Role | Primary Metric | Measured Value | Secondary Metric | Secondary Value |
 |:---|:---|:---|:---|:---:|:---|:---:|
-| **Denoising U-Net AE** | Unit 2 / Practical 2 | Spatial Edge Restoration | PSNR (dB) | **$29.66 \pm 1.10$ dB** | SSIM | **$0.871 \pm 0.03$** |
-| **Spatial VAE** | Unit 2 / Practical 2 | Latent Traversal & Anomaly | SSIM | $0.682 \pm 0.05$ | Active Latent Dims / KL | $63 / 64$ ($103$ nats) |
-| **ResNet-18 Classifier** | Supporting CNN | Territorial Land Zoning | Validation Accuracy | **$98.10\%$** | Cross-Entropy Loss | $0.104$ |
-| **Class-Conditional DCGAN** | Unit 3 / Practical 3 | Novel Synthetic Tile Synthesis | Classifier Recognition Rate | $14.88\%$ | Nash Equilibrium ($D / G$) | $0.465 / 1.674$ |
-| **MiniGPT Transformer** | Unit 4 / Practical 4 | Grounded Policy Formulation | Held-out Perplexity | **$1.087$** | Information Rate | $0.120$ bits/char |
+| **Denoising U-Net AE** | Unit 2 / Practical 2 | Spatial Edge Restoration | Runtime representative metrics | MSE $0.00449$, PSNR $29.65$ dB, SSIM $0.8645$ | Split status | Fixed split required for paper claim |
+| **Spatial VAE** | Unit 2 / Practical 2 | Latent Traversal & Anomaly | Runtime representative metrics | MSE $0.05976$, PSNR $19.48$ dB, SSIM $0.4267$ | Active Latent Dims | $63/64$ |
+| **ResNet-18 Classifier** | Supporting CNN | Territorial Land Zoning | Evaluation status | Fixed held-out evaluation pending | Role | Supporting discriminator |
+| **Class-Conditional DCGAN** | Unit 3 / Practical 3 | Novel Synthetic Tile Synthesis | Intended-class recognition | **83.3% / 168 samples** | Mean pixel diversity | **0.0456** |
+| **MiniGPT Transformer** | Unit 4 / Practical 4 | Grounded Policy Formulation | Held-out perplexity | Reported only for the small templated corpus | Limitation | Not general-purpose language generation |
 
 ---
 
@@ -188,14 +188,13 @@ All models were implemented in PyTorch 2.x and evaluated using the UCMerced Land
 
 | Model Pipeline | Standard Epochs | Approx. Wall Time | Energy Consumption | Convergence Status |
 |:---|:---:|:---:|:---:|:---|
-| **Denoising U-Net AE** | **100 epochs** | ~30.4 min | ~0.060 kWh | Stable (MSE $0.0028$) |
-| **Spatial VAE** | **100 epochs** | ~40.8 min | ~0.080 kWh | Stable (KL $103$ nats) |
-| **ResNet-18 Classifier** | **100 epochs** | ~49.3 min | ~0.095 kWh | Optimal ($98.10\%$) |
-| **Class-Conditional DCGAN** | **100 epochs** | ~35.1 min | ~0.070 kWh | Nash Eq. ($D=0.47, G=1.67$) |
-| **MiniGPT Transformer** | **100 epochs** (equiv.) | ~8.3 min | ~0.015 kWh | Asymptotic ($1.087$ PPL) |
-| **Unified Framework** | **100 epochs** | **~163.9 min** | **~0.320 kWh** | **All Models Converged** |
+| **Denoising U-Net AE** | 50 epochs in the recorded run | Not measured reproducibly | Not reported | Representative reconstruction metrics |
+| **Spatial VAE** | 50 epochs in the recorded run | Not measured reproducibly | Not reported | Reconstruction/anomaly prototype |
+| **ResNet-18 Classifier** | 30 epochs in the recorded run | Not measured reproducibly | Not reported | Fixed held-out evaluation pending |
+| **Class-Conditional DCGAN** | 120 epochs | Not measured reproducibly | Not reported | 83.3% recognition proxy; uneven classes |
+| **MiniGPT Transformer** | Step-based training | Not comparable to image epochs | Not reported | Small-corpus grounded drafting |
 
-Assuming an average carbon intensity factor of $0.70$ kg CO$_2$e/kWh for regional grid electricity, executing the unified 100-epoch training protocol across all models produces merely **$\approx 0.22$ kg CO$_2$e**. Standardizing every model architecture to a single, identical training duration of **100 epochs** eliminates training-horizon discrepancies and guarantees rigorous, fair academic comparability across discriminative, probabilistic, adversarial, and autoregressive models. Furthermore, all models operate in real-time inference ($< 80$ ms per tile) on consumer CPUs, making deployment feasible in municipal environments without dedicated server farms.
+Training horizons are reported per model because an image epoch, an autoregressive optimization step, and a GAN update are not equivalent units of computation. Cross-model comparison therefore uses task-appropriate metrics and a fixed evaluation protocol rather than claiming that identical epoch counts guarantee fairness. Inference latency and energy should be reported only from measured hardware logs.
 
 ---
 

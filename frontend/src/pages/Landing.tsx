@@ -77,7 +77,7 @@ const PIPELINE = [
     desc: 'Flags parcels whose pattern doesn’t match what real land use looks like.',
   },
   {
-    id: 'gan', icon: ImageIcon, title: 'Augment', subtitle: 'Conditional DCGAN · 100 epochs',
+    id: 'gan', icon: ImageIcon, title: 'Augment', subtitle: 'Conditional DCGAN · 120 epochs',
     desc: 'Generates class-conditional synthetic tiles for data augmentation.',
   },
   {

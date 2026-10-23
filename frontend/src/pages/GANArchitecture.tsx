@@ -117,7 +117,7 @@ export default function GANArchitecture() {
 
       <TrainingCurveCard
         modelKey="gan"
-        title="Class-Conditional DCGAN Adversarial Training Dynamics (100 Epochs)"
+        title="Class-Conditional DCGAN Adversarial Training Dynamics (120 Epochs)"
         description="Minimax adversarial optimization trajectory showing Discriminator loss stabilizing near equilibrium (D_loss ≈ 1.03), Generator adversarial loss (g_adv ≈ 1.20), and Generator semantic classification loss descending directly near zero (g_cls: 2.74 → 0.41), confirming sharp structural recognition."
         curves={[
           { key: 'd_loss', label: 'Discriminator Loss (D)', color: 'var(--danger)' },

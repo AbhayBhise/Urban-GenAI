@@ -76,7 +76,7 @@ export default function ClassifierArchitecture() {
       <TrainingCurveCard
         modelKey="transformer"
         title="Land-Use Classifier Training Dynamics (30 Epochs)"
-        description="Training loss (cross-entropy), validation loss, and validation accuracy across 30 fine-tuning epochs on UCMerced. Final validation accuracy stabilizes at 98.10%."
+        description="Training loss (cross-entropy), validation loss, and validation accuracy across 30 fine-tuning epochs on UCMerced. Use only with the persisted fixed validation split; representative runtime samples are diagnostic."
         curves={[
           { key: 'loss', label: 'Train Loss', color: 'var(--accent)' },
           { key: 'val_loss', label: 'Validation Loss', color: 'var(--accent2)' },

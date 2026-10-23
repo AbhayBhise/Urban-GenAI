@@ -281,9 +281,9 @@ function ClassifierPanel() {
             This is a confusion matrix built by re-running the live classifier on a random sample right now —
             useful for seeing <em>which specific classes get confused for which others</em>, not just an overall
             number. It is <strong style={{ color: 'var(--text)' }}>not</strong> the original train/validation
-            split from training (that split isn't persisted), so this number can differ from the reported{' '}
-            98.1% validation accuracy — most likely higher, since this sample can include images the model saw
-            during training. Treat this as a diagnostic tool, not a re-measurement of the headline accuracy.
+            split from training (that split isn't persisted in the older checkpoint), so this number is not a
+            generalization estimate and may include images the model saw
+            during training. Treat this as a diagnostic tool, not a generalization estimate or headline accuracy.
           </p>
           <p style={{ margin: 0 }}>
             {worst.length > 0
@@ -342,9 +342,9 @@ function GANPanel() {
             An overall rate of {(metrics.overall_recognition_rate * 100).toFixed(0)}% quantitatively confirms
             the architectural enhancement: trained with a Projection Discriminator and Auxiliary Semantic Guidance
             (coupling GAN adversarial objectives with deep feature feedback from the pre-trained ResNet18 classifier),
-            both broad textures and distinct geometric land-use categories (such as tennis court boundaries, airport
-            runways, airplane structures, and baseball infields) are synthesized with high fidelity and recognizable
-            structural coherence.
+            the result is only a classifier-based quality proxy, not a photorealism score. Read the per-class chart
+            below: performance can be uneven for buildings, residential areas, harbors, and runways. Generated tiles
+            require human inspection before they are used as planning evidence or training data.
           </p>
         </div>
       </div>

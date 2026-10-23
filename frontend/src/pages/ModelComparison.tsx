@@ -67,9 +67,9 @@ export default function ModelComparison() {
       model: 'Class-Conditional DCGAN (cDCGAN)',
       task: 'Generate synthetic class-conditional tiles for data augmentation',
       syllabus: 'Unit 3 / Pract 3: DCGAN architecture + Conditional GAN label embedding',
-      metric: `Recognition rate ${live.gan ? (live.gan.rate * 100).toFixed(1) + ' %' : '—'} (100 epochs)`,
-      error: 'Minor artifacts on intricate multi-modal edge boundaries',
-      verdict: 'Best for aerial data synthesis. Recognition rate is a classifier-based quality proxy; inspect the live per-class breakdown on Evaluation.',
+      metric: `Recognition proxy ${live.gan ? (live.gan.rate * 100).toFixed(1) + ' %' : '—'} (120 epochs)`,
+      error: 'Per-class quality is uneven; inspect buildings, residential, harbor, and runway results before use.',
+      verdict: 'Useful for syllabus-aligned synthetic tile generation, but not a photorealism guarantee or planning evidence.',
     },
     {
       model: 'MiniGPT Transformer',

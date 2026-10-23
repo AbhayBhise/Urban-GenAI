@@ -142,7 +142,7 @@ export default function ResearchProgress() {
             { label: 'MiniGPT Transformer', value: '4 Layers / 4 Heads', sub: '3,000 Steps | 192 Block Size' },
             { label: 'Training Hardware', value: 'NVIDIA RTX 4050', sub: 'Laptop GPU (~75 W)' },
             { label: 'Total Retrain Budget', value: '~1.6 Hours', sub: 'All models (~0.19 kWh)' },
-            { label: 'Estimated Carbon Footprint', value: '~0.13 kg CO₂e', sub: 'At ~0.7 kg/kWh grid intensity' },
+            { label: 'Carbon Footprint', value: 'Not reported', sub: 'Requires reproducible hardware-level measurement' },
           ].map((m, i) => (
             <div
               key={i}

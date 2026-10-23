@@ -229,7 +229,7 @@ export default function GAN({ isGanTrained }: { isGanTrained?: boolean }) {
           <h1 className="gan-title">GAN — Urban Tile Generator</h1>
           <p className="gan-subtitle">
             Conditional DCGAN trained on 21 UCMerced land-use categories. Select a class,
-            choose how many tiles to generate, and the Generator synthesises realistic
+            choose how many tiles to generate, and the Generator synthesises research-prototype
             128×128 aerial imagery from pure Gaussian noise — no real image required.
           </p>
         </div>
@@ -535,17 +535,18 @@ export default function GAN({ isGanTrained }: { isGanTrained?: boolean }) {
             <div>
               <strong style={{ color: 'var(--text)' }}>Projection Discriminator</strong><br />
               Employs Miyato & Koyama projection conditioning ($y^T V \phi(x)$) combined with Spectral
-              Normalization and an Auxiliary Classifier head to eliminate mode collapse.
+              Normalization and an Auxiliary Classifier head to reduce, not eliminate, mode collapse.
             </div>
             <div>
               <strong style={{ color: 'var(--text)' }}>Semantic Guidance</strong><br />
-              Trained with auxiliary perceptual feedback from the pre-trained 99.3% ResNet18 classifier,
-              enforcing realistic class-specific geometric patterns (court lines, runways, planes).
+              Trained with class guidance and diversity regularization (the classifier is an evaluation aid),
+              enforcing class-specific structure; the independent checkpoint reached 83.3% intended-class
+              recognition over 168 generated samples, with uneven per-class performance.
             </div>
             <div>
               <strong style={{ color: 'var(--text)' }}>Training Details</strong><br />
-              80 epochs on RTX 4050 GPU, Adam (lr=2e-4, β₁=0.5), EMA weights (decay=0.999),
-              achieving 100% classifier recognition across all 21 UCMerced classes.
+              120 epochs on RTX 4050 GPU, Adam (lr=2e-4), EMA weights (decay=0.999),
+              orientation-safe augmentation. Recognition is a quality proxy, not a realism score.
             </div>
           </div>
         </div>
