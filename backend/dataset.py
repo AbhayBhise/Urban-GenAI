@@ -76,14 +76,41 @@ class EuroSATDataset(Dataset):
         return self.transform(img), label
 
 
-def get_dataloaders(batch_size=32, val_split=0.1):
-    dataset = UCMercedDataset()
-    val_size = int(len(dataset) * val_split)
-    train_size = len(dataset) - val_size
-    train_ds, val_ds = random_split(dataset, [train_size, val_size])
+def _aerial_train_transform(size):
+    return transforms.Compose([
+        transforms.Resize((size, size)),
+        transforms.RandomHorizontalFlip(),
+        transforms.RandomVerticalFlip(),
+        transforms.RandomChoice([
+            transforms.Lambda(lambda img, angle=angle: img.rotate(angle))
+            for angle in (0, 90, 180, 270)
+        ]),
+        transforms.ColorJitter(brightness=0.08, contrast=0.08, saturation=0.06, hue=0.02),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
+    ])
+
+
+def _aerial_eval_transform(size):
+    return transforms.Compose([
+        transforms.Resize((size, size)),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
+    ])
+
+
+def get_dataloaders(batch_size=32, val_split=0.1, seed=42):
+    train_base = UCMercedDataset(transform=_aerial_train_transform(128))
+    val_base = UCMercedDataset(transform=_aerial_eval_transform(128))
+    val_size = int(len(train_base) * val_split)
+    train_size = len(train_base) - val_size
+    split_generator = torch.Generator().manual_seed(seed)
+    train_indices, val_indices = random_split(range(len(train_base)), [train_size, val_size], generator=split_generator)
+    train_ds = torch.utils.data.Subset(train_base, train_indices.indices)
+    val_ds = torch.utils.data.Subset(val_base, val_indices.indices)
     train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True, num_workers=0, pin_memory=True, drop_last=True)
     val_loader = DataLoader(val_ds, batch_size=batch_size, shuffle=False, num_workers=0, pin_memory=True)
-    print(f"UCMerced: {len(dataset)} images | Train: {train_size} | Val: {val_size}")
+    print(f"UCMerced: {len(train_base)} images | Train: {train_size} | Val: {val_size} | seed={seed}")
     return train_loader, val_loader
 
 
