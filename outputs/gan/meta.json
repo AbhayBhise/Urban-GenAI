@@ -27,5 +27,5 @@
   "epochs_trained": 100,
   "batch_size": 32,
   "lr": 0.0002,
-  "d_steps": 2
+  "architecture": "Projection DCGAN + AC-GAN Auxiliary Guidance"
 }

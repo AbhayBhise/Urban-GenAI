@@ -5,8 +5,9 @@ import { apiFetch } from '../lib/api';
 // [dataKey, colour, axis] — 'r' = right-hand axis (used for KL, which is
 // ~1000x larger than the reconstruction term and would otherwise flatten it).
 const MODELS = [
-  { key: 'ae', label: 'Autoencoder', x: 'epoch', lines: [['loss', 'var(--accent)', 'l']] },
+  { key: 'ae', label: 'Autoencoder (Denoising U-Net)', x: 'epoch', lines: [['loss', 'var(--accent)', 'l']] },
   { key: 'vae', label: 'VAE — reconstruction (left axis) vs KL divergence (right axis)', x: 'epoch', lines: [['recon', 'var(--accent)', 'l'], ['kl', 'var(--accent2)', 'r']] },
+  { key: 'gan', label: 'Class-Conditional DCGAN — Discriminator vs Adversarial & Class Error', x: 'epoch', lines: [['d_loss', 'var(--danger)', 'l'], ['g_adv', 'var(--accent)', 'l'], ['g_cls', 'var(--success)', 'l']] },
   { key: 'gpt', label: 'Urban Plan Generator (MiniGPT)', x: 'step', lines: [['loss', 'var(--accent)', 'l'], ['val_loss', 'var(--accent2)', 'l']] },
   { key: 'transformer', label: 'Land-Use Classifier', x: 'epoch', lines: [['loss', 'var(--accent)', 'l'], ['val_loss', 'var(--accent2)', 'l'], ['val_accuracy', 'var(--success)', 'l']] },
 ];

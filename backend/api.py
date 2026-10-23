@@ -692,9 +692,13 @@ def compute_gan_evaluation(n_per_class=8):
             fake_imgs = gan_generator(z, labels)  # [-1, 1], 128x128
 
             # Resize from the GAN's native 128x128 to the classifier's
-            # expected 224x224 input.
+            # expected 224x224 input and apply standard ImageNet normalization.
             resized = F.interpolate(fake_imgs, size=(224, 224), mode='bilinear', align_corners=False)
-            logits = transformer(resized)
+            unnorm = (resized + 1.0) * 0.5
+            mean = torch.tensor([0.485, 0.456, 0.406], device=device).view(1, 3, 1, 1)
+            std = torch.tensor([0.229, 0.224, 0.225], device=device).view(1, 3, 1, 1)
+            normed = (unnorm - mean) / std
+            logits = transformer(normed)
             preds = logits.argmax(dim=1)
             correct = int((preds == class_idx).sum().item())
 
@@ -1085,8 +1089,12 @@ async def infer_vae_urbanize(request: Request, file: UploadFile = File(...), alp
     target_path = random.choice(URBANIZATION_TARGET_PATHS)
     target_img = Image.open(target_path).convert('RGB')
 
+    # Keep the original scene layout, but make the developed-tile texture
+    # materially visible. A weak style term can converge to an almost unchanged
+    # copy of the upload.
     result = await asyncio.to_thread(
-        run_urbanization_style_transfer, img, target_img, style_weight=alpha * 1e5,
+        run_urbanization_style_transfer, img, target_img,
+        content_weight=1.5, style_weight=alpha * 2.5e5,
     )
     display = result.clamp(0, 1) * 2 - 1  # tensor_to_b64 expects [-1, 1]
     return {"urbanized": tensor_to_b64(display[0]), "alpha": alpha}
@@ -1101,17 +1109,27 @@ async def generate_vae_random(request: Request):
     mean of a real encoded image, see infer_vae) and interpolation (which
     blends two real posteriors, see infer_vae_interpolate).
 
-    Note: this checkpoint was trained with the KL term deliberately
-    de-weighted in favor of reconstruction fidelity (see models/vae.py), so
-    the posterior is not tightly matched to N(0, I). Prior samples can
-    therefore look more abstract or less realistic than reconstructions --
-    that's an expected, honest consequence of that trade-off, not a bug."""
+    Because the KL term is deliberately near-zero, independent prior noise
+    does not match the spatial latent distribution learned by this decoder.
+    The endpoint therefore samples around a real posterior instead, which is
+    the reason its output remains visually identifiable."""
     if not vae_loaded:
         return Response(status_code=400, content="VAE not trained")
+    # This checkpoint's near-zero KL weight means independent N(0, I) noise is
+    # outside the spatial latent distribution the decoder learned. Start from
+    # a randomly selected real tile's posterior, then add controlled noise so
+    # the output remains a random but recognizable land-use sample.
+    source_img = _random_ucmerced_image()
+    source_x = vae_transform(source_img).unsqueeze(0).to(device)
     with torch.no_grad():
-        z = torch.randn(1, VAE_LATENT_CHANNELS, 8, 8, device=device)
+        mu, logvar = vae.encode(source_x)
+        posterior_std = torch.exp(0.5 * logvar).clamp(0.05, 0.35)
+        z = mu + 0.35 * posterior_std * torch.randn_like(mu)
         generated = vae.decode(z)
-    return {"generated": tensor_to_b64(generated[0])}
+    return {
+        "generated": tensor_to_b64(generated[0]),
+        "sampling_method": "random real-tile posterior with controlled latent noise",
+    }
 
 
 @app.post("/infer/transformer", dependencies=GUARDED)

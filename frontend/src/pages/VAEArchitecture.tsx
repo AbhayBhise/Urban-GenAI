@@ -1,5 +1,6 @@
 import { Box, Arrow, ArrowheadDef, SyllabusTable, ProvenanceNote, DiagramBackground, COLORS } from '../lib/archDiagram';
 import { WorkflowAnimation } from '../lib/WorkflowAnimation';
+import { TrainingCurveCard } from '../components/TrainingCurveCard';
 
 export default function VAEArchitecture() {
   return (
@@ -146,6 +147,16 @@ export default function VAEArchitecture() {
           </div>
         </div>
       </div>
+
+      <TrainingCurveCard
+        modelKey="vae"
+        title="Spatial VAE Training Dynamics (50 Epochs)"
+        description="Dual-axis training dynamics showing reconstruction loss (left axis, descending 0.199 → 0.075) alongside analytical KL divergence (right axis, climbing and stabilizing at ~103 nats without posterior collapse)."
+        curves={[
+          { key: 'recon', label: 'Reconstruction Loss (MSE)', color: 'var(--accent)', yAxisId: 'l' },
+          { key: 'kl', label: 'KL Divergence (nats)', color: 'var(--accent2)', yAxisId: 'r' },
+        ]}
+      />
 
       <SyllabusTable rows={[
         ['Encoder / Decoder structure', 'ResNet18 encoder + CNN decoder, shown above'],

@@ -1,6 +1,6 @@
-// TransformerArchitecture component
 import { Box, Arrow, ArrowheadDef, SyllabusTable, ProvenanceNote, DiagramBackground, COLORS } from '../lib/archDiagram';
 import { WorkflowAnimation } from '../lib/WorkflowAnimation';
+import { TrainingCurveCard } from '../components/TrainingCurveCard';
 
 export default function TransformerArchitecture() {
   return (
@@ -110,6 +110,17 @@ export default function TransformerArchitecture() {
           </div>
         </div>
       </div>
+
+      <TrainingCurveCard
+        modelKey="gpt"
+        xKey="step"
+        title="MiniGPT Urban Planning Transformer Training Dynamics (3,000 Steps)"
+        description="Character-level autoregressive cross-entropy loss across 3,000 training iterations. Training loss descends from 4.239 down to 0.087, while validation loss converges to 0.0836, yielding 1.087 held-out perplexity."
+        curves={[
+          { key: 'loss', label: 'Cross-Entropy Train Loss', color: 'var(--accent)' },
+          { key: 'val_loss', label: 'Validation Loss', color: 'var(--accent2)' },
+        ]}
+      />
 
       <SyllabusTable rows={[
         ['Self-attention mechanism', 'Causal multi-head self-attention, implemented from scratch and diagrammed above'],

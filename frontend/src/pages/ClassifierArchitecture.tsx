@@ -1,6 +1,6 @@
-// ClassifierArchitecture component
 import { Box, Arrow, ArrowheadDef, SyllabusTable, ProvenanceNote, DiagramBackground, COLORS } from '../lib/archDiagram';
 import { WorkflowAnimation } from '../lib/WorkflowAnimation';
+import { TrainingCurveCard } from '../components/TrainingCurveCard';
 
 export default function ClassifierArchitecture() {
   return (
@@ -72,6 +72,17 @@ export default function ClassifierArchitecture() {
           </div>
         </div>
       </div>
+
+      <TrainingCurveCard
+        modelKey="transformer"
+        title="Land-Use Classifier Training Dynamics (30 Epochs)"
+        description="Training loss (cross-entropy), validation loss, and validation accuracy across 30 fine-tuning epochs on UCMerced. Final validation accuracy stabilizes at 98.10%."
+        curves={[
+          { key: 'loss', label: 'Train Loss', color: 'var(--accent)' },
+          { key: 'val_loss', label: 'Validation Loss', color: 'var(--accent2)' },
+          { key: 'val_accuracy', label: 'Validation Accuracy', color: 'var(--success)' },
+        ]}
+      />
 
       <SyllabusTable rows={[
         ['Not counted toward the 4-model requirement', 'Explicitly disclaimed — discriminative CNN, not one of AE/VAE/GAN/Transformer'],

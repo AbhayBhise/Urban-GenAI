@@ -1,6 +1,7 @@
 // AEArchitecture component
 import { Box, Arrow, ArrowheadDef, SyllabusTable, ProvenanceNote, DiagramBackground, COLORS } from '../lib/archDiagram';
 import { WorkflowAnimation } from '../lib/WorkflowAnimation';
+import { TrainingCurveCard } from '../components/TrainingCurveCard';
 
 export default function AEArchitecture() {
   return (
@@ -114,6 +115,15 @@ export default function AEArchitecture() {
           </div>
         </div>
       </div>
+
+      <TrainingCurveCard
+        modelKey="ae"
+        title="Denoising Autoencoder Training Dynamics (50 Epochs)"
+        description="Empirical Mean Squared Error (MSE) reconstruction loss per epoch during training on UCMerced aerial tiles with σ=0.15 Gaussian corruption. Converges smoothly from 0.1155 down to 0.0058 MSE."
+        curves={[
+          { key: 'loss', label: 'MSE Reconstruction Loss', color: 'var(--accent)' },
+        ]}
+      />
 
       <SyllabusTable rows={[
         ['Encoder / Decoder structure', 'ResNet18 encoder + skip-connected CNN decoder, shown above'],

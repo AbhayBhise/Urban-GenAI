@@ -705,6 +705,11 @@ export default function App() {
                       )}
                       {activeView === 'vae' && metrics?.kl != null && (
                         <div style={{ color: 'var(--muted)', fontSize: '0.8rem', marginTop: '-10px', marginBottom: '10px', padding: '0 5px', lineHeight: 1.55 }}>
+                          <strong>Why these numbers have this scale:</strong> MSE is the mean squared difference across all normalized
+                          128×128×3 pixels, so it is a small per-pixel decimal. KL divergence is summed across the 64×8×8 spatial
+                          latent values, so the total is in nats while <strong>KL / latent dim</strong> is the per-value amount.
+                          μ and log(var) are means over that same latent grid. The near-zero β used in training lets those latent values
+                          retain scene detail instead of forcing them to match independent N(0, I) noise.<br /><br />
                           <strong>KL divergence</strong> (shown above, in nats) measures how far the encoder's posterior q(z|x) sits from the
                           prior N(0, I). The reparameterization trick z = μ + σ·ε makes this term differentiable so it can be trained.
                           The objective is <code>reconstruction + β·KL</code>; this checkpoint uses a near-zero β to keep reconstructions sharp,
@@ -784,12 +789,13 @@ export default function App() {
               <div className="card" style={{ marginBottom: '30px' }}>
                 <div className="card-title">Generate Random Sample</div>
                 <p style={{ color: 'var(--muted)', fontSize: '0.85rem', lineHeight: 1.5, marginBottom: '15px' }}>
-                  Samples a latent z ~ N(0, I) directly from the prior — with no input image — and
-                  decodes it. This is the VAE's defining generative capability, distinct from
-                  reconstruction (above) and interpolation (which both decode real, encoded
-                  images). This checkpoint was trained to prioritize reconstruction fidelity over
-                  matching the prior exactly, so a pure prior sample can look more abstract than a
-                  reconstruction — that's an expected trade-off, not a bug.
+                  Generates a random land-use tile by selecting a real UCMerced tile internally,
+                  encoding its learned latent representation, and adding controlled latent noise.
+                  This checkpoint uses a near-zero KL weight, so independent N(0, I) noise is outside
+                  the decoder's learned spatial latent distribution and produces the blurred,
+                  unidentifiable output seen with pure prior sampling. The learned-manifold method
+                  stays in a region the decoder was trained to render, so roads, fields, buildings,
+                  or other land-use structure can remain identifiable.
                 </p>
                 <button className="btn" style={{ maxWidth: '320px' }} onClick={handleGenerateRandom} disabled={randomGenLoading || status[statusKey] !== 'Trained'}>
                   {randomGenLoading ? 'Generating...' : 'Generate Random Sample'}
@@ -805,7 +811,7 @@ export default function App() {
                 {randomGenImg && (
                   <div style={{ marginTop: '15px', maxWidth: '320px' }}>
                     <div style={{ color: 'var(--muted)', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px', textAlign: 'center' }}>
-                      Generated from N(0, I)
+                      Random learned-manifold sample
                     </div>
                     <img src={randomGenImg} style={{ width: '100%', height: 'auto', borderRadius: '4px', border: '1px solid var(--border)' }} alt="Random prior sample" />
                   </div>
