@@ -969,8 +969,15 @@ async def infer_vae(request: Request, file: UploadFile = File(...)):
         recon = vae.decode(mu)
         mse = F.mse_loss(recon, clean_x).item()
         display_recon = sharpen_vae_reconstruction(recon, clean_x)
-        generation_std = torch.exp(0.5 * logvar).clamp(min=0.12, max=0.45)
-        generated_z = mu + 0.95 * generation_std * torch.randn_like(mu)
+        # This checkpoint's KL term is intentionally reconstruction-oriented,
+        # so independent N(0, I) samples are not valid. Generate a new,
+        # identifiable variation by interpolating the upload with a second
+        # real posterior and adding only a small local perturbation.
+        other_img = _random_ucmerced_image()
+        other_x = vae_transform(other_img).unsqueeze(0).to(device)
+        other_mu, _ = vae.encode(other_x)
+        generation_std = torch.exp(0.5 * logvar).clamp(min=0.05, max=0.25)
+        generated_z = 0.65 * mu + 0.35 * other_mu + 0.20 * generation_std * torch.randn_like(mu)
         generated = vae.decode(generated_z)
         display_generated = enhance_generated_urban_image(generated)
 
@@ -980,7 +987,7 @@ async def infer_vae(request: Request, file: UploadFile = File(...)):
     return {
         "reconstructed": tensor_to_b64(display_recon[0]),
         "generated": tensor_to_b64(display_generated[0]),
-        "generation_method": "posterior perturbation on the learned local manifold",
+        "generation_method": "latent interpolation between the upload and a second real tile with local noise",
         "mu": mu.mean().item(),
         "logvar": logvar.mean().item(),
         "kl": kl_total,
@@ -1145,15 +1152,19 @@ async def generate_vae_random(request: Request):
     # a randomly selected real tile's posterior, then add controlled noise so
     # the output remains a random but recognizable land-use sample.
     source_img = _random_ucmerced_image()
+    second_img = _random_ucmerced_image()
     source_x = vae_transform(source_img).unsqueeze(0).to(device)
+    second_x = vae_transform(second_img).unsqueeze(0).to(device)
     with torch.no_grad():
-        mu, logvar = vae.encode(source_x)
-        posterior_std = torch.exp(0.5 * logvar).clamp(0.05, 0.35)
-        z = mu + 0.95 * posterior_std * torch.randn_like(mu)
+        mu0, _ = vae.encode(source_x)
+        mu1, _ = vae.encode(second_x)
+        alpha = 0.25 + 0.5 * torch.rand(1, device=device).item()
+        z = (1.0 - alpha) * mu0 + alpha * mu1
+        z = z + 0.08 * torch.randn_like(z)
         generated = enhance_generated_urban_image(vae.decode(z))
     return {
         "generated": tensor_to_b64(generated[0]),
-        "sampling_method": "random real-tile posterior with controlled latent noise",
+        "sampling_method": "random interpolation between two real learned posteriors",
     }
 
 

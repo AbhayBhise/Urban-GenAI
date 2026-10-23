@@ -793,8 +793,8 @@ export default function App() {
               <div className="card" style={{ marginBottom: '30px' }}>
                 <div className="card-title">Generate Random Sample</div>
                 <p style={{ color: 'var(--muted)', fontSize: '0.85rem', lineHeight: 1.5, marginBottom: '15px' }}>
-                  Generates a new land-use variation by selecting a real UCMerced tile internally,
-                  encoding its learned latent representation, and adding substantial controlled latent noise.
+                  Generates a new land-use variation by encoding two real UCMerced tiles,
+                  interpolating their learned latent representations, and adding a small local perturbation.
                   This checkpoint uses a near-zero KL weight, so independent N(0, I) noise is outside
                   the decoder's learned spatial latent distribution and produces the blurred,
                   unidentifiable output seen with pure prior sampling. The learned-manifold method
