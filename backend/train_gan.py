@@ -1,6 +1,8 @@
 """
 High-Fidelity Training Script for Conditional DCGAN with Projection Discriminator
-and Auxiliary Classifier Guidance with Exact ImageNet Normalization.
+and class guidance. The generator objective avoids paired feature/pixel targets:
+those targets are not aligned with a random latent sample and were encouraging
+the generator to average unrelated tiles into blurry class prototypes.
 """
 
 import argparse
@@ -46,6 +48,7 @@ def get_args():
     p.add_argument("--latent-dim", type=int, default=LATENT_DIM, help=f"Noise vector size (default: {LATENT_DIM})")
     p.add_argument("--ema-decay", type=float, default=0.999, help="EMA decay (default: 0.999)")
     p.add_argument("--save-every", type=int, default=10, help="Save sample grid every N epochs (default: 10)")
+    p.add_argument("--fresh", action="store_true", help="Ignore existing checkpoints and train from scratch")
     return p.parse_args()
 
 
@@ -99,16 +102,16 @@ def train():
     D = Discriminator(num_classes=NUM_CLASSES).to(device)
     G_ema = Generator(latent_dim=args.latent_dim, num_classes=NUM_CLASSES).to(device)
 
-    # Resume from existing checkpoints if available
+    # Resume from existing checkpoints unless a fresh run was requested.
     start_epoch = 1
-    if D_PATH.exists():
+    if not args.fresh and D_PATH.exists():
         try:
             D.load_state_dict(torch.load(D_PATH, map_location=device, weights_only=True))
             print("[GAN] Resumed Discriminator weights from checkpoint!")
         except Exception as e:
             print(f"[GAN] Discriminator starting fresh: {e}")
 
-    if G_PATH.exists():
+    if not args.fresh and G_PATH.exists():
         try:
             G.load_state_dict(torch.load(G_PATH, map_location=device, weights_only=True))
             print("[GAN] Resumed Generator weights from checkpoint!")
@@ -163,7 +166,7 @@ def train():
         history = []
 
     total_target_epochs = max(args.epochs, start_epoch + args.epochs - 1) if start_epoch > 1 else args.epochs
-    print(f"[GAN] Commencing training from epoch {start_epoch} to {total_target_epochs} with Feature Matching + Diversity...")
+    print(f"[GAN] Commencing training from epoch {start_epoch} to {total_target_epochs} with adversarial/class/diversity objectives...")
 
     for epoch in range(start_epoch, total_target_epochs + 1):
         G.train()
@@ -209,8 +212,7 @@ def train():
             g_adv_loss = criterion_bce(gen_adv, torch.ones(B, device=device))
             g_cls_loss = criterion_ce(gen_cls, labels)
 
-            g_guidance_loss = 0.0
-            g_feat_loss = 0.0
+            g_guidance_loss = torch.tensor(0.0, device=device)
             if has_classifier:
                 # Map [-1, 1] -> [0, 1] then apply ImageNet normalization
                 gen_01 = (gen_imgs + 1.0) * 0.5
@@ -221,31 +223,8 @@ def train():
                 real_norm = (real_01 - mean) / std
                 real_224 = F.interpolate(real_norm, size=(224, 224), mode='bilinear', align_corners=False)
 
-                # Extract intermediate spatial feature maps (layer2 edges, layer3 parts)
-                feats.clear()
-                with torch.no_grad():
-                    clf(real_224)
-                f_real2 = feats['layer2'].detach()
-                f_real3 = feats['layer3'].detach()
-
-                feats.clear()
                 clf_logits = clf(gen_224)
-                f_gen2 = feats['layer2']
-                f_gen3 = feats['layer3']
-
                 g_guidance_loss = criterion_ce(clf_logits, labels)
-                # Intermediate edge/texture feature matching loss
-                g_feat_loss = F.l1_loss(f_gen2, f_real2) + F.l1_loss(f_gen3, f_real3)
-
-            # High-frequency structural edge loss (Sobel gradient matching)
-            # Enforces sharp polygonal roof contours and street boundaries
-            gray_gen = gen_imgs.mean(dim=1, keepdim=True)
-            gray_real = real_imgs.mean(dim=1, keepdim=True)
-            kx = torch.tensor([[-1., 0., 1.], [-2., 0., 2.], [-1., 0., 1.]], device=device).view(1, 1, 3, 3)
-            ky = torch.tensor([[-1., -2., -1.], [0., 0., 0.], [1., 2., 1.]], device=device).view(1, 1, 3, 3)
-            edge_gen = torch.sqrt(F.conv2d(gray_gen, kx, padding=1)**2 + F.conv2d(gray_gen, ky, padding=1)**2 + 1e-6)
-            edge_real = torch.sqrt(F.conv2d(gray_real, kx, padding=1)**2 + F.conv2d(gray_real, ky, padding=1)**2 + 1e-6)
-            g_edge_loss = F.l1_loss(edge_gen, edge_real)
 
             # Diversity loss to penalize mode collapse across latent codes
             half = B // 2
@@ -256,7 +235,10 @@ def train():
             else:
                 diversity_loss = torch.tensor(0.0, device=device)
 
-            g_loss = g_adv_loss + 0.8 * g_cls_loss + 1.0 * g_guidance_loss + 1.5 * g_feat_loss + 1.2 * g_edge_loss + 0.05 * diversity_loss
+            # No paired feature/edge reconstruction term: the real tile in this
+            # batch is not the target for this latent code. Those terms caused
+            # averaging, which is exactly the blur/mode-collapse seen in UI.
+            g_loss = g_adv_loss + 0.5 * g_cls_loss + 0.5 * g_guidance_loss + 0.08 * diversity_loss
             g_loss.backward()
             nn.utils.clip_grad_norm_(G.parameters(), max_norm=2.0)
             opt_G.step()
