@@ -1,5 +1,5 @@
 // AEArchitecture component
-import { Box, Arrow, ArrowheadDef, SyllabusTable, ProvenanceNote, DiagramBackground, COLORS } from '../lib/archDiagram';
+import { Box, Arrow, ArrowheadDef, EvidenceTable, ProvenanceNote, DiagramBackground, COLORS } from '../lib/archDiagram';
 import { WorkflowAnimation } from '../lib/WorkflowAnimation';
 import { TrainingCurveCard } from '../components/TrainingCurveCard';
 
@@ -125,7 +125,7 @@ export default function AEArchitecture() {
         ]}
       />
 
-      <SyllabusTable rows={[
+      <EvidenceTable rows={[
         ['Encoder / Decoder structure', 'ResNet18 encoder + skip-connected CNN decoder, shown above'],
         ['Application: Denoising', 'Training objective is literally denoising — Gaussian noise added to input, clean tile as target'],
         ['Application: Data Compression', 'The 8×8×256 bottleneck is the compressed representation (~3× smaller than raw pixel count)'],

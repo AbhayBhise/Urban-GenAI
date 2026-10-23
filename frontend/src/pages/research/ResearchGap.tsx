@@ -165,7 +165,7 @@ export default function ResearchGap() {
             },
             {
               title: '5. Integrated Anomaly & Zoning Auditing',
-              desc: 'Calculates empirical anomaly z-scores against baseline distributions and performs 21-class zoning verification (98.1% val accuracy) before presenting candidates to the planner.',
+              desc: 'Calculates empirical anomaly z-scores against baseline distributions and performs 21-class zoning verification before presenting candidates to the planner; measured values are shown in Evaluation.',
               icon: ShieldCheck,
             },
             {

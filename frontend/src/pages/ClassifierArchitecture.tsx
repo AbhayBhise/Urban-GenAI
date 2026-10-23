@@ -1,4 +1,4 @@
-import { Box, Arrow, ArrowheadDef, SyllabusTable, ProvenanceNote, DiagramBackground, COLORS } from '../lib/archDiagram';
+import { Box, Arrow, ArrowheadDef, EvidenceTable, ProvenanceNote, DiagramBackground, COLORS } from '../lib/archDiagram';
 import { WorkflowAnimation } from '../lib/WorkflowAnimation';
 import { TrainingCurveCard } from '../components/TrainingCurveCard';
 
@@ -10,7 +10,7 @@ export default function ClassifierArchitecture() {
         padding: '12px 16px', borderRadius: 6, background: 'rgba(255, 184, 77, 0.06)',
         border: '1px solid rgba(255, 184, 77, 0.3)', fontSize: '0.85rem',
       }}>
-        <strong style={{ color: 'var(--warn)', flexShrink: 0 }}>Not a syllabus-required model:</strong>
+        <strong style={{ color: 'var(--warn)', flexShrink: 0 }}>Supporting model:</strong>
         <span style={{ color: 'var(--text)' }}>
           This is a discriminative CNN, kept because automated zoning classification is genuinely
           useful project work — it is <strong>not</strong> a substitute for the transformer
@@ -36,7 +36,7 @@ export default function ClassifierArchitecture() {
         ]}
         note="A discriminative pass: the fine-tuned backbone extracts a 512-d feature vector, the from-scratch
         linear head maps it to 21 land-use logits, and softmax gives the predicted zoning class. This label is
-        what the VAE and MiniGPT stages downstream act on. Held-out accuracy ≈ 98.1%."
+        what the VAE and MiniGPT stages downstream act on. Measured performance is shown in the live Evaluation view."
       />
 
       <div className="card" style={{ marginBottom: 20 }}>
@@ -67,7 +67,7 @@ export default function ClassifierArchitecture() {
         <div className="card">
           <div className="card-title">Result &amp; Why ResNet18</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: '0.85rem', color: 'var(--text)' }}>
-            <div><strong>98.1% validation accuracy</strong>, val loss ≈ 0.10, over 30 epochs on a 90/10 split of UCMerced's 2,100 tiles.</div>
+            <div>Training history and the live representative evaluation are shown in the Training and Evaluation views; they are reported separately because they use different protocols.</div>
             <div>Transfer learning from ImageNet is standard practice for small datasets like this one (100 images/class) — training a CNN of this depth from scratch on 2,100 images would badly overfit.</div>
           </div>
         </div>
@@ -84,8 +84,8 @@ export default function ClassifierArchitecture() {
         ]}
       />
 
-      <SyllabusTable rows={[
-        ['Not counted toward the 4-model requirement', 'Explicitly disclaimed — discriminative CNN, not one of AE/VAE/GAN/Transformer'],
+      <EvidenceTable rows={[
+        ['Supporting model boundary', 'Discriminative CNN used for land-use verification and GAN recognition evaluation'],
         ['Supporting role in the pipeline', 'Provides the initial land-use label that the VAE and MiniGPT stages build on'],
       ]} />
     </div>

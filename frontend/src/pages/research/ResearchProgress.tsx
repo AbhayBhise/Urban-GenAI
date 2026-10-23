@@ -59,7 +59,7 @@ const TIMELINE: TimelineStep[] = [
     status: 'implemented',
     statusLabel: 'Verified ✓',
     description: 'ResNet18 backbone encoder compressing 128×128 tiles to 8×8×256 spatial latent codes for denoising.',
-    verification: '50 epochs trained; weights committed in outputs/ae/model.pth; final recorded training MSE: 0.00585.',
+    verification: 'Checkpoint and training history are committed in outputs/ae/; current runtime reconstruction metrics are shown in Evaluation.',
   },
   {
     step: '07',
@@ -67,7 +67,7 @@ const TIMELINE: TimelineStep[] = [
     status: 'implemented',
     statusLabel: 'Verified ✓',
     description: 'Probabilistic spatial latent space (64×8×8 = 4,096 dims) with reparameterization trick and beta-VAE trade-off.',
-    verification: '50 epochs trained; outputs/vae/model.pth; final recon loss: 0.07524, KL: 103.25 nats.',
+    verification: 'Checkpoint and training history are committed in outputs/vae/; current runtime reconstruction and latent metrics are shown in Evaluation.',
   },
   {
     step: '08',
@@ -87,11 +87,11 @@ const TIMELINE: TimelineStep[] = [
   },
   {
     step: '10',
-    title: 'Diffusion Model Visualization',
-    status: 'planned',
+    title: 'Class-Conditional Diffusion Generation',
+    status: 'implemented',
     statusLabel: 'Planned Roadmap ○',
     description: 'Latent Diffusion Model (LDM) generating photorealistic satellite renderings of future zoning scenarios.',
-    verification: 'Phase 14 development roadmap.',
+    verification: 'Checkpoint, history, API inference, and Evaluation panel are active under outputs/diffusion/.',
   },
   {
     step: '11',
@@ -138,10 +138,11 @@ export default function ResearchProgress() {
             { label: 'AE Feature Bottleneck', value: '8 × 8 × 256', sub: '16,384 Spatial Codes' },
             { label: 'VAE Training Run', value: '50 Epochs', sub: 'Recon: 0.07524 | KL: 103.25' },
             { label: 'VAE Latent Space', value: '64 × 8 × 8', sub: '4,096 Spatial Dimensions' },
-            { label: 'Zoning Classifier Val Acc', value: '98.1%', sub: 'Val Loss: 0.1032 (ResNet18)' },
+            { label: 'Zoning Classifier', value: 'Live evaluation', sub: 'Runtime metrics are exposed in Evaluation' },
+            { label: 'Urban Scenario Diffusion', value: 'GPU training required', sub: 'Source tile + target land-use conditioning | DDIM: 20 steps' },
             { label: 'MiniGPT Transformer', value: '4 Layers / 4 Heads', sub: '3,000 Steps | 192 Block Size' },
             { label: 'Training Hardware', value: 'NVIDIA RTX 4050', sub: 'Laptop GPU (~75 W)' },
-            { label: 'Total Retrain Budget', value: '~1.6 Hours', sub: 'All models (~0.19 kWh)' },
+ { label: 'Total Retrain Budget', value: 'Task-specific', sub: 'Wall time and energy not measured reproducibly' },
             { label: 'Carbon Footprint', value: 'Not reported', sub: 'Requires reproducible hardware-level measurement' },
           ].map((m, i) => (
             <div

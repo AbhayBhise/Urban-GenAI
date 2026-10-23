@@ -24,6 +24,7 @@ from models.vae import VAE, kl_divergence
 from models.classifier import UrbanClassifier
 from models.gpt import GPTConfig, MiniGPT
 from models.gan import Generator as GANGenerator, LATENT_DIM as GAN_LATENT_DIM, NUM_CLASSES as GAN_NUM_CLASSES
+from models.diffusion import DiffusionUNet, DDPM
 from dataset import DATASET_PATH, URBAN_CLASSES
 from rag_pipeline import PUNE_STATS, query_rag
 from security import (
@@ -56,7 +57,7 @@ VAE_LATENT_CHANNELS = 64
 
 # Models
 ae = DenoisingAE().to(device)
-vae = VAE(latent_channels=VAE_LATENT_CHANNELS).to(device)
+vae = VAE(latent_channels=VAE_LATENT_CHANNELS, skip_channels=64, skip0_channels=16).to(device)
 transformer = UrbanClassifier(num_classes=len(URBAN_CLASSES)).to(device)
 
 
@@ -81,6 +82,14 @@ trans_loaded = load_model_if_exists(transformer, '../outputs/transformer/model.p
 # ---------------------------------------------------------------------------
 gan_generator = GANGenerator(latent_dim=GAN_LATENT_DIM, num_classes=GAN_NUM_CLASSES).to(device)
 gan_loaded = load_model_if_exists(gan_generator, '../outputs/gan/generator_ema.pth')
+
+# ---------------------------------------------------------------------------
+# UrbanGenAI image-conditioned scenario diffusion model (DDIM Fast Sampler)
+# ---------------------------------------------------------------------------
+diffusion_unet = DiffusionUNet(base_ch=32, num_classes=len(URBAN_CLASSES), condition_channels=3).to(device)
+diffusion_model = DDPM(diffusion_unet, timesteps=1000).to(device)
+diffusion_loaded = load_model_if_exists(diffusion_unet, '../outputs/diffusion_scenario/model.pth')
+
 GAN_META: dict = {}
 _gan_meta_path = '../outputs/gan/meta.json'
 if os.path.exists(_gan_meta_path):
@@ -169,13 +178,16 @@ def compute_vae_anomaly_baseline(n_samples=300):
             batch.append(vae_transform(img))
             if len(batch) == 32:
                 x = torch.stack(batch).to(device)
-                recon, _, _ = vae(x)
+                # Use the deterministic posterior mean and the same skip-aware
+                # decoder used by evaluation/inference.  Calling forward here
+                # samples z and makes the anomaly baseline noisy.
+                recon, _, _ = vae.reconstruct(x)
                 per_image_mse = F.mse_loss(recon, x, reduction='none').mean(dim=[1, 2, 3])
                 errors.extend(per_image_mse.cpu().tolist())
                 batch = []
         if batch:
             x = torch.stack(batch).to(device)
-            recon, _, _ = vae(x)
+            recon, _, _ = vae.reconstruct(x)
             per_image_mse = F.mse_loss(recon, x, reduction='none').mean(dim=[1, 2, 3])
             errors.extend(per_image_mse.cpu().tolist())
 
@@ -681,6 +693,10 @@ def compute_gan_evaluation(n_per_class=8):
     from dataset import URBAN_CLASSES
     n_classes = len(URBAN_CLASSES)
 
+    # Make the reported proxy reproducible across API restarts. This is still
+    # a classifier-recognition proxy, not a perceptual-quality benchmark.
+    torch.manual_seed(2026)
+
     per_class = {}
     total_correct = 0
     total_n = 0
@@ -907,6 +923,7 @@ def get_status():
         "transformer": "Trained" if trans_loaded else "Not trained yet",
         "gpt": "Trained" if gpt_loaded else "Not trained yet",
         "gan": "Trained" if gan_loaded else "Not trained yet",
+        "diffusion": "Trained" if diffusion_loaded else "Not trained yet",
     }
 
 
@@ -917,7 +934,8 @@ def get_config():
 
 @app.get("/history/{model_name}")
 def get_history(model_name: str):
-    path = f'../outputs/{model_name}/history.json'
+    output_name = 'diffusion_scenario' if model_name == 'diffusion' else model_name
+    path = f'../outputs/{output_name}/history.json'
     if os.path.exists(path):
         with open(path, 'r') as f:
             return json.load(f)
@@ -962,11 +980,11 @@ async def infer_vae(request: Request, file: UploadFile = File(...)):
     img = await read_image_upload(file)
     clean_x = vae_transform(img).unsqueeze(0).to(device)
     with torch.no_grad():
-        # Keep the posterior mean for stable anomaly scoring, but also decode
-        # a substantially perturbed posterior so this inference visibly
-        # generates a new, recognizable local variation.
-        mu, logvar = vae.encode(clean_x)
-        recon = vae.decode(mu)
+        # This checkpoint is skip-connected.  Reconstruction and generation
+        # must pass the encoded skip tensors to the decoder; omitting them
+        # produces the noise/flat image previously shown in the UI.
+        mu, logvar, skips = vae.encode_with_skips(clean_x)
+        recon = vae.decode(mu, skips)
         mse = F.mse_loss(recon, clean_x).item()
         display_recon = sharpen_vae_reconstruction(recon, clean_x)
         # This checkpoint's KL term is intentionally reconstruction-oriented,
@@ -975,11 +993,18 @@ async def infer_vae(request: Request, file: UploadFile = File(...)):
         # real posterior and adding only a small local perturbation.
         other_img = _random_ucmerced_image()
         other_x = vae_transform(other_img).unsqueeze(0).to(device)
-        other_mu, _ = vae.encode(other_x)
+        other_mu, _, other_skips = vae.encode_with_skips(other_x)
+        alpha = 0.55
         generation_std = torch.exp(0.5 * logvar).clamp(min=0.05, max=0.25)
-        generated_z = 0.65 * mu + 0.35 * other_mu + 0.20 * generation_std * torch.randn_like(mu)
-        generated = vae.decode(generated_z)
+        generated_z = (1.0 - alpha) * mu + alpha * other_mu
+        generated_z = generated_z + 0.08 * generation_std * torch.randn_like(mu)
+        generated_skips = tuple(
+            (1.0 - alpha) * source + alpha * target
+            for source, target in zip(skips, other_skips)
+        )
+        generated = vae.decode(generated_z, generated_skips)
         display_generated = enhance_generated_urban_image(generated)
+        generated_mse = F.mse_loss(generated, clean_x).item()
 
     kl_total, kl_per_dim = kl_divergence(mu, logvar)
     anomaly_score, anomaly_level, anomaly_percent_diff, anomaly_reason = score_anomaly(mse)
@@ -987,7 +1012,9 @@ async def infer_vae(request: Request, file: UploadFile = File(...)):
     return {
         "reconstructed": tensor_to_b64(display_recon[0]),
         "generated": tensor_to_b64(display_generated[0]),
-        "generation_method": "latent interpolation between the upload and a second real tile with local noise",
+        "generation_method": "skip-aware latent and feature interpolation between the upload and a second real tile",
+        "generation_alpha": alpha,
+        "generated_mse_vs_input": generated_mse,
         "mu": mu.mean().item(),
         "logvar": logvar.mean().item(),
         "kl": kl_total,
@@ -1085,11 +1112,15 @@ async def infer_vae_interpolate(request: Request, file: UploadFile = File(...)):
     other_x = vae_transform(other_img).unsqueeze(0).to(device)
 
     with torch.no_grad():
-        mu0, _ = model.encode(clean_x)
-        mu1, _ = model.encode(other_x)
+        mu0, _, skips0 = model.encode_with_skips(clean_x)
+        mu1, _, skips1 = model.encode_with_skips(other_x)
         alphas = torch.linspace(0, 1, 8, device=device)
         interp_z = torch.cat([(1 - a) * mu0 + a * mu1 for a in alphas], dim=0)
-        interp_imgs = model.decode(interp_z)
+        interp_skips = tuple(
+            torch.cat([(1 - a) * s0 + a * s1 for a in alphas], dim=0)
+            for s0, s1 in zip(skips0, skips1)
+        )
+        interp_imgs = model.decode(interp_z, interp_skips)
 
     return Response(content=tensor_to_image_bytes(interp_imgs), media_type="image/jpeg")
 
@@ -1156,12 +1187,16 @@ async def generate_vae_random(request: Request):
     source_x = vae_transform(source_img).unsqueeze(0).to(device)
     second_x = vae_transform(second_img).unsqueeze(0).to(device)
     with torch.no_grad():
-        mu0, _ = vae.encode(source_x)
-        mu1, _ = vae.encode(second_x)
+        mu0, _, skips0 = vae.encode_with_skips(source_x)
+        mu1, _, skips1 = vae.encode_with_skips(second_x)
         alpha = 0.25 + 0.5 * torch.rand(1, device=device).item()
         z = (1.0 - alpha) * mu0 + alpha * mu1
         z = z + 0.08 * torch.randn_like(z)
-        generated = enhance_generated_urban_image(vae.decode(z))
+        generated_skips = tuple(
+            (1.0 - alpha) * s0 + alpha * s1
+            for s0, s1 in zip(skips0, skips1)
+        )
+        generated = enhance_generated_urban_image(vae.decode(z, generated_skips))
     return {
         "generated": tensor_to_b64(generated[0]),
         "sampling_method": "random interpolation between two real learned posteriors",
@@ -1404,6 +1439,95 @@ _DOC_FILES = {
 @app.get("/privacy")
 def get_privacy():
     return privacy_policy()
+
+
+
+# ---------------------------------------------------------------------------
+# Diffusion Inference & Evaluation Endpoints
+# ---------------------------------------------------------------------------
+@app.post("/infer/diffusion", dependencies=GUARDED)
+@limiter.limit(RATE_LIMIT)
+async def infer_diffusion(request: Request, file: UploadFile = File(...),
+                          class_name: str = Form(...), steps: int = Form(20),
+                          eta: float = Form(0.0)):
+    if not diffusion_loaded:
+        return Response(status_code=400, content="Urban scenario diffusion checkpoint unavailable. Train backend/train_diffusion.py on the GPU first.")
+    if class_name not in URBAN_CLASSES:
+        return Response(status_code=400, content=f"Unknown class {class_name}")
+    source = await read_image_upload(file)
+    condition = vae_transform(source).unsqueeze(0).to(device)
+    c_idx = URBAN_CLASSES.index(class_name)
+    c_tensor = torch.tensor([c_idx], device=device)
+    steps = max(5, min(int(steps), 50))
+    eta = max(0.0, min(float(eta), 1.0))
+    with torch.no_grad():
+        sample = diffusion_model.ddim_sample((1, 3, 128, 128), c_tensor, steps=steps, eta=eta, condition=condition)
+        sample = ((sample + 1.0) * 127.5).clamp(0, 255).to(torch.uint8)
+        img = transforms.ToPILImage()(sample.squeeze(0).cpu())
+    buf = io.BytesIO()
+    img.save(buf, format="JPEG", quality=92)
+    b64 = base64.b64encode(buf.getvalue()).decode("ascii")
+    return {
+        "image": f"data:image/jpeg;base64,{b64}",
+        "class_name": class_name,
+        "class_index": c_idx,
+        "steps": steps,
+        "eta": eta
+    }
+
+
+@app.get("/evaluate/diffusion")
+def evaluate_diffusion():
+    history_path = '../outputs/diffusion_scenario/history.json'
+    history = []
+    if os.path.exists(history_path):
+        try:
+            history = json.load(open(history_path, encoding='utf-8'))
+        except Exception:
+            pass
+    final_loss = history[-1]['loss'] if history else None
+    return {
+        "model": "Urban Scenario Image-Conditioned DDPM (DDIM 20-step Sampler)",
+        "status": "trained" if diffusion_loaded else "unavailable",
+        "dataset": "UCMerced LandUse",
+        "evaluation_protocol": "Conditioned reconstruction convergence; paired before/after planning labels are not available, so future-land-use accuracy is not claimed.",
+        "epochs": len(history),
+        "timesteps": 1000,
+        "sampling_steps": 20,
+        "final_loss": final_loss,
+        "best_loss": min((row.get('loss', float('inf')) for row in history), default=None),
+        "architecture": "U-Net with source-tile, sinusoidal-timestep, and land-use-label conditioning",
+        "parameters_millions": round(sum(p.numel() for p in diffusion_unet.parameters()) / 1e6, 2)
+    }
+
+
+@app.get("/evaluate/summary")
+def evaluate_summary():
+    """Single machine-readable benchmark contract used by the UI and reports.
+
+    The individual endpoints remain available for detailed panels, while this
+    endpoint gives reviewers one consistent list of models, protocols, and
+    measured values. Missing models are represented as null rather than an
+    invented fallback number.
+    """
+    return {
+        "schema_version": "1.0",
+        "dataset": {
+            "name": "UCMerced LandUse",
+            "classes": len(URBAN_CLASSES),
+            "image_size": "128x128 RGB",
+            "split": "Stratified train/validation/test split; legacy runtime panels may use representative samples.",
+        },
+        "hardware": {"device": str(device), "cuda": torch.cuda.is_available()},
+        "models": {
+            "ae": {"name": "Denoising U-Net Autoencoder", "status": ae_loaded, "metrics": AE_EVAL_METRICS or None},
+            "vae": {"name": "Spatial VAE", "status": vae_loaded, "metrics": VAE_EVAL_METRICS or None},
+            "classifier": {"name": "ResNet-18 Land-Use Classifier", "status": trans_loaded, "metrics": CLASSIFIER_EVAL_METRICS or None},
+            "gan": {"name": "Class-Conditional DCGAN", "status": gan_loaded, "metrics": GAN_EVAL_METRICS or None},
+            "diffusion": {"name": "Class-Conditional DDPM", "status": diffusion_loaded, "metrics": evaluate_diffusion()},
+            "gpt": {"name": "MiniGPT Urban-Planning Transformer", "status": gpt_loaded, "metrics": GPT_EVAL_METRICS or None},
+        },
+    }
 
 
 @app.get("/governance/{doc}", response_class=PlainTextResponse)

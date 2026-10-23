@@ -7,7 +7,8 @@ import { apiFetch } from '../lib/api';
 const MODELS = [
   { key: 'ae', label: 'Autoencoder (Denoising U-Net)', x: 'epoch', lines: [['loss', 'var(--accent)', 'l']] },
   { key: 'vae', label: 'VAE — reconstruction (left axis) vs KL divergence (right axis)', x: 'epoch', lines: [['recon', 'var(--accent)', 'l'], ['kl', 'var(--accent2)', 'r']] },
-  { key: 'gan', label: 'Class-Conditional DCGAN — Discriminator vs Adversarial & Class Error', x: 'epoch', lines: [['d_loss', 'var(--danger)', 'l'], ['g_adv', 'var(--accent)', 'l'], ['g_cls', 'var(--success)', 'l']] },
+ { key: 'gan', label: 'Class-Conditional DCGAN — Discriminator and Generator Objectives', x: 'epoch', lines: [['d_loss', 'var(--danger)', 'l'], ['g_loss', 'var(--accent)', 'l']] },
+  { key: 'diffusion', label: 'Class-Conditional DDPM — Noise Prediction Loss', x: 'epoch', lines: [['loss', 'var(--accent)', 'l']] },
   { key: 'gpt', label: 'Urban Plan Generator (MiniGPT)', x: 'step', lines: [['loss', 'var(--accent)', 'l'], ['val_loss', 'var(--accent2)', 'l']] },
   { key: 'transformer', label: 'Land-Use Classifier', x: 'epoch', lines: [['loss', 'var(--accent)', 'l'], ['val_loss', 'var(--accent2)', 'l'], ['val_accuracy', 'var(--success)', 'l']] },
 ];

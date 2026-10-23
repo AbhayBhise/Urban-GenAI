@@ -1,4 +1,4 @@
-import { Box, Arrow, ArrowheadDef, SyllabusTable, ProvenanceNote, DiagramBackground, COLORS } from '../lib/archDiagram';
+import { Box, Arrow, ArrowheadDef, EvidenceTable, ProvenanceNote, DiagramBackground, COLORS } from '../lib/archDiagram';
 import { WorkflowAnimation } from '../lib/WorkflowAnimation';
 import { TrainingCurveCard } from '../components/TrainingCurveCard';
 
@@ -127,7 +127,7 @@ export default function VAEArchitecture() {
         <div className="card">
           <div className="card-title">Contribution to UrbanGenAI</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: '0.85rem', color: 'var(--text)' }}>
-            <div>1. <strong>Land-Use Classifier</strong> identifies what a tile currently is (98.1% validation accuracy, 21 categories).</div>
+            <div>1. <strong>Land-Use Classifier</strong> identifies what a tile currently is across 21 categories; measured performance is reported in the Evaluation view.</div>
             <div>2. <strong>This VAE</strong> scores its reconstruction error against a 294-tile baseline — <em>does this parcel look typical for what it claims to be?</em> Atypical parcels (unregistered construction, illegal conversion, sensor artifacts) reconstruct worse and get flagged.</div>
             <div>3. Flagged / typical parcels feed into the <strong>MiniGPT Plan Generator</strong> for text recommendations.</div>
             <div>4. <strong>Latent interpolation</strong> separately gives a continuous, explorable spectrum between two land-use states.</div>
@@ -158,7 +158,7 @@ export default function VAEArchitecture() {
         ]}
       />
 
-      <SyllabusTable rows={[
+      <EvidenceTable rows={[
         ['Encoder / Decoder structure', 'ResNet18 encoder + CNN decoder, shown above'],
         ['KL divergence', 'Computed analytically every inference and plotted (dual-axis) against reconstruction loss during training'],
         ['Reparameterization trick', 'Implemented as z = μ + σ⊙ε; explained above with the differentiability reasoning'],

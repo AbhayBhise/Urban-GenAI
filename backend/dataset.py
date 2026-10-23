@@ -4,6 +4,7 @@ from PIL import Image
 import torch
 from torch.utils.data import Dataset, DataLoader, random_split
 from torchvision import transforms
+from splits import split_paths
 
 DATASET_PATH = Path("../UCMerced_LandUse/UCMerced_LandUse/Images")
 EUROSAT_PATH = Path("../EuroSAT/EuroSAT")
@@ -25,7 +26,7 @@ EURO_CLASSES = [
 
 
 class UCMercedDataset(Dataset):
-    def __init__(self, root=DATASET_PATH, classes=URBAN_CLASSES, transform=None):
+    def __init__(self, root=DATASET_PATH, classes=URBAN_CLASSES, transform=None, paths=None):
         self.samples = []
         self.class_to_idx = {c: i for i, c in enumerate(classes)}
         self.transform = transform or transforms.Compose([
@@ -33,6 +34,12 @@ class UCMercedDataset(Dataset):
             transforms.ToTensor(),
             transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])
         ])
+        if paths is not None:
+            for f in paths:
+                cls = Path(f).parent.name
+                if cls in self.class_to_idx:
+                    self.samples.append((Path(f), self.class_to_idx[cls]))
+            return
         for cls in classes:
             cls_dir = root / cls
             if cls_dir.exists():
@@ -112,6 +119,28 @@ def get_dataloaders(batch_size=32, val_split=0.1, seed=42):
     val_loader = DataLoader(val_ds, batch_size=batch_size, shuffle=False, num_workers=0, pin_memory=True)
     print(f"UCMerced: {len(train_base)} images | Train: {train_size} | Val: {val_size} | seed={seed}")
     return train_loader, val_loader
+
+
+def get_split_datasets(size=128, train_aug=True):
+    train_paths = split_paths("train")
+    val_paths = split_paths("val")
+    test_paths = split_paths("test")
+    train_ds = UCMercedDataset(
+        transform=_aerial_train_transform(size) if train_aug else _aerial_eval_transform(size),
+        paths=train_paths,
+    )
+    val_ds = UCMercedDataset(transform=_aerial_eval_transform(size), paths=val_paths)
+    test_ds = UCMercedDataset(transform=_aerial_eval_transform(size), paths=test_paths)
+    return train_ds, val_ds, test_ds
+
+
+def get_split_dataloaders(batch_size=16, size=128, num_workers=0, train_aug=True):
+    train_ds, val_ds, test_ds = get_split_datasets(size=size, train_aug=train_aug)
+    train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True, num_workers=num_workers, pin_memory=True, drop_last=True)
+    val_loader = DataLoader(val_ds, batch_size=batch_size, shuffle=False, num_workers=num_workers, pin_memory=True)
+    test_loader = DataLoader(test_ds, batch_size=batch_size, shuffle=False, num_workers=num_workers, pin_memory=True)
+    print(f"UCMerced stratified split | Train: {len(train_ds)} | Val: {len(val_ds)} | Test: {len(test_ds)}")
+    return train_loader, val_loader, test_loader
 
 
 def get_eurosat_dataloaders(batch_size=64, val_split=0.1):

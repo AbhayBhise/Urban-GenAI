@@ -30,7 +30,7 @@ const TRACKS: { name: string; icon: typeof Rocket; items: Item[] }[] = [
     name: 'Models — generation & simulation',
     icon: Cpu,
     items: [
-      { title: 'GAN geometry maturation', detail: 'More epochs + augmented data to lift the classifier-recognition rate on grid-geometry classes (freeway, intersection, dense-residential) beyond the current ~15%.', horizon: 'Near-term' },
+ { title: 'GAN geometry maturation', detail: 'More epochs + augmented data to improve the uneven classifier-recognition rate on grid-geometry classes (freeway, intersection, dense-residential).', horizon: 'Near-term' },
       { title: 'Latent Diffusion Model (LDM)', detail: 'Photorealistic satellite renderings of future zoning scenarios — replaces the schematic VAE/GAN preview with high-resolution imagery.', horizon: 'Long-term' },
       { title: 'Surrogate impact networks', detail: 'Fast neural approximations of Traffic (MATSim), Air Quality, Flood risk (SWMM), Energy and Water demand for multi-criteria scenario scoring.', horizon: 'Long-term' },
     ],

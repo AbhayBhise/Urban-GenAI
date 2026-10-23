@@ -63,15 +63,15 @@ export function ArrowheadDef() {
   );
 }
 
-export function SyllabusTable({ rows }: { rows: [string, string][] }) {
+export function EvidenceTable({ rows }: { rows: [string, string][] }) {
   return (
     <div className="card">
-      <div className="card-title">Syllabus Alignment</div>
+      <div className="card-title">Design Evidence</div>
       <div style={{ overflowX: 'auto' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
           <thead>
             <tr style={{ borderBottom: '1px solid var(--border)', color: 'var(--muted)', textAlign: 'left' }}>
-              <th style={{ padding: '8px 12px' }}>Syllabus requirement</th>
+              <th style={{ padding: '8px 12px' }}>Design element</th>
               <th style={{ padding: '8px 12px' }}>Where it's demonstrated here</th>
             </tr>
           </thead>

@@ -33,7 +33,7 @@ Common properties:
 | Training data | UCMerced LandUse |
 | Objective | `0.7·L1 + 0.3·MSE` reconstruction + `β·KL`, **β = 1e-4** (reconstruction-priority) |
 | Result | train recon ≈ 0.075, KL ≈ 103 nats (50 epochs) |
-| Purpose in project | High-fidelity reconstruction; latent **interpolation** between two real encoded tiles (the latent-space demo); reconstruction-error **anomaly scoring** against a baseline over 300 real tiles |
+| Purpose in project | Reconstruction; latent **interpolation** between two real encoded tiles; reconstruction-error **anomaly scoring** against a baseline over real tiles |
 | KL divergence | Reported per inference and plotted in the Training tab. With β ≈ 0 it is **not minimised** — it rises during training as the latent grows more informative. This is expected for a reconstruction-priority VAE. Sampling straight from the prior is therefore not meaningful on this model (a known β-VAE trade-off); interpolation between real tiles is used instead. A genuinely prior-matched checkpoint was attempted but collapsed at every workable β on this encoder/decoder within the project timeframe |
 | Limitations | Latent does not match N(0,1); soft 8×8 spatial bottleneck |
 
@@ -54,7 +54,7 @@ Common properties:
 |---|---|
 | Architecture | ResNet18, ImageNet-pretrained, fine-tuned; final FC → 21 classes |
 | Training data | UCMerced LandUse (90/10 split) |
-| Result | val accuracy ≈ 98.1%, val loss ≈ 0.10 (30 epochs) |
+| Result | Persisted validation history: 98.1% accuracy and 0.103 loss at epoch 30; the API also reports a separate 105-tile representative runtime evaluation |
 | Purpose in project | Automated land-use / zoning audit and land-use-change tracking at city scale |
 | Note | This is a **CNN**, not a transformer. It is kept because it does useful project work; the transformer requirement is met by MiniGPT (§3). The API route name `transformer` is retained for backward compatibility |
 | Limitations | 21 fixed classes from US imagery; single-label per tile |
@@ -63,28 +63,41 @@ Common properties:
 
 | | |
 |---|---|
-| Architecture | Class-conditional DCGAN. Generator: noise (128-d) + class embedding (64-d) → linear/reshape to 8×8×512 → 4× ConvTranspose2d (BatchNorm+ReLU) → Tanh, 128×128 RGB. Discriminator: class embedding projected to a 128×128×1 map, channel-concatenated with the image → 5× spectral-normalized Conv2d (LeakyReLU) → scalar logit |
+| Architecture | Class-conditional DCGAN. Generator: noise (128-d) + class embedding (64-d) → linear/reshape to 8×8×512 → four residual nearest-neighbour upsampling blocks → Tanh, 128×128 RGB. Discriminator: projection-conditioned, five spectral-normalized Conv2d stages with an auxiliary classifier head |
 | Training data | UCMerced LandUse (21 classes, 100 images/class) |
-| Objective | Non-saturating adversarial BCE with label smoothing (real=0.9, fake=0.1); 2 Discriminator steps per Generator step; EMA-averaged Generator (decay 0.999) used for all inference |
-| Result | 100 epochs (no pretrained weights — trained fully from scratch). Final losses D≈0.47, G≈1.67, stable throughout, no collapse. Texture-distinctive classes (harbor) show real structure; classes needing precise repeated geometry (freeway, intersection, dense residential grids) are still color/texture fields at this epoch count — an expected GAN-training characteristic on a small dataset, not a failure, reported here rather than only showing favorable outputs |
+| Objective | Non-saturating adversarial BCE with label smoothing (real=0.9, fake=0.1), auxiliary class loss, diversity regularization, and EMA-averaged Generator (decay 0.999) used for inference |
+| Result | 120 epochs (no pretrained weights — trained fully from scratch). The current seeded API evaluation reaches 100.0% intended-class recognition over 168 generated samples. This is a classifier-recognition proxy, not a photorealism or planning-validity measure |
 | Purpose in project | Class-conditional synthetic tile generation for data augmentation / scenario exploration — distinct from the VAE, which only reconstructs/interpolates real, already-encoded tiles |
 | Was untrained | Flagged as the top-priority missing component in `CONTRIBUTING.md` ("implemented but NOT yet trained") prior to this training run |
-| Limitations | Geometric structure (road grids, intersections) not yet crisp at 100 epochs on 2,100 images; would need substantially more epochs and/or data |
+| Limitations | Geometric structure is not consistently crisp on 2,100 images; the recognition proxy is not a photorealism measure and generated tiles require human inspection |
 
 ---
 
 ## Sustainability / carbon footprint (Unit 6)
 
-Rough estimate for a full retrain of all models on the reference RTX 4050 laptop:
+Hardware-level energy and carbon measurements were not recorded with a reproducible protocol, so no numerical footprint is claimed.
 
-| Model | Approx. train time | Approx. energy |
-|---|---|---|
-| AE (50 ep) | ~15 min | ~0.03 kWh |
-| VAE (50 ep) | ~20 min | ~0.04 kWh |
-| MiniGPT (3k steps) | ~8 min | ~0.015 kWh |
-| Classifier (30 ep) | ~15 min | ~0.03 kWh |
-| GAN (100 ep) | ~35 min | ~0.07 kWh |
-| **Total** | **~1.6 h** | **~0.19 kWh** (≈ 0.13 kg CO₂e at ~0.7 kg/kWh grid intensity) |
+| Model | Recorded training |
+|---|---|
+| AE | 50 epochs |
+| VAE | 50 epochs |
+| MiniGPT | 3,000 optimization steps |
+| Classifier | 30 epochs |
+| GAN | 120 epochs |
+| **Total** | **Not aggregated across incomparable protocols** |
 
-Design choices that keep this low: pretrained backbones (transfer learning),
-small from-scratch transformer, single-GPU, modest datasets. Inference is CPU-viable.
+Design choices that limit compute include pretrained backbones, a small from-scratch
+transformer, single-GPU execution, and modest datasets. Inference is CPU-viable; a
+quantitative carbon comparison remains future work.
+
+## 6. Urban Scenario Diffusion Model (`diffusion`)
+
+| | |
+|---|---|
+| Architecture | Lightweight image- and class-conditioned DDPM U-Net with sinusoidal timestep embeddings, label embeddings, and a 1,000-step linear noise schedule; inference uses a 20-step deterministic DDIM sampler |
+| Training data | UCMerced LandUse, using the reproducible stratified split manifest in `outputs/splits/ucmerced_seed42.json` |
+| Objective | MSE noise prediction, `E[||epsilon - epsilon_theta(x_t,t,c)||^2]` |
+| Result | Source-conditioned checkpoint not yet trained; GPU retraining is required before reporting a result |
+| Purpose in project | Generate a candidate urban-scene alternative from an uploaded tile and target land-use class |
+| Evaluation boundary | The available dataset has no paired before/after planning labels. The first valid report must include conditioned reconstruction loss and a human/land-use validity benchmark; no future-development accuracy is claimed |
+| Limitations | Small dataset and lightweight U-Net; generated tiles are advisory scenarios and require human/domain review |

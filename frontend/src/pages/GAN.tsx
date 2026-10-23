@@ -244,7 +244,7 @@ export default function GAN({ isGanTrained }: { isGanTrained?: boolean }) {
                 The Generator weights have not been found. Train the model first:
                 <code className="ntb-code">
                   cd backend{'\n'}
-                  python train_gan.py --epochs 100 --batch-size 32
+                  python train_gan.py --epochs 120 --batch-size 32
                 </code>
                 Training takes ~20 min on a GPU (longer on CPU). Once done,
                 restart the API server and refresh this page.
@@ -530,7 +530,7 @@ export default function GAN({ isGanTrained }: { isGanTrained?: boolean }) {
             <div>
               <strong style={{ color: 'var(--text)' }}>Generator (G)</strong><br />
               Maps latent vector <em>z</em> ~ N(0, I) concatenated with a learned class embedding
-              through 4 ConvTranspose2d stages (8×8 → 128×128) with BatchNorm and LeakyReLU/Tanh.
+              through a projected 8×8 seed and four residual upsampling blocks (8×8 → 128×128).
             </div>
             <div>
               <strong style={{ color: 'var(--text)' }}>Projection Discriminator</strong><br />
@@ -540,8 +540,8 @@ export default function GAN({ isGanTrained }: { isGanTrained?: boolean }) {
             <div>
               <strong style={{ color: 'var(--text)' }}>Semantic Guidance</strong><br />
               Trained with class guidance and diversity regularization (the classifier is an evaluation aid),
-              enforcing class-specific structure; the independent checkpoint reached 83.3% intended-class
-              recognition over 168 generated samples, with uneven per-class performance.
+              enforcing class-specific structure; the live classifier-recognition proxy over generated samples is
+              reported in the Evaluation view and is not a realism score.
             </div>
             <div>
               <strong style={{ color: 'var(--text)' }}>Training Details</strong><br />

@@ -93,7 +93,7 @@ export default function ResearchOverview({ onNavigateTab }: ResearchOverviewProp
             </div>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.85rem' }}>
               <span>Zoning Classifier</span>
-              <span style={{ color: 'var(--success)', fontWeight: 600 }}>98.1% Val ✓</span>
+              <span style={{ color: 'var(--success)', fontWeight: 600 }}>Live evaluation</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.85rem' }}>
               <span>Pune GIS RAG</span>

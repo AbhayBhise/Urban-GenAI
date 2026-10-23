@@ -10,7 +10,7 @@ export interface CurveConfig {
 }
 
 interface TrainingCurveProps {
-  modelKey: 'ae' | 'vae' | 'gan' | 'gpt' | 'transformer';
+  modelKey: 'ae' | 'vae' | 'gan' | 'gpt' | 'transformer' | 'diffusion';
   title?: string;
   description?: string;
   xKey?: string;

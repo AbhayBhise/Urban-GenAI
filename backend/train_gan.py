@@ -161,7 +161,7 @@ def train():
                 return _hook
             clf.model.layer2.register_forward_hook(_get_hook('layer2'))
             clf.model.layer3.register_forward_hook(_get_hook('layer3'))
-            print("[GAN] Successfully loaded pretrained UrbanClassifier (ResNet18) with multi-scale feature matching hooks!")
+            print("[GAN] Successfully loaded pretrained UrbanClassifier (ResNet18) for class-guidance loss!")
         except Exception as e:
             print(f"[GAN] Warning: could not load classifier: {e}")
 

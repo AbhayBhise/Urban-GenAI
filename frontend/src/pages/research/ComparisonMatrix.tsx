@@ -118,7 +118,7 @@ const COMPARISON_ROWS: MatrixRow[] = [
     literatureStatus: 'Rare',
     literatureDetail: 'Zoning audits performed manually; reconstruction error rarely operationalized as an anomaly score.',
     urbanGenStatus: 'Implemented',
-    urbanGenDetail: 'Empirical anomaly z-scoring against 294 real tiles + 21-class zoning verification (98.1% validation accuracy).',
+    urbanGenDetail: 'Empirical anomaly z-scoring against real tiles plus 21-class zoning verification; current measured values are shown in Evaluation.',
   },
 
   // 4. Planner Explanation

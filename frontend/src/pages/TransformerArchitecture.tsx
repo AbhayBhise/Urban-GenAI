@@ -1,4 +1,4 @@
-import { Box, Arrow, ArrowheadDef, SyllabusTable, ProvenanceNote, DiagramBackground, COLORS } from '../lib/archDiagram';
+import { Box, Arrow, ArrowheadDef, EvidenceTable, ProvenanceNote, DiagramBackground, COLORS } from '../lib/archDiagram';
 import { WorkflowAnimation } from '../lib/WorkflowAnimation';
 import { TrainingCurveCard } from '../components/TrainingCurveCard';
 
@@ -122,7 +122,7 @@ export default function TransformerArchitecture() {
         ]}
       />
 
-      <SyllabusTable rows={[
+      <EvidenceTable rows={[
         ['Self-attention mechanism', 'Causal multi-head self-attention, implemented from scratch and diagrammed above'],
         ['Positional encoding', 'Learned positional embeddings, summed with token embeddings'],
         ['Transformer-based generative model (GPT-style)', 'Decoder-only, autoregressive, next-token cross-entropy — the architecture family GPT-2/GPT-3 belong to'],

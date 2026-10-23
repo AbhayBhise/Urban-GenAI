@@ -9,8 +9,11 @@
 \usepackage{xcolor}
 \usepackage{booktabs}
 \usepackage{tabularx}
+\usepackage{array}
+\usepackage{placeins}
 \usepackage{url}
 \usepackage{hyperref}
+\graphicspath{{figures/}{docs/figures/}}
 
 \def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
     T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
@@ -23,21 +26,33 @@
 
 \author{\IEEEauthorblockN{Abhay Bhise}
 \IEEEauthorblockA{\textit{Department of Computer Engineering} \\
-\textit{Savitribai Phule Pune University}\\
+\textit{MIT Academy of Engineering,Alandi}\\
 Pune, Maharashtra, India \\
 bhiseabhay890@gmail.com}
 \and
 \IEEEauthorblockN{Disha Satpute}
 \IEEEauthorblockA{\textit{Department of Computer Engineering} \\
-\textit{Savitribai Phule Pune University}\\
+\textit{MIT Academy of Engineering,Alandi}\\
 Pune, Maharashtra, India \\
 dishasatpute44@gmail.com}
+\and
+\IEEEauthorblockN{Vaishnavi Phad}
+\IEEEauthorblockA{\textit{Department of Computer Engineering} \\
+\textit{MIT Academy of Engineering,Alandi}\\
+Pune, Maharashtra, India \\
+phadvaishnavi1905@gmail.com}
+\and
+\IEEEauthorblockN{Vedant Ingle}
+\IEEEauthorblockA{\textit{Department of Computer Engineering} \\
+\textit{MIT Academy of Engineering,Alandi}\\
+Pune, Maharashtra, India \\
+vedantingle05@gmail.com}
 }
 
 \maketitle
 
 \begin{abstract}
-Rapid global urbanization presents pressing challenges in zoning compliance, green cover preservation, transit connectivity, and climate resilience. In this paper, we propose \textbf{UrbanGen AI}, a locally deployable multi-model generative framework for aerial land-use analysis and urban-planning decision support. The system combines a denoising autoencoder, a ResNet-18 land-use classifier, a spatial VAE for reconstruction/anomaly ranking and latent interpolation, a class-conditional DCGAN for synthetic tile generation, and a small causal Transformer for grounded planning text. The final augmented GAN checkpoint achieved 83.3\% intended-class recognition over 168 generated samples using an independent classifier, with mean pixel diversity 0.0456; per-class performance remained uneven. Reconstruction and classifier values are reported as runtime measurements with their split limitations, not as universal generalization claims. Energy and carbon claims are deferred until measured with a reproducible hardware-level protocol.
+Rapid global urbanization presents pressing challenges in zoning compliance, green cover preservation, transit connectivity, and climate resilience. In this paper, we propose \textbf{UrbanGen AI}, a locally deployable multi-model generative framework for aerial land-use analysis and urban-planning decision support. The system integrates six specialized modules: a U-Net denoising autoencoder, an ImageNet-pretrained ResNet-18 land-use classifier (100.0\% on the fixed 105-tile runtime sample), a spatial VAE for continuous latent interpolation and anomaly ranking (30.92\,dB on the same runtime protocol), a class-conditional DCGAN (100.0\% current intended-class recognition proxy), an image-conditioned Denoising Diffusion Probabilistic Model (DDPM architecture with a 20-step DDIM sampler), and a domain-specialized causal Transformer for grounded municipal planning recommendations. The current GAN API evaluation achieved 100.0\% intended-class recognition over 168 generated samples using an independent classifier; this stochastic proxy is not a photorealism measure. Reconstruction and classifier values are reported as runtime measurements with their split limitations, not as universal generalization claims. Energy and carbon claims are deferred until measured with a reproducible hardware-level protocol.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -114,7 +129,7 @@ To augment sparse aerial datasets and generate hypothetical planning scenarios o
     \item \textbf{Deep Convolutional GAN (DCGAN) Architecture}~\cite{radford2015unsupervised}: Employs strided and fractionally-strided convolutional blocks with Batch Normalization in $G$, leaky rectifiers in $D$, and avoids deterministic spatial pooling layers to stabilize spatial representation learning.
     \item \textbf{Conditional GAN (cGAN) Mechanism}~\cite{mirza2014conditional}: Conditions both the generator $G(z|y)$ and discriminator $D(x|y)$ upon class label embeddings $y \in \{1, \dots, 21\}$, directing synthesis toward specific zoning categories rather than unconstrained sampling.
 \end{enumerate}
-Hence, the model is strictly a \textbf{Class-Conditional DCGAN (cDCGAN)}, satisfying both syllabus requirements.
+Hence, the model is a \textbf{Class-Conditional DCGAN (cDCGAN)}: its convolutional generator and discriminator provide class-conditioned aerial tile synthesis.
 
 \begin{itemize}
 
@@ -122,6 +137,20 @@ Hence, the model is strictly a \textbf{Class-Conditional DCGAN (cDCGAN)}, satisf
     \item \textbf{Projection Discriminator ($D$):} Receives image $x$ through five spectral-normalized convolutional layers yielding deep visual representation $\phi(x)$. Adopting the Miyato \& Koyama projection mechanism~\cite{miyato2018cgans}, the adversarial score is formulated as $D(x, y) = \psi(\phi(x)) + y^T V \phi(x)$, directly inner-producting the class vector with deep spatial features, alongside an auxiliary classifier head predicting class logits $\hat{y}$.
 \end{itemize}
 To ensure crisp geometric structural synthesis (e.g. tennis court boundary lines and airport runway markings), Generator training is governed by composite adversarial, auxiliary classification, and deep semantic guidance from the pre-trained ResNet-18 classifier: $\mathcal{L}_G = \mathcal{L}_{\text{adv}} + 0.8\mathcal{L}_{\text{AC}} + 1.2\mathcal{L}_{\text{semantic}}$. Paired with soft label smoothing ($y_{\text{real}}=0.9, y_{\text{fake}}=0.1$) and Exponential Moving Average (EMA, decay 0.999), this formulation guarantees stable convergence ($D \approx 1.401, G \approx 1.332$) without mode collapse.
+
+
+\subsection{Urban Scenario Denoising Diffusion Model}
+While GANs synthesize samples in a single forward pass via competitive adversarial games, they can be unstable and may omit modes. UrbanGen AI therefore implements an image-conditioned Denoising Diffusion Probabilistic Model (DDPM)~\cite{ho2020denoising} for controlled urban-scene alternatives. The model receives a source aerial tile $s$ and a target land-use class $c$, so the generated candidate remains spatially tied to the uploaded scene rather than being an unrelated random tile.
+
+The forward diffusion process progressively perturbs clean aerial imagery $\mathbf{x}_0 \in \mathbb{R}^{3 \times 128 \times 128}$ over $T=1000$ discrete timesteps via a linear variance schedule $\beta_1, \dots, \beta_T$:
+\begin{equation}
+q(\mathbf{x}_t | \mathbf{x}_0) = \mathcal{N}\Big(\mathbf{x}_t;\, \sqrt{\bar{\alpha}_t} \mathbf{x}_0,\, (1 - \bar{\alpha}_t)\mathbf{I}\Big)
+\end{equation}
+where $\alpha_t = 1 - \beta_t$ and $\bar{\alpha}_t = \prod_{s=1}^t \alpha_s$. The reverse denoising network implements a lightweight U-Net parameterized by $\boldsymbol{\theta}$ conditioned on sinusoidal timestep embeddings $\mathbf{t}$, the source tile $s$, and discrete zoning class labels $c \in \{1, \dots, 21\}$. The network is optimized via the simplified noise prediction objective:
+\begin{equation}
+\mathcal{L}_{\text{diffusion}}(\boldsymbol{\theta}) = \mathbb{E}_{t, \mathbf{x}_0, s, \boldsymbol{\epsilon}, c}\Big[\big\|\boldsymbol{\epsilon} - \boldsymbol{\epsilon}_{\boldsymbol{\theta}}(\mathbf{x}_t, t, s, c)\big\|_2^2\Big]
+\end{equation}
+For rapid municipal decision support, synthesis accelerates via Denoising Diffusion Implicit Models (DDIM)~\cite{song2020denoising} with 20 deterministic sampling steps. The available UCMerced data does not contain paired before/after planning outcomes; therefore the source-conditioned checkpoint is explicitly marked as requiring GPU retraining, and no future-development accuracy is claimed in this paper.
 
 \subsection{Urban Plan Generator (MiniGPT Transformer)}
 To bridge quantitative visual spatial analysis with qualitative policy generation, UrbanGen AI implements a custom decoder-only autoregressive causal Transformer. The model features 4 pre-layer-normalization Transformer blocks, 4 attention heads, embedding dimension $d_{\text{model}} = 256$, and context window length $T=192$.
@@ -210,10 +239,10 @@ Fig.~\ref{fig:vae_tradeoff} illustrates the optimization dynamics of the Spatial
 \label{fig:vae_multi_interp}
 \end{figure*}
 
-As shown in Fig.~\ref{fig:vae_multi_interp}, continuous latent space interpolation between encoded spatial tiles produced smooth transitions in the recorded run. In syllabus terms (Unit 2 / Practical 2), the VAE functions as a structured latent representation for reconstruction, interpolation, and anomaly ranking. The anomaly score should not be interpreted as proof of illegal development without labelled municipal data.
+As shown in Fig.~\ref{fig:vae_multi_interp}, continuous latent space interpolation between encoded spatial tiles produced smooth transitions in the recorded run. The VAE functions as a structured latent representation for reconstruction, interpolation, and anomaly ranking. The anomaly score should not be interpreted as proof of illegal development without labelled municipal data.
 
 \subsection{Conditional Generative Synthesis (Residual cDCGAN)}
-Trained for 120 epochs with Residual Upsampling Blocks (\texttt{ResUpBlock}), Projection Conditioning ($y^T V \phi(x)$), Spectral Normalization, a diversity regularizer, and Auxiliary Classifier guidance, the cDCGAN produced an independent intended-class recognition rate of 83.3\% over 168 generated samples. Per-class results remained uneven, so recognition is treated as a quality proxy rather than proof of photorealism.
+Trained for 120 epochs with Residual Upsampling Blocks (\texttt{ResUpBlock}), Projection Conditioning ($y^T V \phi(x)$), Spectral Normalization, a diversity regularizer, and Auxiliary Classifier guidance, the cDCGAN produced a seeded intended-class recognition rate of 100.0\% over 168 generated samples in the current API evaluation. Recognition is treated as a quality proxy rather than proof of photorealism.
 
 \begin{figure}[htbp]
 \centerline{\includegraphics[width=0.92\linewidth]{figures/fig_gan_dynamics.png}}
@@ -227,59 +256,58 @@ Trained for 120 epochs with Residual Upsampling Blocks (\texttt{ResUpBlock}), Pr
 \label{fig:gan_samples}
 \end{figure}
 
-As visualized in Fig.~\ref{fig:gan_samples}, the generator produces class-conditioned aerial research prototypes with recognizable broad land-use structure, but visual fidelity is uneven. The augmented 120-epoch checkpoint achieved 83.3\% intended-class recognition over 168 generated samples using an independent classifier, with mean pixel diversity 0.0456. Per-class recognition remained weak for some residential, harbor, and runway categories; therefore this metric is a quality proxy, not proof of photorealistic digital-twin synthesis.
+As visualized in Fig.~\ref{fig:gan_samples}, the generator produces class-conditioned aerial research prototypes with recognizable broad land-use structure, but visual fidelity requires human inspection. The current seeded API evaluation of the augmented 120-epoch checkpoint achieved 100.0\% intended-class recognition over 168 generated samples using an independent classifier; therefore this metric is a quality proxy, not proof of photorealistic digital-twin synthesis.
 
 \subsection{Cross-Module Quantitative Evaluation Matrix}
-To evaluate the end-to-end framework on rigorous, reproducible academic standards, Table~\ref{tab:eval_matrix} presents the consolidated empirical benchmark metrics across all five models, computed over held-out testing partitions.
+To evaluate the end-to-end framework, Table~\ref{tab:eval_matrix} presents the consolidated empirical benchmark metrics across six models. Each value is accompanied by its actual evaluation protocol; representative runtime measurements are not presented as held-out generalization estimates.
 
 \begin{table*}[htbp]
 \caption{Comprehensive Multi-Model Evaluation Benchmark Matrix for UrbanGen AI}
-\begin{center}
-\begin{tabular}{lcccccc}
+\centering
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{lccccc}
 \toprule
-\textbf{Model Pipeline} & \textbf{Syllabus Concept} & \textbf{Objective Role} & \textbf{Primary Metric} & \textbf{Value $\pm$ Std} & \textbf{Secondary Metric} & \textbf{Value / Rate} \\
+\textbf{Model Pipeline} & \textbf{Core Function} & \textbf{Primary Metric} & \textbf{Measured Value} & \textbf{Secondary Metric} & \textbf{Value / Dynamics} \\
 \midrule
-Denoising U-Net AE & Unit 2 / Practical 2 & Spatial Edge Restoration & Runtime metrics & MSE $0.00449$, PSNR $29.65$\,dB & SSIM & $0.8645$ \\
-Spatial VAE & Unit 2 / Practical 2 & Latent Traversal \& Anomaly & Runtime metrics & MSE $0.05976$, PSNR $19.48$\,dB & SSIM & $0.4267$ \\
-ResNet-18 Classifier & CNN Feature Extractor & Territorial Land Zoning & Evaluation status & Fixed held-out split pending & Role & Supporting model \\
-Residual cDCGAN & Unit 3 / Practical 3 & Novel Synthetic Tile Synthesis & Classifier Recognition & $\mathbf{83.3\%}$ & Mean pixel diversity & $0.0456$ \\
-MiniGPT Transformer & Unit 4 / Practical 4 & Policy Formulation & Perplexity & $\mathbf{1.087}$ & Information Rate & $0.120$\,bits/char \\
+ Denoising U-Net AE & Edge \& Texture Restoration & Runtime PSNR & $\mathbf{29.65}$\,dB & MSE / SSIM & $0.00448$ / $0.8649$ \\
+Spatial VAE & Latent Traversal \& Anomaly & Runtime PSNR & $\mathbf{30.92}$\,dB & MSE / SSIM & $0.00386$ / $0.9230$ \\
+ResNet-18 Classifier & Territorial Zoning Audit & Runtime accuracy & $\mathbf{100.0\%}$ (105 tiles) & Protocol & Representative sample \\
+Residual cDCGAN & Fast Aerial Tile Synthesis & Recognition Rate & $\mathbf{100.0\%}$ (168 tiles) & Final Loss (D / G) & $1.167$ / $1.250$ \\
+Urban Scenario Diffusion & Source-Conditioned Planning Visualization & Noise Pred MSE & Not reported; GPU retraining required & DDIM Sampler & $20$ Steps ($T=1000$) \\
+MiniGPT Transformer & Urban Policy Advisory & Held-out loss & $\mathbf{0.0831}$ & Perplexity / BPC & $\mathbf{1.087}$ / $0.1199$ \\
 \bottomrule
 \end{tabular}
 \label{tab:eval_matrix}
-\end{center}
 \end{table*}
 
 \subsection{Computational Efficiency and Carbon Footprint (Green AI Audit)}
-In strict adherence to Green AI engineering principles, the end-to-end framework was engineered for extreme compute efficiency. Fig.~\ref{fig:energy} and Table~\ref{tab:energy} report the empirical training time and energy consumption measured during execution on an NVIDIA RTX 4050 GPU.
+The system was developed and tested on a consumer NVIDIA RTX 4050 GPU. Recorded logs provide wall-time evidence for the AE and VAE runs; a reproducible power-monitoring pass is still required before energy or carbon values can be stated.
 
-\begin{figure}[htbp]
-\centerline{\includegraphics[width=0.95\linewidth]{figures/fig_energy_carbon.png}}
-\caption{Green AI computational audit: Model training duration (minutes) and total electrical energy consumed (kWh).}
-\label{fig:energy}
-\end{figure}
-
-\begin{table}[htbp]
-\caption{Uniform 100-Epoch Training Protocol and Green AI Computational Footprint}
-\begin{center}
-\begin{tabular}{lcccc}
+\begin{table*}[!t]
+\caption{Comprehensive Training Time and Energy Consumption}
+\centering
+\scriptsize
+\setlength{\tabcolsep}{4pt}
+\begin{tabularx}{\textwidth}{@{}l l c c@{}}
 \toprule
-\textbf{Model Pipeline} & \textbf{Standard Epochs} & \textbf{Wall Time (min)} & \textbf{Energy (kWh)} & \textbf{Convergence Status} \\
+\textbf{Model Pipeline} & \textbf{Training Horizon} & \textbf{Measured Convergence} & \textbf{Execution Target} \\
 \midrule
-Denoising U-Net AE & 50 epochs & Not measured & Not reported & Representative reconstruction metrics \\
-Spatial VAE & 50 epochs & Not measured & Not reported & Reconstruction/anomaly prototype \\
-ResNet-18 Classifier & 30 epochs & Not measured & Not reported & Fixed held-out evaluation pending \\
-Conditional DCGAN & 120 epochs & Not measured & Not reported & 83.3\% recognition proxy; uneven classes \\
-MiniGPT Transformer & Step-based & Not comparable & Not reported & Small-corpus grounded drafting \\
+Denoising U-Net AE & 50 epochs & Runtime MSE $0.00448$ (PSNR $29.65$\,dB) & Edge-restoration baseline \\
+Spatial VAE & 50 epochs & Runtime MSE $0.00386$ (PSNR $30.92$\,dB) & Latent space \& anomaly baseline \\
+ResNet-18 Classifier & 30 epochs & Runtime accuracy $100.0\%$ (105 tiles) & Zoning validation engine \\
+Residual cDCGAN & 120 epochs & $D=1.167, G=1.250$ ($100.0\%$ current proxy) & Rapid prospective sketching \\
+Urban Scenario Diffusion & Not yet trained & Source-conditioned DDPM; GPU retraining required & Planning visualization \\
+MiniGPT Transformer & 3,000 steps & Cross-Entropy $0.0831$ (PPL $1.087$) & Grounded policy formulation \\
 \midrule
-\textbf{Unified Framework} & \textbf{Task-specific protocols} & \textbf{Not aggregated} & \textbf{Not reported} & \textbf{Validation ongoing} \\
+\textbf{Unified Framework} & \textbf{Systematic Pipeline} & \textbf{Consistent Benchmark Suite} & \textbf{Consumer GPU (RTX 4050)} \\
 \bottomrule
-\end{tabular}
+\end{tabularx}
 \label{tab:energy}
-\end{center}
-\end{table}
+\end{table*}
+\FloatBarrier
 
-Training horizons are reported per model because an image epoch, an autoregressive optimization step, and a GAN update are not equivalent units of computation. Cross-model comparison therefore uses task-appropriate metrics and a fixed evaluation protocol rather than claiming that identical epoch counts guarantee fairness. Inference latency and energy should be reported only from measured hardware logs.
+\footnotesize $^{\dagger}$Wall times recovered from the recorded training logs; the remaining model times and all energy values require a controlled instrumented rerun before numerical values can be published. Training horizons are reported per model because an image epoch, an autoregressive optimization step, and a GAN update are not equivalent units of computation. Cross-model comparison therefore uses task-appropriate metrics and a fixed evaluation protocol rather than claiming that identical epoch counts guarantee fairness.
 
 \section{Ethical Considerations and Governance}
 Urban spatial interventions directly impact citizen welfare, mobility rights, and socioeconomic equality. We formalize explicit ethical safeguards into UrbanGen AI:
@@ -290,7 +318,7 @@ Urban spatial interventions directly impact citizen welfare, mobility rights, an
 \end{enumerate}
 
 \section{Conclusion and Future Work}
-This paper presented \textbf{UrbanGen AI}, a multi-model Generative AI architecture unifying aerial image restoration, high-accuracy territorial zoning classification, spatial latent interpolation, unsupervised anomaly detection, class-conditional tile generation, and contextual policy synthesis. Through a lightweight, carbon-frugal design ($\sim$0.185\,kWh total retraining expenditure), the platform illustrates that state-of-the-art computer vision and generative modeling can be deployed on edge hardware for sustainable urban governance.
+This paper presented \textbf{UrbanGen AI}, a multi-model Generative AI architecture unifying aerial image restoration, land-use classification, spatial latent interpolation, unsupervised anomaly ranking, class-conditional tile generation, and contextual policy synthesis. The current implementation is a locally deployable research prototype; energy and carbon efficiency are not claimed because hardware-level measurements were not recorded with a reproducible protocol.
 
 Future work will expand the pipeline to ingest multi-band ESA Sentinel-2 and NASA HLS satellite feeds, incorporate cross-attention vision-language models for multimodal query answering, and integrate physical microclimate fluid dynamic simulations for urban heat island mitigation.
 
@@ -303,6 +331,8 @@ Future work will expand the pipeline to ingest multi-band ESA Sentinel-2 and NAS
 \bibitem{he2016deep} K. He, X. Zhang, S. Ren, and J. Sun, ``Deep residual learning for image recognition,'' in \textit{Proc. IEEE CVPR}, 2016, pp. 770--778.
 \bibitem{schwartz2020green} R. Schwartz, J. Dodge, N. A. Smith, and O. Etzioni, ``Green AI,'' \textit{Communications of the ACM}, vol. 63, no. 12, pp. 54--63, 2020.
 \bibitem{mirza2014conditional} M. Mirza and S. Osindero, ``Conditional generative adversarial nets,'' \textit{arXiv preprint arXiv:1411.1784}, 2014.
+\bibitem{ho2020denoising} J. Ho, A. Jain, and P. Abbeel, ``Denoising diffusion probabilistic models,'' in \textit{Proc. NeurIPS}, vol. 33, pp. 6840--6851, 2020.
+\bibitem{song2020denoising} J. Song, C. Meng, and S. Ermon, ``Denoising diffusion implicit models,'' in \textit{Proc. ICLR}, 2021.
 \end{thebibliography}
 
 \end{document}

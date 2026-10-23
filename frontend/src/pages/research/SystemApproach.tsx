@@ -105,7 +105,7 @@ export default function SystemApproach() {
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '12px' }}>
             <div style={{ fontSize: '0.82rem', color: 'var(--text)' }}>
-        <strong>1. UCMerced LandUse (21 classes, 2,100 tiles)</strong>: Used to train the Denoising Autoencoder (50 epochs), Spatial VAE (50 epochs), and Land-Use Classifier (30 epochs, 98.1% validation accuracy).
+        <strong>1. UCMerced LandUse (21 classes, 2,100 tiles)</strong>: Used to train the Denoising Autoencoder, Spatial VAE, and Land-Use Classifier. Checkpoint histories and runtime evaluation are exposed in the Evaluation and Training views.
             </div>
             <div style={{ fontSize: '0.82rem', color: 'var(--text)' }}>
               <strong>2. EuroSAT Sentinel-2 (10 classes)</strong>: Supported in the dataset pipeline (<code style={{ color: 'var(--accent)' }}>backend/dataset.py</code>) for multi-spectral land cover benchmarking.

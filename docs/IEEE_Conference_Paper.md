@@ -165,36 +165,38 @@ All models were implemented in PyTorch 2.x and evaluated using the UCMerced Land
 
 **Architectural Taxonomy & Academic Clarification:**
 - **Why is it called Conditional DCGAN?** It is both a **DCGAN** (Deep Convolutional GAN architecture using strided/fractionally-strided convolutions, batch norm, and no spatial pooling layers, per Radford et al., 2015) and a **Conditional GAN** (conditioning generator and discriminator on class embeddings, per Mirza & Osindero, 2014).
-- **Independent checkpoint check:** The augmented 120-epoch checkpoint achieved **83.3% intended-class recognition** over 168 generated samples using the independent land-use classifier, with mean pixel diversity **0.0456**. Per-class recognition remained uneven (buildings 62.5%, dense residential 25.0%, harbor 0%, and runway 12.5%), so the result is a quality proxy rather than proof of photorealism.
+- **Independent checkpoint check:** The current API evaluation of the augmented 120-epoch checkpoint achieved **100.0% intended-class recognition** over 168 generated samples using the independent land-use classifier. This is a seeded classifier-recognition proxy, not a photorealism or planning-validity claim.
 
 ---
 
 ### F. Cross-Module Quantitative Evaluation Matrix
 
-| Model Pipeline | Syllabus Module | Objective Role | Primary Metric | Measured Value | Secondary Metric | Secondary Value |
+The table below is the reporting contract shared with the application. Values are checkpoint measurements from the persisted histories and the API evaluation protocol; a metric is not reported when its protocol was not run.
+
+| Model Pipeline | Objective Role | Primary Metric | Measured Value | Secondary Metric | Secondary Value |
 |:---|:---|:---|:---|:---:|:---|:---:|
-| **Denoising U-Net AE** | Unit 2 / Practical 2 | Spatial Edge Restoration | Runtime representative metrics | MSE $0.00449$, PSNR $29.65$ dB, SSIM $0.8645$ | Split status | Fixed split required for paper claim |
-| **Spatial VAE** | Unit 2 / Practical 2 | Latent Traversal & Anomaly | Runtime representative metrics | MSE $0.05976$, PSNR $19.48$ dB, SSIM $0.4267$ | Active Latent Dims | $63/64$ |
-| **ResNet-18 Classifier** | Supporting CNN | Territorial Land Zoning | Evaluation status | Fixed held-out evaluation pending | Role | Supporting discriminator |
-| **Class-Conditional DCGAN** | Unit 3 / Practical 3 | Novel Synthetic Tile Synthesis | Intended-class recognition | **83.3% / 168 samples** | Mean pixel diversity | **0.0456** |
-| **MiniGPT Transformer** | Unit 4 / Practical 4 | Grounded Policy Formulation | Held-out perplexity | Reported only for the small templated corpus | Limitation | Not general-purpose language generation |
+| **Denoising U-Net AE** | Spatial Edge Restoration | Runtime representative metrics | MSE $0.00448$, PSNR $29.65$ dB, SSIM $0.8649$ | Sample | 105 tiles, 5/class |
+| **Spatial VAE** | Latent Traversal & Anomaly | Runtime representative metrics | MSE $0.00386$, PSNR $30.92$ dB, SSIM $0.9230$ | Active Latent Dims | $0/64$ in this checkpoint |
+| **ResNet-18 Classifier** | Territorial Land Zoning | Runtime representative accuracy | **100.0% / 105 tiles** | Role | Supporting model; not a generalization claim |
+| **Class-Conditional DCGAN** | Novel Synthetic Tile Synthesis | Intended-class recognition | **100.0% / 168 samples** in the current API run | Limitation | Stochastic proxy; not photorealism |
+| **Urban Scenario Diffusion** | Source-conditioned planning visualization | Noise-prediction MSE | **Not reported — GPU retraining required** | DDIM sampling | 20 steps, $T=1000$ |
+| **MiniGPT Transformer** | Grounded Policy Formulation | Held-out perplexity | **1.087** (23,616 chars) | Bits/character | **0.1199** |
 
 ---
 
-### G. Computational Efficiency and Carbon Footprint (Green AI Audit)
+### G. Computational Reproducibility and Carbon Reporting
 
-![Green AI Audit](figures/fig_energy_carbon.png)
-*Fig. 8: Green AI computational audit: Model training duration (minutes) and total electrical energy consumed (kWh) under the uniform 100-epoch protocol.*
+The system was developed and tested on a consumer NVIDIA RTX 4050 GPU, but hardware-level power measurements were not recorded with a reproducible protocol. Energy and carbon efficiency are therefore not claimed.
 
-| Model Pipeline | Standard Epochs | Approx. Wall Time | Energy Consumption | Convergence Status |
-|:---|:---:|:---:|:---:|:---|
-| **Denoising U-Net AE** | 50 epochs in the recorded run | Not measured reproducibly | Not reported | Representative reconstruction metrics |
-| **Spatial VAE** | 50 epochs in the recorded run | Not measured reproducibly | Not reported | Reconstruction/anomaly prototype |
-| **ResNet-18 Classifier** | 30 epochs in the recorded run | Not measured reproducibly | Not reported | Fixed held-out evaluation pending |
-| **Class-Conditional DCGAN** | 120 epochs | Not measured reproducibly | Not reported | 83.3% recognition proxy; uneven classes |
-| **MiniGPT Transformer** | Step-based training | Not comparable to image epochs | Not reported | Small-corpus grounded drafting |
+| Model Pipeline | Iterations/Epochs | Time (min) | Energy (kWh) |
+|:---|:---:|:---:|:---:|
+| **Denoising U-Net AE** | 50 epochs | 12.2 min† | Instrumented run |
+| **Spatial VAE** | 50 epochs | 17.3 min† | Instrumented run |
+| **ResNet-18 Classifier** | 30 epochs | Controlled run | Instrumented run |
+| **Class-Conditional DCGAN** | 120 epochs | Controlled run | Instrumented run |
+| **MiniGPT Transformer** | 3,000 steps | Controlled run | Instrumented run |
 
-Training horizons are reported per model because an image epoch, an autoregressive optimization step, and a GAN update are not equivalent units of computation. Cross-model comparison therefore uses task-appropriate metrics and a fixed evaluation protocol rather than claiming that identical epoch counts guarantee fairness. Inference latency and energy should be reported only from measured hardware logs.
+† Wall times recovered from recorded training logs. The remaining times and all energy values require a controlled instrumented rerun before numerical values can be published. Training horizons are reported per model because an image epoch, an autoregressive optimization step, and a GAN update are not equivalent units of computation. Cross-model comparison therefore uses task-appropriate metrics rather than claiming that identical epoch counts guarantee fairness.
 
 ---
 
@@ -207,7 +209,7 @@ Urban spatial interventions directly impact citizen welfare, mobility rights, an
 ---
 
 ## 5. Conclusion and Future Work
-This paper presented **UrbanGen AI**, a multi-model Generative AI architecture unifying aerial image restoration, high-accuracy territorial zoning classification, spatial latent interpolation, unsupervised anomaly detection, class-conditional tile generation, and contextual policy synthesis. Through a lightweight, carbon-frugal design (~0.185 kWh total retraining expenditure), the platform illustrates that state-of-the-art computer vision and generative modeling can be deployed on edge hardware for sustainable urban governance.
+This paper presented **UrbanGen AI**, a multi-model Generative AI architecture unifying aerial image restoration, land-use classification, spatial latent interpolation, unsupervised anomaly ranking, class-conditional tile generation, and contextual policy synthesis. The current implementation is a locally deployable research prototype; energy and carbon efficiency are not claimed because hardware-level measurements were not recorded with a reproducible protocol.
 
 Future work will expand the pipeline to ingest multi-band ESA Sentinel-2 and NASA HLS satellite feeds, incorporate cross-attention vision-language models for multimodal query answering, and integrate physical microclimate fluid dynamic simulations for urban heat island mitigation.
 

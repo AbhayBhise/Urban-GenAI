@@ -28,6 +28,17 @@ type GanEvalMetrics = {
   overall_recognition_rate: number;
   per_class: Record<string, { recognized: number; n: number; rate: number }>;
 };
+type DiffusionEvalMetrics = {
+  model: string;
+  timesteps: number;
+  sampling_steps: number;
+  final_loss: number | null;
+  architecture: string;
+  parameters_millions: number;
+  status: string;
+  epochs: number;
+  best_loss: number | null;
+};
 type GptEvalMetrics = {
   held_out_chars: number;
   vocab_size: number;
@@ -375,11 +386,10 @@ function GANPanel() {
       <TrainingCurveCard
         modelKey="gan"
         title="Class-Conditional DCGAN Adversarial Training Dynamics"
-        description="Minimax adversarial trajectory: Discriminator loss balances at D_loss ≈ 1.03, pure adversarial generator loss settles at g_adv ≈ 1.20, while generator semantic classification loss descends directly near zero (g_cls: 2.74 → 0.41)."
+        description="Recorded discriminator and generator objective totals from the checkpoint. Class recognition is evaluated separately with a fixed 168-sample protocol and is not a photorealism score."
         curves={[
           { key: 'd_loss', label: 'Discriminator Loss (D)', color: 'var(--danger)' },
-          { key: 'g_adv', label: 'Generator Adversarial (BCE)', color: 'var(--accent)' },
-          { key: 'g_cls', label: 'Generator Class Error (CE → 0)', color: 'var(--success)' },
+          { key: 'g_loss', label: 'Generator Objective (G)', color: 'var(--accent)' },
         ]}
       />
     </>
@@ -475,17 +485,89 @@ function Metric({ label, value, color }: { label: string; value: string; color?:
     </div>
   );
 }
+
+function DiffusionPanel() {
+  const { data: m, error } = useEval<DiffusionEvalMetrics>('/evaluate/diffusion');
+  const [className, setClassName] = useState('agricultural');
+  const [sourceFile, setSourceFile] = useState<File | null>(null);
+  const [image, setImage] = useState<string | null>(null);
+  const [generating, setGenerating] = useState(false);
+  if (error) return <ErrorCard error={error} />;
+  if (!m) return <LoadingCard />;
+  return (
+    <>
+      <div className="metrics-strip">
+        <Metric label="Model Architecture" value={m.architecture} color="var(--accent)" />
+        <Metric label="Final MSE Loss" value={m.final_loss == null ? '—' : m.final_loss.toFixed(5)} color="var(--success)" />
+        <Metric label="Total Diffusion Steps" value={`${m.timesteps} steps`} />
+        <Metric label="DDIM Fast Sampler" value={`${m.sampling_steps} steps`} />
+        <Metric label="Parameters" value={`${m.parameters_millions}M`} />
+      </div>
+
+      <div className="card" style={{ marginBottom: 24 }}>
+        <div className="card-title">Denoising Diffusion Probabilistic Model (DDPM / DDIM)</div>
+        <div style={{ color: 'var(--muted)', fontSize: '0.88rem', lineHeight: 1.6 }}>
+          <p style={{ margin: '0 0 10px' }}>
+            The UrbanGenAI scenario diffusion model uses a lightweight U-Net to reverse a 1,000-step Gaussian
+            process while conditioning on the uploaded source tile and a target land-use class. This keeps the
+            output tied to the source scene instead of producing an unrelated random tile.
+          </p>
+          <p style={{ margin: 0 }}>
+            <strong>Fast inference:</strong> A deterministic 20-step DDIM sampler produces a candidate scenario.
+            Because the dataset has no paired before/after planning labels, this is a controlled visualization, not a
+            validated prediction of future development.
+          </p>
+        </div>
+      </div>
+
+      <TrainingCurveCard
+        modelKey="diffusion"
+        title="Class-Conditional DDPM Noise Prediction Dynamics"
+        description="Recorded MSE noise prediction loss over 50 training epochs on the UCMerced dataset."
+        curves={[
+          { key: 'loss', label: 'Noise Prediction MSE Loss', color: 'var(--accent)' },
+        ]}
+      />
+
+      <div className="card" style={{ marginTop: 24 }}>
+        <div className="card-title">Generate a class-conditioned diffusion tile</div>
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+          <input type="file" accept="image/*" onChange={e => setSourceFile(e.target.files?.[0] ?? null)} style={{ color: 'var(--muted)' }} />
+          <select value={className} onChange={e => setClassName(e.target.value)} style={{ padding: 9, background: 'var(--surface)', color: 'var(--text)', border: '1px solid var(--border)', borderRadius: 6 }}>
+            {['agricultural', 'buildings', 'denseresidential', 'forest', 'freeway', 'harbor', 'mediumresidential', 'river', 'runway', 'storagetanks'].map(c => <option key={c}>{c}</option>)}
+          </select>
+          <button className="btn btn-primary" disabled={generating || m.status !== 'trained' || !sourceFile} onClick={async () => {
+            setGenerating(true);
+            try {
+              const body = new FormData();
+              body.append('file', sourceFile!);
+              body.append('class_name', className);
+              body.append('steps', String(m.sampling_steps));
+              body.append('eta', '0');
+              const r = await apiFetch('/infer/diffusion', { method: 'POST', body });
+              if (r.ok) setImage((await r.json()).image);
+            } finally { setGenerating(false); }
+          }}>{generating ? 'Sampling…' : 'Generate tile'}</button>
+        </div>
+        {image && <img src={image} alt={`Generated ${className} diffusion tile`} style={{ display: 'block', width: 256, height: 256, objectFit: 'cover', marginTop: 16, borderRadius: 8 }} />}
+        <div style={{ marginTop: 10, color: 'var(--muted)', fontSize: '0.78rem' }}>{m.status === 'trained' ? 'Scenario generation only; a generated tile is not a validated land-use observation.' : 'Training required: no image-conditioned scenario checkpoint is currently available.'}</div>
+      </div>
+    </>
+  );
+}
+
 function MatrixPanel() {
   const { data: ae } = useEval<ReconEvalMetrics>('/evaluate/ae');
   const { data: vae } = useEval<ReconEvalMetrics>('/evaluate/vae');
   const { data: cls } = useEval<ClassifierEvalMetrics>('/evaluate/classifier');
   const { data: gan } = useEval<GanEvalMetrics>('/evaluate/gan');
+  const { data: diffusion } = useEval<DiffusionEvalMetrics>('/evaluate/diffusion');
   const { data: gpt } = useEval<GptEvalMetrics>('/evaluate/gpt');
 
   const rows = [
     {
       module: 'Denoising U-Net Autoencoder',
-      syllabus: 'Unit 2 / Practical 2 (AE & Denoising)',
+      evidence: 'Runtime reconstruction metrics over 105 sampled tiles',
       role: 'Aerial Edge & Texture Restoration',
       primaryMetric: 'PSNR',
       primaryVal: ae ? `${ae.psnr.mean.toFixed(2)} ± ${ae.psnr.std.toFixed(2)} dB` : '—',
@@ -495,7 +577,7 @@ function MatrixPanel() {
     },
     {
       module: 'Spatial Variational Autoencoder',
-      syllabus: 'Unit 2 / Practical 2 (VAE & Latent Traversal)',
+      evidence: 'Runtime reconstruction and latent metrics over 105 sampled tiles',
       role: 'Latent Interpolation & Anomaly Auditing',
       primaryMetric: 'SSIM',
       primaryVal: vae ? `${vae.ssim.mean.toFixed(2)} ± ${vae.ssim.std.toFixed(2)}` : '—',
@@ -505,7 +587,7 @@ function MatrixPanel() {
     },
     {
       module: 'ResNet-18 Territorial Classifier',
-      syllabus: 'Supporting CNN Feature Extractor',
+      evidence: 'Representative 21-class classification evaluation',
       role: 'Land-Use & Zoning Classification',
       primaryMetric: 'Representative Accuracy',
       primaryVal: cls ? `${(cls.accuracy * 100).toFixed(1)}%` : '—',
@@ -515,7 +597,7 @@ function MatrixPanel() {
     },
     {
       module: 'Class-Conditional DCGAN (cDCGAN)',
-      syllabus: 'Unit 3 / Practical 3 (DCGAN & cGAN)',
+      evidence: 'Classifier-recognition proxy over generated samples',
       role: 'Novel Class-Conditional Tile Synthesis',
       primaryMetric: 'Classifier Recognition Rate',
       primaryVal: gan ? `${(gan.overall_recognition_rate * 100).toFixed(1)}%` : '—',
@@ -524,8 +606,18 @@ function MatrixPanel() {
       objective: 'Synthesize synthetic aerial patches from Gaussian noise conditioned on class labels',
     },
     {
+      module: 'Class-Conditional DDPM (Diffusion)',
+      evidence: 'Persisted noise-prediction history and DDIM configuration',
+      role: 'Iterative Denoising Urban Tile Generation',
+      primaryMetric: 'Noise Prediction MSE',
+      primaryVal: diffusion ? `${diffusion.final_loss?.toFixed(5) ?? '—'} (final; ${diffusion.epochs} epochs)` : '—',
+      secondaryMetric: 'DDIM Sampler Steps',
+      secondaryVal: diffusion ? `${diffusion.sampling_steps} steps · best ${diffusion.best_loss?.toFixed(5) ?? '—'}` : '—',
+      objective: 'Synthesize high-fidelity aerial tiles via iterative reverse Gaussian diffusion',
+    },
+    {
       module: 'MiniGPT Urban Policy Transformer',
-      syllabus: 'Unit 4 / Practical 4 (Self-Attention & GPT)',
+      evidence: 'Held-out character-level language evaluation',
       role: 'Grounded Urban Planning Recommendations',
       primaryMetric: 'Held-out Perplexity',
       primaryVal: gpt ? gpt.perplexity.toFixed(3) : '—',
@@ -542,8 +634,7 @@ function MatrixPanel() {
         <div style={{ color: 'var(--muted)', fontSize: '0.88rem', lineHeight: 1.65 }}>
           This table unifies the live evaluation metrics exposed by the backend. Methodology differs by model:
           reconstruction and classifier panels use representative per-class samples, GAN uses fresh generated tiles,
-          and MiniGPT uses its persisted held-out character split. A dash means the endpoint is unavailable; no fallback
-          value is displayed.
+          and MiniGPT uses its persisted held-out character split. A dash means the endpoint is unavailable.
         </div>
       </div>
 
@@ -553,7 +644,7 @@ function MatrixPanel() {
             <thead>
               <tr style={{ background: 'var(--surface-inset)', textAlign: 'left', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em', fontSize: '0.7rem' }}>
                 <th style={{ padding: '10px 12px' }}>Model Pipeline</th>
-                <th style={{ padding: '10px 12px' }}>Syllabus Module</th>
+                <th style={{ padding: '10px 12px' }}>Evidence / Protocol</th>
                 <th style={{ padding: '10px 12px' }}>Objective Role</th>
                 <th style={{ padding: '10px 12px' }}>Primary Benchmark</th>
                 <th style={{ padding: '10px 12px' }}>Secondary Benchmark</th>
@@ -564,7 +655,7 @@ function MatrixPanel() {
               {rows.map((r, i) => (
                 <tr key={r.module} style={{ borderTop: '1px solid var(--border)', background: i % 2 ? 'var(--hover-overlay)' : 'transparent', verticalAlign: 'top' }}>
                   <td style={{ padding: '12px', fontWeight: 600, color: 'var(--text)' }}>{r.module}</td>
-                  <td style={{ padding: '12px', color: 'var(--muted)' }}>{r.syllabus}</td>
+                  <td style={{ padding: '12px', color: 'var(--muted)' }}>{r.evidence}</td>
                   <td style={{ padding: '12px', color: 'var(--text)' }}>{r.role}</td>
                   <td style={{ padding: '12px', color: 'var(--accent)', fontFamily: 'var(--font-mono)' }}>
                     <div style={{ fontSize: '0.72rem', color: 'var(--muted)' }}>{r.primaryMetric}</div>
@@ -597,6 +688,7 @@ const TABS = [
   { id: 'vae', label: 'VAE', panel: VAEPanel },
   { id: 'ae', label: 'Autoencoder', panel: AEPanel },
   { id: 'gan', label: 'GAN', panel: GANPanel },
+  { id: 'diffusion', label: 'Diffusion', panel: DiffusionPanel },
   { id: 'gpt', label: 'MiniGPT', panel: GPTPanel },
   { id: 'classifier', label: 'Classifier', panel: ClassifierPanel },
 ] as const;

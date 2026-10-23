@@ -1,14 +1,15 @@
 import { useEffect, useState } from 'react';
 import { apiFetch } from '../lib/api';
 
-// Live numbers (with safe fallbacks) so the comparison always reflects the
-// current committed checkpoints.
+// Live numbers from the backend evaluation endpoints; unavailable models stay
+// explicitly unavailable instead of receiving invented values.
 type Live = {
   ae?: { psnr: number; ssim: number };
   vae?: { psnr: number; ssim: number; kl: number; active: number; total: number };
   gan?: { rate: number };
   gpt?: { perplexity: number; bpc: number };
   classifier?: { accuracy: number };
+  diffusion?: { loss: number | null; steps: number; epochs: number };
 };
 
 function useLiveMetrics(): Live {
@@ -22,8 +23,8 @@ function useLiveMetrics(): Live {
         return null;
       }
     };
-    Promise.all([grab('/evaluate/ae'), grab('/evaluate/vae'), grab('/evaluate/gan'), grab('/evaluate/gpt'), grab('/evaluate/classifier')])
-      .then(([ae, vae, gan, gpt, classifier]) => {
+    Promise.all([grab('/evaluate/ae'), grab('/evaluate/vae'), grab('/evaluate/gan'), grab('/evaluate/gpt'), grab('/evaluate/classifier'), grab('/evaluate/diffusion')])
+      .then(([ae, vae, gan, gpt, classifier, diffusion]) => {
         const next: Live = {};
         if (ae) next.ae = { psnr: ae.psnr.mean, ssim: ae.ssim.mean };
         if (vae) next.vae = {
@@ -34,23 +35,24 @@ function useLiveMetrics(): Live {
         if (gan) next.gan = { rate: gan.overall_recognition_rate };
         if (gpt) next.gpt = { perplexity: gpt.perplexity, bpc: gpt.bits_per_char };
         if (classifier) next.classifier = { accuracy: classifier.accuracy };
+        if (diffusion?.final_loss != null) next.diffusion = { loss: diffusion.final_loss, steps: diffusion.sampling_steps, epochs: diffusion.epochs };
         setM(next);
       });
   }, []);
   return m;
 }
 
-const fmt = (v: number | undefined, dp: number, unit = '') =>
+const fmt = (v: number | null | undefined, dp: number, unit = '') =>
   v == null ? '—' : `${v.toFixed(dp)}${unit}`;
 
 export default function ModelComparison() {
   const live = useLiveMetrics();
 
-  const rows: { model: string; task: string; syllabus: string; metric: string; error: string; verdict: string }[] = [
+  const rows: { model: string; task: string; evidence: string; metric: string; error: string; verdict: string }[] = [
     {
       model: 'Denoising Autoencoder',
       task: 'Clean degraded aerial imagery before analysis',
-      syllabus: 'Autoencoder + reconstruction loss',
+      evidence: 'Runtime reconstruction metrics',
       metric: `PSNR ${fmt(live.ae?.psnr, 1, ' dB')} · SSIM ${fmt(live.ae?.ssim, 3)}`,
       error: 'Small residual blur on very fine texture',
       verdict: 'Best for image restoration. U-Net skip connections preserve fine detail; the live PSNR/SSIM result is shown above.',
@@ -58,7 +60,7 @@ export default function ModelComparison() {
     {
       model: 'Variational Autoencoder',
       task: 'Score how far a parcel is from "normal" + latent scenario blending',
-      syllabus: 'VAE, KL divergence, reparameterization trick',
+      evidence: 'Runtime reconstruction and latent metrics',
       metric: `SSIM ${fmt(live.vae?.ssim, 2)} · KL ${fmt(live.vae?.kl, 0, ' nats')} · ${live.vae?.active ?? '—'}/${live.vae?.total ?? 64} dims active`,
       error: 'Reconstruction is soft — the 8×8 spatial bottleneck limits detail',
       verdict: 'Best for anomaly detection. Gives a probabilistic score + interpolation the AE cannot.',
@@ -66,15 +68,23 @@ export default function ModelComparison() {
     {
       model: 'Class-Conditional DCGAN (cDCGAN)',
       task: 'Generate synthetic class-conditional tiles for data augmentation',
-      syllabus: 'Unit 3 / Pract 3: DCGAN architecture + Conditional GAN label embedding',
+      evidence: 'Classifier-recognition proxy over generated samples',
       metric: `Recognition proxy ${live.gan ? (live.gan.rate * 100).toFixed(1) + ' %' : '—'} (120 epochs)`,
       error: 'Per-class quality is uneven; inspect buildings, residential, harbor, and runway results before use.',
-      verdict: 'Useful for syllabus-aligned synthetic tile generation, but not a photorealism guarantee or planning evidence.',
+      verdict: 'Useful for class-conditioned synthetic tile generation, but not a photorealism guarantee or planning evidence.',
+    },
+    {
+      model: 'Class-Conditional DDPM (Diffusion)',
+      task: 'Generate class-conditioned aerial tiles through iterative denoising',
+      evidence: 'Noise-prediction history and DDIM sampling',
+      metric: `Noise MSE ${fmt(live.diffusion?.loss, 4)} Â· ${live.diffusion?.steps ?? 'â€”'}-step DDIM`,
+      error: 'Noise-prediction loss is not a photorealism or planning-validity score',
+      verdict: 'Best for stable iterative synthesis; use the generated tiles as scenarios, not evidence, until a held-out quality benchmark is added.',
     },
     {
       model: 'MiniGPT Transformer',
       task: 'Draft a planning recommendation grounded in real Pune statistics',
-      syllabus: 'Transformer, self-attention, cross-entropy LM loss',
+      evidence: 'Held-out character-level language evaluation',
       metric: `Perplexity ${fmt(live.gpt?.perplexity, 2)} · ${fmt(live.gpt?.bpc, 2, ' bpc')}`,
       error: 'Narrow — trained on a small templated corpus, not a general planner',
       verdict: 'Best for structured, grounded drafting from statistics. Delivers the final planner-facing output.',
@@ -82,7 +92,7 @@ export default function ModelComparison() {
     {
       model: 'Land-Use Classifier (ResNet18)',
       task: 'Label a parcel into one of 21 zoning classes',
-      syllabus: 'Supporting CNN — not one of the 4 required generative models',
+      evidence: 'Representative 21-class classification evaluation',
       metric: `Representative accuracy ${live.classifier ? (live.classifier.accuracy * 100).toFixed(1) + ' %' : '—'}`,
       error: 'Some dense- vs medium-residential confusion',
       verdict: 'Supporting discriminative model, not a generator; it feeds land-use verification and the GAN recognition proxy.',
@@ -102,7 +112,7 @@ export default function ModelComparison() {
       <div className="panel-header">
         <h1 className="panel-title">Model Comparison</h1>
         <div className="panel-desc">
-          Five models, each measured on the metric it is actually judged by. The question this page answers:
+          Six models, each measured on the metric it is actually judged by. The question this page answers:
           <strong style={{ color: 'var(--text)' }}> which model matters most for UrbanGenAI’s goal — urban-planning decision support?</strong>
         </div>
       </div>
@@ -141,7 +151,7 @@ export default function ModelComparison() {
               <tr style={{ background: 'var(--surface-inset)', textAlign: 'left', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em', fontSize: '0.7rem' }}>
                 <th style={{ padding: '10px 12px' }}>Model</th>
                 <th style={{ padding: '10px 12px' }}>Job in the pipeline</th>
-                <th style={{ padding: '10px 12px' }}>Syllabus concept</th>
+            <th style={{ padding: '10px 12px' }}>Evidence / protocol</th>
                 <th style={{ padding: '10px 12px' }}>Live result</th>
                 <th style={{ padding: '10px 12px' }}>Main limitation</th>
                 <th style={{ padding: '10px 12px' }}>Verdict — best for…</th>
@@ -152,7 +162,7 @@ export default function ModelComparison() {
                 <tr key={r.model} style={{ borderTop: '1px solid var(--border)', background: i % 2 ? 'var(--hover-overlay)' : 'transparent', verticalAlign: 'top' }}>
                   <td style={{ padding: '12px', fontWeight: 600, color: 'var(--text)' }}>{r.model}</td>
                   <td style={{ padding: '12px', color: 'var(--muted)' }}>{r.task}</td>
-                  <td style={{ padding: '12px', color: 'var(--muted)' }}>{r.syllabus}</td>
+                  <td style={{ padding: '12px', color: 'var(--muted)' }}>{r.evidence}</td>
                   <td style={{ padding: '12px', color: 'var(--accent)', fontFamily: 'var(--font-mono)', fontSize: '0.76rem' }}>{r.metric}</td>
                   <td style={{ padding: '12px', color: 'var(--warn)' }}>{r.error}</td>
                   <td style={{ padding: '12px', color: 'var(--text)' }}>{r.verdict}</td>

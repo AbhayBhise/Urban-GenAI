@@ -98,8 +98,8 @@ tile.
 The **VAE** — same encoder, but two 1-by-1 convolutions produce mu and log-
 variance, each 8-by-8-by-64, that's 4,096 latent dimensions. Loss is L1 plus
 MSE plus a tiny beta times KL divergence.
-The **GAN** — noise 128 plus a class embedding 64, five transposed
-convolutions to a 128-pixel tile, 100 epochs, adversarial loss with label
+The **GAN** — noise 128 plus a class embedding 64, four residual upsampling
+blocks to a 128-pixel tile, 120 epochs, adversarial loss with label
 smoothing and an EMA generator.
 The **MiniGPT** — four transformer blocks, four attention heads, context of
 192 characters, 3.2 million parameters, trained 3,000 steps on next-character
@@ -111,12 +111,14 @@ cross-entropy."
 
 "Here are the verified results, one row per module.
 The **classifier** — 98.1 percent validation accuracy.
-The **autoencoder** — PSNR 29.7 decibels, SSIM 0.87. That's near-lossless
-denoising; training MSE fell from 0.18 to 0.02.
+The **autoencoder** — PSNR 29.7 decibels, SSIM 0.87. That is strong
+reconstruction on this dataset; training MSE fell substantially during the run.
 The **VAE** — SSIM 0.43, deliberately softer, because an 8-by-8 bottleneck
 limits detail. But 63 of 64 latent dimensions are active, so the latent is
 healthy.
-The **GAN** — about 15 percent classifier-recognition rate.
+The **GAN** — 83.3 percent intended-class recognition in a fixed 168-sample
+evaluation, with substantial per-class variation. This is a classifier proxy,
+not a photorealism score.
 The **MiniGPT** — perplexity 1.09, which means it predicts the next character
 very confidently.
 All of these are read live from the checkpoints, served at slash-evaluate."
@@ -178,8 +180,8 @@ reparameterization trick — z equals mu plus sigma times epsilon, epsilon from
 N(0,1) — so gradients can flow through the sampling step. Beta is about 1e-4;
 we measured that beta above 0.02 causes posterior collapse on our data."
 
-**Q: Why is the GAN only 15%?**
-"At 100 epochs on 21 classes with 100 images each, texture-heavy classes like
+**Q: Why is the GAN not uniformly recognizable?**
+"At 120 epochs on 21 classes with 100 images each, texture-heavy classes like
 beach and forest come through, but classes needing exact repeated geometry —
 road grids, intersections — need far more epochs or data. It's the expected
 behaviour at this scale. We report it instead of only showing good samples."

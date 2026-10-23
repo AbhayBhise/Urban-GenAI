@@ -124,7 +124,7 @@ except Exception as e:
 
 # 5. cDCGAN Discriminator & Generator Loss Dynamics
 try:
-    with open("f:/PROJECTS/GEN AI PROJECT/UrbanGenAI/outputs/gan/history.json", "r") as f:
+    with open("../outputs/gan/history.json", "r") as f:
         gan_hist = json.load(f)
     
     epochs = [x['epoch'] for x in gan_hist]
@@ -134,7 +134,7 @@ try:
     fig, ax = plt.subplots(figsize=(5.5, 3.5))
     ax.plot(epochs, d_loss, color='#475569', linewidth=1.5, label='Discriminator Loss (D)')
     ax.plot(epochs, g_loss, color='#8b5cf6', linewidth=1.5, label='Generator Loss (G)')
-    ax.set_title('Conditional DCGAN Training Dynamics (100 Epochs)')
+    ax.set_title(f'Conditional DCGAN Training Dynamics ({epochs[-1]} Epochs)')
     ax.set_xlabel('Epoch')
     ax.set_ylabel('Adversarial Loss (BCE)')
     ax.legend(loc='upper right')
@@ -169,4 +169,3 @@ plt.title('Green AI Computational Audit: 100-Epoch Uniform Protocol (Total: 0.32
 plt.savefig(out_dir + "fig_energy_carbon.png", bbox_inches='tight')
 plt.close()
 print("Saved updated fig_energy_carbon.png")
-

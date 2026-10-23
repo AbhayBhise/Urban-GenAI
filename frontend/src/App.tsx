@@ -73,7 +73,7 @@ const MODEL_META: Record<string, {
     title: 'Variational Autoencoder — Anomaly Detection & Latent Exploration',
     description: 'Primary use in this project: flags land parcels whose reconstruction error deviates from a 294-tile normal baseline — a real anomaly-detection signal for parcels that don’t match expected patterns for their zone (informal construction, illegal land conversion, sensor artifacts). Also supports latent interpolation between two real tiles. This VAE reconstructs and blends real, encoded tiles — it does not invent new buildings or roads on arbitrary land (see architecture below for why, and what would).',
     resultTitle: 'VAE Generation & Reconstruction',
-    panelLabels: ['Original (Your Upload)', 'Generated Variation', 'Reconstruction'],
+    panelLabels: ['Original (Your Upload)', 'Generated Variation (should differ)', 'Reconstruction (should match)'],
     sampleEndpoint: '/sample/ucmerced/undeveloped',
     sampleHint: 'Trained on UCMerced aerial tiles (roads, buildings, fields, etc.) — upload a similar image, or load a real (undeveloped) sample below to try the urbanization projection.',
     inferEndpoint: '/infer/vae',
@@ -271,6 +271,7 @@ export default function App() {
           } else if (activeView === 'vae') {
             setMetrics({
               mu: data.mu, logvar: data.logvar, kl: data.kl, klPerDim: data.kl_per_dim, mse: data.mse,
+              generatedMse: data.generated_mse_vs_input, generationAlpha: data.generation_alpha,
               anomalyScore: data.anomaly_score, anomalyLevel: data.anomaly_level,
               anomalyPercentDiff: data.anomaly_percent_diff, anomalyReason: data.anomaly_reason,
             });
@@ -726,6 +727,12 @@ export default function App() {
                             <>
                               <div className="metric"><span className="metric-label">μ Mean</span><span className="metric-value">{Number(metrics.mu).toFixed(4)}</span></div>
                               <div className="metric"><span className="metric-label">log(var) Mean</span><span className="metric-value">{Number(metrics.logvar).toFixed(4)}</span></div>
+                              {metrics.mse != null && (
+                                <div className="metric"><span className="metric-label">Reconstruction MSE</span><span className="metric-value">{Number(metrics.mse).toFixed(5)}</span></div>
+                              )}
+                              {metrics.generatedMse != null && (
+                                <div className="metric"><span className="metric-label">Variation distance</span><span className="metric-value">{Number(metrics.generatedMse).toFixed(5)}</span></div>
+                              )}
                               {metrics.kl != null && (
                                 <div className="metric">
                                   <span className="metric-label">KL Divergence</span>
@@ -746,6 +753,10 @@ export default function App() {
                           latent values, so the total is in nats while <strong>KL / latent dim</strong> is the per-value amount.
                           μ and log(var) are means over that same latent grid. The near-zero β used in training lets those latent values
                           retain scene detail instead of forcing them to match independent N(0, I) noise.<br /><br />
+                          <strong>Reconstruction vs. generation:</strong> the reconstruction is intentionally expected to resemble the upload;
+                          its MSE is the anomaly-detection loss. The middle panel is a separate skip-aware interpolation with a real second tile,
+                          so it should remain recognizable while differing from the upload. Its distance is reported as variation, not as a loss to
+                          minimize.<br /><br />
                           <strong>KL divergence</strong> (shown above, in nats) measures how far the encoder's posterior q(z|x) sits from the
                           prior N(0, I). The reparameterization trick z = μ + σ·ε makes this term differentiable so it can be trained.
                           The objective is <code>reconstruction + β·KL</code>; this checkpoint uses a near-zero β to keep reconstructions sharp,

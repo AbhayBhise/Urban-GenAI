@@ -409,7 +409,7 @@ def build():
          "0.01977 MSE  (from 0.1830 at epoch 1)",
          "PSNR / SSIM / MSE  — 105 held-out tiles",
          "29.7 dB / 0.865 / 0.0045",
-         "Near-lossless"),
+         "Strong reconstruction; not lossless"),
         ("Spatial VAE",
          "0.7 L1 + 0.3 MSE  +  beta KL(q(z|x) || N(0,I)),  beta ~ 1e-4",
          "recon 0.07524  ·  KL 103.25 nats",
@@ -452,8 +452,8 @@ def build():
          "Answering 'is this parcel normal for its zone?' — gives a probabilistic score the AE cannot."),
         ("Conditional GAN",
          "Generating new synthetic tiles per class",
-         "~15% recognised; beach / forest / built-up high",
-         "Grid-geometry classes near 0% at 100 epochs",
+         "83.3% intended-class recognition proxy; uneven by class",
+         "Grid-geometry classes remain difficult after 120 epochs",
          "Augmenting texture-rich classes. Not yet reliable for geometric classes — needs more epochs / data."),
         ("MiniGPT",
          "Text — planning recommendations",
@@ -540,7 +540,7 @@ def build():
         [("Human in the loop   ", 13, True, ACCENT),
          ("outputs are candidate computational representations, not statutory plans; the planner stays in control.", 12, False, INK)],
         [("Limitations   ", 13, True, WARN),
-         ("the VAE cannot invent geometry it has not seen; the GAN geometry is immature at 100 epochs; MiniGPT "
+          ("the VAE cannot invent geometry it has not seen; the GAN geometry is immature after 120 epochs; MiniGPT "
           "is a template learner on a small corpus. All outputs need validation against Pune DCPR 2017/2021, "
           "engineering and hydrology models, and public hearings.", 12, False, INK)],
     ], space_after=10)

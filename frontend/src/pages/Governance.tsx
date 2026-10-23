@@ -28,9 +28,9 @@ export default function Governance() {
       <div className="panel-header">
         <h1 className="panel-title">Governance</h1>
         <div className="panel-desc">
-          Ethical, privacy, and security documentation for UrbanGen AI — mapped to
-          the Generative AI syllabus Unit 6 (GDPR, EU AI Act, India DPDP Act, bias,
-          security, sustainability). Served live from <code>docs/</code>.
+          Ethical, privacy, and security documentation for UrbanGen AI, including
+          GDPR, EU AI Act, India DPDP Act, bias, security, and sustainability. Served
+          live from <code>docs/</code>.
         </div>
       </div>
 

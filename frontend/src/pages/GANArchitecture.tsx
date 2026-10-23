@@ -1,4 +1,4 @@
-import { Box, Arrow, ArrowheadDef, SyllabusTable, ProvenanceNote, DiagramBackground, COLORS } from '../lib/archDiagram';
+import { Box, Arrow, ArrowheadDef, EvidenceTable, ProvenanceNote, DiagramBackground, COLORS } from '../lib/archDiagram';
 import { WorkflowAnimation } from '../lib/WorkflowAnimation';
 import { TrainingCurveCard } from '../components/TrainingCurveCard';
 
@@ -7,7 +7,7 @@ export default function GANArchitecture() {
     <div style={{ marginBottom: 30 }}>
       <ProvenanceNote>
         This Conditional DCGAN was trained end-to-end on UCMerced by our own <code>train_gan.py</code>
-        — 100 epochs, from a random initialization (no pretrained weights at all; unlike the AE/VAE/
+        — 120 epochs, from a random initialization (no pretrained weights at all; unlike the AE/VAE/
         Classifier, a GAN generator has no equivalent "ImageNet head start" to build on). It was
         flagged as the top-priority untrained component in the project's own contributing guide;
         we trained it, verified the result, and committed the weights (<code>outputs/gan/generator_ema.pth</code>).
@@ -31,7 +31,7 @@ export default function GANArchitecture() {
       <div className="card" style={{ marginBottom: 20 }}>
         <div className="card-title">Architecture — Class-Conditional Deep Convolutional GAN (cDCGAN)</div>
         <div style={{ padding: '0 16px 12px', color: 'var(--muted)', fontSize: '0.85rem', lineHeight: 1.6 }}>
-          <strong style={{ color: 'var(--accent)' }}>Syllabus Clarification: Is it a DCGAN or a Conditional GAN?</strong> It is <strong>both</strong>.
+          <strong style={{ color: 'var(--accent)' }}>Architecture clarification: is it a DCGAN or a Conditional GAN?</strong> It is <strong>both</strong>.
           The <em>convolutional backbone</em> (strided convolutions in D, fractionally-strided transposed convolutions in G, batch norm, no spatial pooling) is the <strong>DCGAN</strong> architecture (Radford et al., 2015).
           The <em>class-conditioning mechanism</em> (class embedding vectors injected into both G and D) is the <strong>Conditional GAN</strong> paradigm (Mirza &amp; Osindero, 2014). Combining them produces a <strong>Class-Conditional DCGAN (cDCGAN)</strong>.
         </div>
@@ -68,8 +68,8 @@ export default function GANArchitecture() {
             {/* Loss annotation */}
             <line x1={490} y1={251} x2={490} y2={286} stroke={COLORS.warn} strokeWidth={1.25} strokeDasharray="3,3" />
             <Box x={130} y={286} w={720} h={60} fill="#1a1408" stroke={COLORS.warn}
-              label="Adversarial loss: Non-saturating BCE + ResNet-18 Feature Matching + Sobel Edge Gradient Loss"
-              sub="D trained 2 steps per G step; G's weights EMA-averaged (decay 0.999) — used for all inference" labelColor={COLORS.warn} />
+          label="Adversarial BCE + auxiliary class guidance + diversity regularization"
+          sub="G's weights EMA-averaged (decay 0.999) — used for all inference" labelColor={COLORS.warn} />
           </svg>
         </div>
       </div>
@@ -102,7 +102,7 @@ export default function GANArchitecture() {
           <div className="card-title">Contribution to UrbanGenAI</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: '0.85rem', color: 'var(--text)' }}>
             <div>The GAN generates <strong>synthetic tiles for any of the 21 classes on demand</strong> — a data-augmentation and scenario-exploration tool distinct from the VAE (which only reconstructs/interpolates real, encoded tiles). It can produce novel examples of a class the other models only ever see through the fixed 2,100-tile dataset.</div>
-            <div><strong>Honest limitation:</strong> at 100 epochs on this dataset size, texture-distinctive classes like harbor already show real water/dock structure. Classes needing precise repeated geometry — a residential grid, a road intersection — are still color-and-texture fields rather than crisp layouts. That's expected: GANs typically need far more epochs or data to learn geometric structure than to learn texture statistics, and we report it rather than only showing the good outputs.</div>
+            <div><strong>Honest limitation:</strong> after 120 epochs on this dataset size, texture and broad land-use cues are stronger than precise repeated geometry. Recognition remains uneven for buildings, residential areas, harbor, and runway, so these are research prototypes rather than photorealistic planning evidence.</div>
           </div>
         </div>
 
@@ -118,18 +118,17 @@ export default function GANArchitecture() {
       <TrainingCurveCard
         modelKey="gan"
         title="Class-Conditional DCGAN Adversarial Training Dynamics (120 Epochs)"
-        description="Minimax adversarial optimization trajectory showing Discriminator loss stabilizing near equilibrium (D_loss ≈ 1.03), Generator adversarial loss (g_adv ≈ 1.20), and Generator semantic classification loss descending directly near zero (g_cls: 2.74 → 0.41), confirming sharp structural recognition."
+        description="Recorded adversarial training history. The checkpoint stores discriminator and generator objective totals; class recognition is evaluated separately with a fixed 168-sample protocol and is not treated as proof of photorealism."
         curves={[
           { key: 'd_loss', label: 'Discriminator Loss (D)', color: 'var(--danger)' },
-          { key: 'g_adv', label: 'Generator Adversarial (BCE)', color: 'var(--accent)' },
-          { key: 'g_cls', label: 'Generator Class Error (CE → 0)', color: 'var(--success)' },
+          { key: 'g_loss', label: 'Generator Objective (G)', color: 'var(--accent)' },
         ]}
       />
 
-      <SyllabusTable rows={[
+      <EvidenceTable rows={[
         ['Generator / Discriminator structure', 'Shown above — class-conditional DCGAN, both networks diagrammed exactly as implemented'],
         ['Adversarial loss, minimax optimization', 'Non-saturating BCE with label smoothing; D trained 2 steps per G step'],
-        ['Type: Deep Convolutional GAN (DCGAN)', 'This is explicitly a DCGAN — the standard convolutional G/D recipe named in the syllabus'],
+        ['Type: Deep Convolutional GAN (DCGAN)', 'Convolutional generator and discriminator follow the implemented DCGAN recipe'],
         ['Type: Conditional GAN', 'Class-conditioning via learned embeddings in both G and D'],
         ['Challenges: mode collapse', 'Spectral normalization + label smoothing specifically address this on a small (100 images/class) dataset'],
       ]} />
