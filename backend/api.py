@@ -833,6 +833,21 @@ def sharpen_vae_reconstruction(recon, source, output_size=512):
     return enhanced.clamp(-1.0, 1.0)
 
 
+def enhance_generated_urban_image(image, target=None, strength=1.0):
+    """Improve legibility of generated/projection outputs for display."""
+    image = F.interpolate(image, size=(512, 512), mode="bicubic", align_corners=False)
+    image01 = ((image + 1.0) / 2.0).clamp(0.0, 1.0)
+    if target is not None:
+        target = F.interpolate(target, size=image01.shape[-2:], mode="bicubic", align_corners=False)
+        target01 = ((target + 1.0) / 2.0).clamp(0.0, 1.0)
+        target_smooth = F.avg_pool2d(target01, kernel_size=9, stride=1, padding=4)
+        image01 = (image01 + 0.35 * strength * (target01 - target_smooth)).clamp(0.0, 1.0)
+    luminance = image01.mean(dim=1, keepdim=True)
+    image01 = luminance + 1.12 * (image01 - luminance)
+    image01 = ((image01 - 0.5) * 1.16 + 0.5).clamp(0.0, 1.0)
+    return image01 * 2.0 - 1.0
+
+
 
 
 @app.get("/evaluate/vae")
@@ -947,17 +962,25 @@ async def infer_vae(request: Request, file: UploadFile = File(...)):
     img = await read_image_upload(file)
     clean_x = vae_transform(img).unsqueeze(0).to(device)
     with torch.no_grad():
-        # Use the posterior mean for a stable reconstruction. Sampling here
-        # adds stochastic noise to the image and makes anomaly scores noisy.
-        recon, mu, logvar = vae.reconstruct(clean_x)
+        # Keep the posterior mean for stable anomaly scoring, but also decode
+        # a substantially perturbed posterior so this inference visibly
+        # generates a new, recognizable local variation.
+        mu, logvar = vae.encode(clean_x)
+        recon = vae.decode(mu)
         mse = F.mse_loss(recon, clean_x).item()
         display_recon = sharpen_vae_reconstruction(recon, clean_x)
+        generation_std = torch.exp(0.5 * logvar).clamp(min=0.12, max=0.45)
+        generated_z = mu + 0.95 * generation_std * torch.randn_like(mu)
+        generated = vae.decode(generated_z)
+        display_generated = enhance_generated_urban_image(generated)
 
     kl_total, kl_per_dim = kl_divergence(mu, logvar)
     anomaly_score, anomaly_level, anomaly_percent_diff, anomaly_reason = score_anomaly(mse)
 
     return {
         "reconstructed": tensor_to_b64(display_recon[0]),
+        "generated": tensor_to_b64(display_generated[0]),
+        "generation_method": "posterior perturbation on the learned local manifold",
         "mu": mu.mean().item(),
         "logvar": logvar.mean().item(),
         "kl": kl_total,
@@ -1095,9 +1118,10 @@ async def infer_vae_urbanize(request: Request, file: UploadFile = File(...), alp
     # copy of the upload.
     result = await asyncio.to_thread(
         run_urbanization_style_transfer, img, target_img,
-        content_weight=1.5, style_weight=alpha * 2.5e5,
+        content_weight=0.75, style_weight=alpha * 4.0e5,
     )
-    display = result.clamp(0, 1) * 2 - 1  # tensor_to_b64 expects [-1, 1]
+    target_tensor = transforms.ToTensor()(target_img).unsqueeze(0).to(device) * 2.0 - 1.0
+    display = enhance_generated_urban_image(result * 2.0 - 1.0, target_tensor, strength=alpha)
     return {"urbanized": tensor_to_b64(display[0]), "alpha": alpha}
 
 
@@ -1125,8 +1149,8 @@ async def generate_vae_random(request: Request):
     with torch.no_grad():
         mu, logvar = vae.encode(source_x)
         posterior_std = torch.exp(0.5 * logvar).clamp(0.05, 0.35)
-        z = mu + 0.35 * posterior_std * torch.randn_like(mu)
-        generated = vae.decode(z)
+        z = mu + 0.95 * posterior_std * torch.randn_like(mu)
+        generated = enhance_generated_urban_image(vae.decode(z))
     return {
         "generated": tensor_to_b64(generated[0]),
         "sampling_method": "random real-tile posterior with controlled latent noise",

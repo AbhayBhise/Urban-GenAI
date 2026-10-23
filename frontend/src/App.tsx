@@ -72,8 +72,8 @@ const MODEL_META: Record<string, {
   vae: {
     title: 'Variational Autoencoder — Anomaly Detection & Latent Exploration',
     description: 'Primary use in this project: flags land parcels whose reconstruction error deviates from a 294-tile normal baseline — a real anomaly-detection signal for parcels that don’t match expected patterns for their zone (informal construction, illegal land conversion, sensor artifacts). Also supports latent interpolation between two real tiles. This VAE reconstructs and blends real, encoded tiles — it does not invent new buildings or roads on arbitrary land (see architecture below for why, and what would).',
-    resultTitle: 'VAE Reconstruction',
-    panelLabels: ['Original (Your Upload)', 'Reconstructed'],
+    resultTitle: 'VAE Generation & Reconstruction',
+    panelLabels: ['Original (Your Upload)', 'Generated Variation', 'Reconstruction'],
     sampleEndpoint: '/sample/ucmerced/undeveloped',
     sampleHint: 'Trained on UCMerced aerial tiles (roads, buildings, fields, etc.) — upload a similar image, or load a real (undeveloped) sample below to try the urbanization projection.',
     inferEndpoint: '/infer/vae',
@@ -639,6 +639,9 @@ export default function App() {
                         {activeView === 'ae' && resultData?.noisy && (
                           <img src={`data:image/jpeg;base64,${resultData.noisy}`} style={{ flex: 1, width: 0, minWidth: 0, height: 'auto', borderRadius: '4px', border: '1px solid var(--border)' }} alt="Noisy" />
                         )}
+                        {activeView === 'vae' && resultData?.generated && (
+                          <img src={`data:image/jpeg;base64,${resultData.generated}`} style={{ flex: 1, width: 0, minWidth: 0, height: 'auto', borderRadius: '4px', border: '1px solid var(--border)' }} alt="Generated VAE variation" />
+                        )}
                         {resultData?.reconstructed && (
                           <img src={`data:image/jpeg;base64,${resultData.reconstructed}`} style={{ flex: 1, width: 0, minWidth: 0, height: 'auto', borderRadius: '4px', border: '1px solid var(--border)' }} alt="Reconstructed" />
                         )}
@@ -742,8 +745,9 @@ export default function App() {
                             textures it toward a randomly picked real developed/built-up tile, while
                             a content loss keeps it anchored to the original layout. This is the same
                             land — its boundaries and structure come from your upload, not from the
-                            style tile — with a "more built-up" material/texture applied. It can't
-                            invent new roads or buildings beyond what the layout already implies.
+                            style tile — with a stronger future-urban material, contrast, and detail
+                            projection applied. It cannot guarantee new roads or buildings where the
+                            upload contains no supporting structure.
                             Optimized natively at 512×512 on GPU — takes about 15 seconds.
                           </p>
                           <label style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>
@@ -766,7 +770,7 @@ export default function App() {
                           {urbanizeImg && (
                             <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                               <div style={{ color: 'var(--muted)', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px', textAlign: 'center' }}>
-                                Same land, urbanization projection ({Math.round(urbanizeIntensity * 100)}% style strength)
+                                Future urbanization projection ({Math.round(urbanizeIntensity * 100)}% style strength)
                               </div>
                               {/* Output is natively 512x512 — cap display at that so the browser
                                   never upscales it past its real resolution (which is what made it
@@ -789,8 +793,8 @@ export default function App() {
               <div className="card" style={{ marginBottom: '30px' }}>
                 <div className="card-title">Generate Random Sample</div>
                 <p style={{ color: 'var(--muted)', fontSize: '0.85rem', lineHeight: 1.5, marginBottom: '15px' }}>
-                  Generates a random land-use tile by selecting a real UCMerced tile internally,
-                  encoding its learned latent representation, and adding controlled latent noise.
+                  Generates a new land-use variation by selecting a real UCMerced tile internally,
+                  encoding its learned latent representation, and adding substantial controlled latent noise.
                   This checkpoint uses a near-zero KL weight, so independent N(0, I) noise is outside
                   the decoder's learned spatial latent distribution and produces the blurred,
                   unidentifiable output seen with pure prior sampling. The learned-manifold method
