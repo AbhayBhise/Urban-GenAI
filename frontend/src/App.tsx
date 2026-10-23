@@ -152,20 +152,29 @@ export default function App() {
   }, [activeView]);
 
   useEffect(() => {
-    apiFetch('/status')
+    let disposed = false;
+    const checkStatus = () => apiFetch('/status')
       .then(res => {
         if (!res.ok) throw new Error(`Backend returned HTTP ${res.status}`);
         return res.json();
       })
       .then(data => {
+        if (disposed) return;
         setStatus(data);
         setStatusError(null);
       })
       .catch(err => {
+        if (disposed) return;
         setStatus({});
         setStatusError('Backend unavailable at http://127.0.0.1:8000. Start it manually with "python api.py" from the backend folder.');
         console.error(err);
       });
+    checkStatus();
+    const timer = window.setInterval(checkStatus, 5000);
+    return () => {
+      disposed = true;
+      window.clearInterval(timer);
+    };
   }, []);
 
   useEffect(() => {
