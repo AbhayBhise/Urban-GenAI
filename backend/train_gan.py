@@ -71,7 +71,23 @@ def train():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"[GAN] Using device: {device} ({torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'CPU'})")
 
-    raw_dataset = UCMercedDataset()
+    # Aerial scenes have no canonical up direction. Reusing each tile with
+    # orientation-preserving flips/quarter-turns increases the effective
+    # variety without inventing labels or mixing classes. Mild colour jitter
+    # covers sensor/illumination variation while retaining land-use geometry.
+    gan_transform = transforms.Compose([
+        transforms.Resize((128, 128)),
+        transforms.RandomHorizontalFlip(),
+        transforms.RandomVerticalFlip(),
+        transforms.RandomChoice([
+            transforms.Lambda(lambda img, angle=angle: img.rotate(angle))
+            for angle in (0, 90, 180, 270)
+        ]),
+        transforms.ColorJitter(brightness=0.08, contrast=0.08, saturation=0.06, hue=0.02),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
+    ])
+    raw_dataset = UCMercedDataset(transform=gan_transform)
     if len(raw_dataset) == 0:
         print("[GAN] ERROR: UCMerced dataset not found.")
         sys.exit(1)
