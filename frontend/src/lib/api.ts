@@ -2,7 +2,9 @@
 // has set one) as the X-API-Key header on every request. The key never
 // leaves the browser except as a header to this project's own backend.
 
-export const API_URL = 'http://127.0.0.1:8000';
+// Set VITE_API_URL in the deployment environment for the hosted backend.
+// Keep localhost as the development default so local runs remain zero-config.
+export const API_URL = (import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000').replace(/\/$/, '');
 
 const API_KEY_STORAGE = 'urbangen_api_key';
 
