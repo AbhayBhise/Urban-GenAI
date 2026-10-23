@@ -92,6 +92,7 @@ const MODEL_META: Record<string, {
 export default function App() {
   const [activeView, setActiveView] = useState<ViewType>(getInitialView());
   const [status, setStatus] = useState<any>({});
+  const [statusError, setStatusError] = useState<string | null>(null);
 
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
@@ -152,9 +153,19 @@ export default function App() {
 
   useEffect(() => {
     apiFetch('/status')
-      .then(res => res.json())
-      .then(data => setStatus(data))
-      .catch(err => console.error(err));
+      .then(res => {
+        if (!res.ok) throw new Error(`Backend returned HTTP ${res.status}`);
+        return res.json();
+      })
+      .then(data => {
+        setStatus(data);
+        setStatusError(null);
+      })
+      .catch(err => {
+        setStatus({});
+        setStatusError('Backend unavailable at http://127.0.0.1:8000. Start it manually with "python api.py" from the backend folder.');
+        console.error(err);
+      });
   }, []);
 
   useEffect(() => {
@@ -520,6 +531,11 @@ export default function App() {
                   {status[statusKey] === 'Trained' ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
                   {status[statusKey] === 'Trained' ? 'Trained ✓' : 'Not trained yet — run backend script'}
                 </div>
+              ) : statusError ? (
+                <div className="status-chip error" title={statusError}>
+                  <AlertCircle size={16} />
+                  Backend offline
+                </div>
               ) : null}
               <button
                 className="theme-toggle"
@@ -533,6 +549,14 @@ export default function App() {
           </div>
 
           <div className="content-body">
+            {statusError && (
+              <div style={{
+                border: '1px solid var(--danger)', color: 'var(--danger)', borderRadius: '4px',
+                padding: '10px 12px', marginBottom: '15px', fontSize: '0.85rem',
+              }}>
+                {statusError}
+              </div>
+            )}
             {isImageView(activeView) && (
               <div className="panel-header">
                 <h1 className="panel-title">{MODEL_META[activeView].title}</h1>
@@ -598,7 +622,7 @@ export default function App() {
                         </div>
                       )}
                       <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '15px' }}>
-                        <button className="btn" onClick={handleUpload} disabled={loading || status[statusKey] !== 'Trained'}>
+                        <button className="btn" onClick={handleUpload} disabled={loading || status[statusKey] === 'Not trained'}>
                           {loading ? 'Processing...' : activeView === 'classifier' ? 'Run Classification' : 'Run Inference'}
                         </button>
                         <button className="btn" onClick={clearSelection} style={{ background: 'transparent', border: '1px solid var(--border)', color: 'var(--text)' }}>Clear Selection</button>
@@ -801,7 +825,7 @@ export default function App() {
                   stays in a region the decoder was trained to render, so roads, fields, buildings,
                   or other land-use structure can remain identifiable.
                 </p>
-                <button className="btn" style={{ maxWidth: '320px' }} onClick={handleGenerateRandom} disabled={randomGenLoading || status[statusKey] !== 'Trained'}>
+                <button className="btn" style={{ maxWidth: '320px' }} onClick={handleGenerateRandom} disabled={randomGenLoading || status[statusKey] === 'Not trained'}>
                   {randomGenLoading ? 'Generating...' : 'Generate Random Sample'}
                 </button>
                 {randomGenError && (
