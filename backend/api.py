@@ -1238,6 +1238,7 @@ async def generate_vae_random(request: Request):
 
 
 @app.post("/infer/transformer", dependencies=GUARDED)
+@app.post("/infer/classifier", dependencies=GUARDED)
 @limiter.limit(RATE_LIMIT)
 async def infer_transformer(request: Request, file: UploadFile = File(...)):
     """Land-use / zoning classification (ResNet18). Route name kept for
