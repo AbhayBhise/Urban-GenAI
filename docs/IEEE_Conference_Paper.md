@@ -13,16 +13,20 @@
 ---
 
 ### Abstract
-Rapid global urbanization presents pressing challenges in zoning compliance, green cover preservation, transit infrastructure allocation, and microclimate resilience. Traditional Geographic Information System (GIS) workflows demand extensive manual photointerpretation and lack real-time scenario simulation capabilities. In this paper, we propose **UrbanGen AI**, an end-to-end, multi-model generative artificial intelligence framework engineered specifically for sustainable smart city planning and digital twin prototyping. UrbanGen AI unifies four foundational paradigms into a cohesive pipeline: 
+Rapid global urbanization presents pressing challenges in zoning compliance, green cover preservation, transit infrastructure allocation, and microclimate resilience. Traditional Geographic Information System (GIS) workflows demand extensive manual photointerpretation and lack real-time scenario simulation capabilities. In this paper, we propose **UrbanGen AI**, an end-to-end, multi-model generative artificial intelligence framework engineered specifically for sustainable smart city planning and digital twin prototyping. UrbanGen AI implements the five generative model families required by the Generative Artificial Intelligence syllabus—Autoencoder, Variational Autoencoder, Generative Adversarial Network, Transformer-based generator, and Diffusion Model—within one auditable pipeline:
 1. An aerial imagery **Denoising Autoencoder** incorporating U-Net skip connections, evaluated with reconstruction metrics on representative UCMerced tiles;
-2. A **ResNet-18 Land-Use Classifier** for rapid territorial zoning audits, with accuracy reported alongside the evaluation split and sampling protocol;
-3. A spatial **Variational Autoencoder (VAE)** enabling continuous latent-space interpolation and unsupervised spatial anomaly detection with reconstruction error metrics;
-4. A **Class-Conditional Deep Convolutional GAN (cDCGAN)** with spectral normalization and EMA generator weights for synthetic aerial tile generation across diverse land categories; and
-5. An autoregressive causal **Transformer (MiniGPT)** delivering contextual, localized urban planning policy recommendations seeded with real municipal geospatial distributions (e.g., Pune metropolitan region).
+2. A spatial **Variational Autoencoder (VAE)** enabling continuous latent-space interpolation and unsupervised spatial anomaly detection with reconstruction error metrics;
+3. A **Class-Conditional Deep Convolutional GAN (cDCGAN)** with spectral normalization and EMA generator weights for synthetic aerial tile generation across diverse land categories;
+4. An autoregressive causal **Transformer (MiniGPT)** delivering contextual, localized urban planning policy recommendations seeded with real municipal geospatial distributions (e.g., Pune metropolitan region); and
+5. A class-conditional **Denoising Diffusion Probabilistic Model (DDPM)** with a DDIM sampler for novel target-class aerial-tile generation.
+
+An independently trained **ResNet-18 land-use classifier** is used only as a supporting zoning and generated-image evaluation component; it is not counted as an additional generative model family.
 
 The system is designed to run locally on a consumer NVIDIA RTX 4050 GPU. Energy and carbon claims are intentionally not reported until measured with a reproducible hardware-level protocol.
 
-**Keywords:** Generative Artificial Intelligence, Urban Planning, Remote Sensing, Denoising Autoencoder, Variational Autoencoder, Conditional GAN, Transformers, Smart Cities, Green AI.
+The paper follows the supplied Generative Artificial Intelligence syllabus boundary: the reported generative families are AE, VAE, GAN, Transformer/GPT, and Diffusion. No additional generative architecture is introduced. The land-use classifier is retained as a conventional discriminative support model because it supplies zoning labels and independent target-compliance checks.
+
+**Keywords:** Generative Artificial Intelligence, Urban Planning, Remote Sensing, Denoising Autoencoder, Variational Autoencoder, Conditional GAN, Transformer, Diffusion Model, Smart Cities, Green AI.
 
 ---
 
@@ -43,7 +47,7 @@ To overcome these challenges, we introduce **UrbanGen AI**, a multi-model genera
 
 ## 2. System Architecture and Methodology
 
-The UrbanGen AI pipeline comprises five specialized modules designed to address distinct phases of the spatial intelligence lifecycle: restoration, classification, latent representation, generative synthesis, and contextual advisory text generation.
+The UrbanGen AI pipeline comprises five syllabus-aligned generative model families: Autoencoder, VAE, GAN, Transformer/GPT, and Diffusion. The ResNet-18 classifier is a supporting discriminative component for zoning labels and independent evaluation.
 
 ```
 Input Aerial/Satellite Imagery
@@ -101,10 +105,10 @@ We use soft label smoothing ($y_{\text{real}}=0.9, y_{\text{fake}}=0.1$), class-
 
 ### E. Urban Scenario Denoising Diffusion Model
 
-UrbanGen AI implements an image- and class-conditioned DDPM for controlled aerial scenario generation. The model receives the uploaded source tile and one of 21 land-use classes. A lightweight residual U-Net predicts injected Gaussian noise across a 1,000-step linear schedule; inference uses a 20-step DDIM sampler. The trained checkpoint contains 2.8M parameters and uses:
+UrbanGen AI implements a class-conditional DDPM for controlled aerial-tile generation. The model receives one of 21 land-use classes and samples its initial image from Gaussian noise; the uploaded UI tile is not passed to the generator. A lightweight residual U-Net predicts injected Gaussian noise across a 1,000-step linear schedule; inference uses a 20-step DDIM sampler. The trained checkpoint contains 2.8M parameters and uses:
 $$\mathcal{L}_{\text{diffusion}} = \mathbb{E}\left[\|\epsilon - \epsilon_\theta(x_t,t,s,c)\|_2^2\right].$$
 
-The fixed CUDA run used 50 epochs and recorded: initial noise-prediction MSE **0.36231**, final MSE **0.00421**, best epoch MSE **0.00384**, wall time **16.63 minutes**, average GPU power **28.51 W**, peak GPU power **61.37 W**, and estimated GPU-board energy **7.90 Wh** from 476 `nvidia-smi` samples. This is a convergence and reproducibility record, not a claim of future-development prediction accuracy; the dataset contains no paired before/after planning outcomes.
+The replacement CUDA run used 50 epochs and recorded its measured values in `outputs/diffusion_class_conditional/meta.json` and `history.json`. At inference, the application evaluates four independently seeded DDIM candidates, rejects exact or near-duplicate dataset matches, and selects using the measured requested-class probability. These are transparent generation heuristics, not planning-validity metrics. Because the dataset contains no paired before/after planning outcomes, this model is not a source-preserving transformer or future-development predictor.
 
 ### F. Urban Plan Generator (MiniGPT Transformer)
 To bridge quantitative visual spatial analysis with qualitative policy generation, UrbanGen AI implements a custom decoder-only autoregressive causal Transformer. The model features 4 pre-layer-normalization Transformer blocks, 4 attention heads, embedding dimension $d_{\text{model}} = 256$, and context window length $T=192$.
@@ -222,7 +226,7 @@ Urban spatial interventions directly impact citizen welfare, mobility rights, an
 ---
 
 ## 5. Conclusion and Future Work
-This paper presented **UrbanGen AI**, a multi-model Generative AI architecture unifying aerial image restoration, land-use classification, spatial latent interpolation, unsupervised anomaly ranking, source-conditioned diffusion scenario generation, class-conditional tile generation, and contextual policy synthesis. The current implementation is a locally deployable research prototype. The diffusion run includes reproducible GPU power telemetry, while whole-system energy and carbon efficiency remain outside the reported claims.
+This paper presented **UrbanGen AI**, a multi-model Generative AI architecture unifying aerial image restoration, land-use classification, spatial latent interpolation, unsupervised anomaly ranking, class-conditional diffusion tile generation, class-conditional GAN synthesis, and contextual policy synthesis. The current implementation is a locally deployable research prototype. The diffusion run includes reproducible GPU power telemetry, while whole-system energy and carbon efficiency remain outside the reported claims.
 
 Future work will expand the pipeline to ingest multi-band ESA Sentinel-2 and NASA HLS satellite feeds, incorporate cross-attention vision-language models for multimodal query answering, and integrate physical microclimate fluid dynamic simulations for urban heat island mitigation.
 

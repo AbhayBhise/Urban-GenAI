@@ -2,9 +2,8 @@
 Lightweight Denoising Diffusion Probabilistic Model (DDPM) for 128x128 aerial imagery synthesis.
 Designed for consumer-grade GPU execution (e.g. RTX 4050 6GB) with DDIM fast sampling.
 
-The UrbanGenAI scenario variant receives the uploaded source tile as a
-spatial condition in addition to the land-use class. This preserves the
-scene-conditioned planning objective instead of generating an unrelated tile.
+The generator samples from noise and conditions only on the requested
+land-use class. The available dataset has no paired source/target scenes.
 """
 
 import math
@@ -168,20 +167,28 @@ class DDPM(nn.Module):
         predicted_noise = self.unet(x_noisy, t, c, condition=condition)
         return F.mse_loss(predicted_noise, noise)
 
-    @torch.no_grad()
     def ddim_sample(self, shape, c: torch.Tensor, steps: int = 20, eta: float = 0.0,
-                    condition: torch.Tensor | None = None) -> torch.Tensor:
-        """Fast deterministic/low-variance sampling (DDIM) for interactive generation."""
+                    condition: torch.Tensor | None = None,
+                    classifier: nn.Module | None = None,
+                    classifier_guidance_scale: float = 0.0,
+                    init_image: torch.Tensor | None = None,
+                    strength: float = 1.0) -> torch.Tensor:
+        """Fast DDIM sampling from noise with optional classifier guidance."""
         device = self.betas.device
         b = shape[0]
-        times = torch.linspace(0, self.timesteps - 1, steps, dtype=torch.long, device=device)
+        strength = max(0.0, min(float(strength), 1.0))
+        start_t = int((self.timesteps - 1) * strength)
+        times = torch.linspace(0, start_t, steps, dtype=torch.long, device=device)
         times = list(reversed(times.tolist()))
-        
+
+        if init_image is not None:
+            raise ValueError("This class-conditional sampler must start from noise")
         img = torch.randn(shape, device=device)
         
         for i, t in enumerate(times):
             t_batch = torch.full((b,), t, device=device, dtype=torch.long)
-            eps = self.unet(img, t_batch, c, condition=condition)
+            with torch.no_grad():
+                eps = self.unet(img, t_batch, c, condition=condition)
             
             alpha_bar = self.alphas_cumprod[t]
             alpha_bar_prev = self.alphas_cumprod[times[i + 1]] if i < len(times) - 1 else torch.tensor(1.0, device=device)
@@ -189,6 +196,20 @@ class DDPM(nn.Module):
             # Predict x_0
             pred_x0 = (img - torch.sqrt(1.0 - alpha_bar) * eps) / torch.sqrt(alpha_bar)
             pred_x0 = pred_x0.clamp(-1.0, 1.0)
+
+            if classifier is not None and classifier_guidance_scale > 0:
+                with torch.enable_grad():
+                    guided_x0 = pred_x0.detach().requires_grad_(True)
+                    classifier_input = F.interpolate(
+                        guided_x0, size=(224, 224), mode='bilinear', align_corners=False
+                    )
+                    class_log_probability = F.log_softmax(classifier(classifier_input), dim=1)
+                    guidance = class_log_probability[
+                        torch.arange(b, device=device), c
+                    ].sum()
+                    gradient = torch.autograd.grad(guidance, guided_x0)[0]
+                gradient = gradient / gradient.abs().mean(dim=(1, 2, 3), keepdim=True).clamp_min(1e-6)
+                pred_x0 = (pred_x0 + classifier_guidance_scale * gradient).clamp(-1.0, 1.0)
             
             # Direction pointing to x_t
             # At the final reverse step alpha_bar_prev can equal 1.0.  For

@@ -4,6 +4,7 @@ import json
 import io
 import base64
 import asyncio
+import hashlib
 import torch
 import torch.nn.functional as F
 import psutil
@@ -51,6 +52,7 @@ app.add_middleware(
 GUARDED = [Depends(require_api_key)]
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+RUN_STARTUP_EVALUATIONS = os.getenv("URBANGEN_STARTUP_EVALUATIONS", "0") == "1"
 
 AE_LATENT = None  # DenoisingAE has no explicit latent dim arg
 VAE_LATENT_CHANNELS = 64
@@ -101,19 +103,20 @@ gan_generator = GANGenerator(latent_dim=GAN_LATENT_DIM, num_classes=GAN_NUM_CLAS
 gan_loaded = load_model_if_exists(gan_generator, '../outputs/gan/generator_ema.pth')
 
 # ---------------------------------------------------------------------------
-# UrbanGenAI image-conditioned scenario diffusion model (DDIM Fast Sampler)
+# UrbanGenAI class-conditional diffusion model (DDIM Fast Sampler)
 # ---------------------------------------------------------------------------
-diffusion_unet = DiffusionUNet(base_ch=32, num_classes=len(URBAN_CLASSES), condition_channels=3).to(device)
+diffusion_unet = DiffusionUNet(base_ch=32, num_classes=len(URBAN_CLASSES), condition_channels=0).to(device)
 diffusion_model = DDPM(diffusion_unet, timesteps=1000).to(device)
-diffusion_loaded = load_model_if_exists(diffusion_unet, '../outputs/diffusion_scenario/model.pth')
+_DIFFUSION_CHECKPOINT = '../outputs/diffusion_class_conditional/model_best.pth'
+diffusion_loaded = load_model_if_exists(diffusion_unet, _DIFFUSION_CHECKPOINT)
 
 
 def refresh_diffusion_checkpoint():
     """Pick up a checkpoint produced after API startup without fake fallbacks."""
     global diffusion_loaded
-    if not diffusion_loaded and os.path.exists('../outputs/diffusion_scenario/model.pth'):
+    if not diffusion_loaded and os.path.exists(_DIFFUSION_CHECKPOINT):
         diffusion_loaded = load_model_if_exists(
-            diffusion_unet, '../outputs/diffusion_scenario/model.pth'
+            diffusion_unet, _DIFFUSION_CHECKPOINT
         )
     return diffusion_loaded
 
@@ -562,9 +565,70 @@ transformer_transform = transforms.Compose([
     transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])
 ])
 
-compute_vae_anomaly_baseline()
-compute_urbanization_targets()
-compute_vae_evaluation()
+_DIFFUSION_REFERENCE_TILES = None
+_DIFFUSION_REFERENCE_TRANSFORM = transforms.Compose([
+    transforms.Resize((32, 32)),
+    transforms.ToTensor(),
+    transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
+])
+
+
+def diffusion_dataset_novelty(sample):
+    """Compare a generated tile with every available UCMerced tile.
+
+    This is a novelty check, not a learned quality metric. The compact
+    32x32 comparison is used to keep inference memory bounded.
+    """
+    global _DIFFUSION_REFERENCE_TILES
+    if _DIFFUSION_REFERENCE_TILES is None:
+        references = []
+        for class_name in URBAN_CLASSES:
+            for path in sorted((DATASET_PATH / class_name).glob("*.tif")):
+                with Image.open(path) as reference:
+                    references.append(
+                        _DIFFUSION_REFERENCE_TRANSFORM(reference.convert("RGB"))
+                    )
+        if not references:
+            return None
+        _DIFFUSION_REFERENCE_TILES = torch.stack(references)
+    sample_small = F.interpolate(
+        sample.detach().cpu(), size=(32, 32), mode="bilinear", align_corners=False
+    )
+    distances = (_DIFFUSION_REFERENCE_TILES - sample_small).pow(2).mean(dim=(1, 2, 3))
+    nearest_mse = float(distances.min().item())
+    return {
+        "reference_count": int(_DIFFUSION_REFERENCE_TILES.shape[0]),
+        "nearest_tile_mse_32x32": nearest_mse,
+        "is_exact_or_near_duplicate": nearest_mse < 1e-5,
+    }
+
+
+def score_diffusion_candidate(sample, target_index):
+    """Measure one generated candidate without treating any proxy as truth."""
+    normalized = sample.detach().clamp(-1.0, 1.0)
+    image = transforms.ToPILImage()(
+        ((normalized + 1.0) * 127.5).clamp(0, 255).to(torch.uint8).squeeze(0).cpu()
+    )
+    with torch.no_grad():
+        logits = transformer(transformer_transform(image).unsqueeze(0).to(device))
+        probabilities = F.softmax(logits, dim=1)[0]
+    novelty = diffusion_dataset_novelty(normalized)
+    target_probability = float(probabilities[target_index].item())
+    selection_score = target_probability
+    return {
+        "sample": normalized,
+        "image": image,
+        "verified_class_name": URBAN_CLASSES[int(probabilities.argmax().item())],
+        "verified_class_confidence": float(probabilities.max().item()),
+        "target_class_confidence": target_probability,
+        "dataset_novelty": novelty,
+        "selection_score": selection_score,
+    }
+
+if RUN_STARTUP_EVALUATIONS:
+    compute_vae_anomaly_baseline()
+    compute_urbanization_targets()
+    compute_vae_evaluation()
 
 
 def add_noise(imgs, noise_std=0.15):
@@ -644,7 +708,8 @@ def compute_ae_evaluation(n_per_class=5):
           f"SSIM={AE_EVAL_METRICS['ssim']['mean']:.4f}")
 
 
-compute_ae_evaluation()
+if RUN_STARTUP_EVALUATIONS:
+    compute_ae_evaluation()
 
 
 # ---------------------------------------------------------------------------
@@ -704,7 +769,8 @@ def compute_classifier_evaluation(n_per_class=5):
           f"accuracy={CLASSIFIER_EVAL_METRICS['accuracy']:.4f}")
 
 
-compute_classifier_evaluation()
+if RUN_STARTUP_EVALUATIONS:
+    compute_classifier_evaluation()
 
 
 # ---------------------------------------------------------------------------
@@ -765,7 +831,8 @@ def compute_gan_evaluation(n_per_class=8):
           f"classifier-recognition rate={GAN_EVAL_METRICS['overall_recognition_rate']:.4f}")
 
 
-compute_gan_evaluation()
+if RUN_STARTUP_EVALUATIONS:
+    compute_gan_evaluation()
 
 
 # ---------------------------------------------------------------------------
@@ -839,7 +906,22 @@ def compute_gpt_evaluation():
           f"bits/char={GPT_EVAL_METRICS['bits_per_char']:.4f}")
 
 
-compute_gpt_evaluation()
+if RUN_STARTUP_EVALUATIONS:
+    compute_gpt_evaluation()
+
+
+def ensure_evaluation_metrics():
+    """Compute real evaluation data on demand after fast model startup."""
+    if ae_loaded and not AE_EVAL_METRICS:
+        compute_ae_evaluation()
+    if vae_loaded and not VAE_EVAL_METRICS:
+        compute_vae_evaluation()
+    if trans_loaded and not CLASSIFIER_EVAL_METRICS:
+        compute_classifier_evaluation()
+    if gan_loaded and trans_loaded and not GAN_EVAL_METRICS:
+        compute_gan_evaluation()
+    if gpt_loaded and not GPT_EVAL_METRICS:
+        compute_gpt_evaluation()
 
 
 def tensor_to_image_bytes(t):
@@ -904,6 +986,8 @@ def get_vae_evaluation():
     """Reconstruction-quality and latent-health metrics computed once at
     startup over a representative sample spanning all 21 UCMerced classes.
     This is measured runtime evaluation data, not a persisted held-out split."""
+    if vae_loaded and not VAE_EVAL_METRICS:
+        compute_vae_evaluation()
     if not VAE_EVAL_METRICS:
         return Response(status_code=400, content="VAE evaluation unavailable (model or dataset missing).")
     return VAE_EVAL_METRICS
@@ -914,6 +998,8 @@ def get_ae_evaluation():
     """Same per-class PSNR/SSIM/MSE methodology as /evaluate/vae, using a
     representative per-class sample so both reconstruction models are reported
     on equal footing."""
+    if ae_loaded and not AE_EVAL_METRICS:
+        compute_ae_evaluation()
     if not AE_EVAL_METRICS:
         return Response(status_code=400, content="AE evaluation unavailable (model or dataset missing).")
     return AE_EVAL_METRICS
@@ -923,6 +1009,8 @@ def get_ae_evaluation():
 def get_classifier_evaluation():
     """Confusion matrix + per-class accuracy over a random real-data sample
     (see compute_classifier_evaluation)."""
+    if trans_loaded and not CLASSIFIER_EVAL_METRICS:
+        compute_classifier_evaluation()
     if not CLASSIFIER_EVAL_METRICS:
         return Response(status_code=400, content="Classifier evaluation unavailable (model or dataset missing).")
     return CLASSIFIER_EVAL_METRICS
@@ -933,6 +1021,8 @@ def get_gan_evaluation():
     """Classifier-based sample-quality proxy (see compute_gan_evaluation) --
     what fraction of generated samples per class the independently-trained
     Land-Use Classifier recognizes as that class."""
+    if gan_loaded and trans_loaded and not GAN_EVAL_METRICS:
+        compute_gan_evaluation()
     if not GAN_EVAL_METRICS:
         return Response(status_code=400, content="GAN evaluation unavailable (GAN or Classifier not trained).")
     return GAN_EVAL_METRICS
@@ -943,6 +1033,8 @@ def get_gpt_evaluation():
     """Held-out cross-entropy, perplexity and bits-per-char for MiniGPT on
     the last 10% of the training corpus (see compute_gpt_evaluation) -- the
     standard intrinsic language-model metric."""
+    if gpt_loaded and not GPT_EVAL_METRICS:
+        compute_gpt_evaluation()
     if not GPT_EVAL_METRICS:
         return Response(status_code=400, content="MiniGPT evaluation unavailable (model or corpus missing).")
     return GPT_EVAL_METRICS
@@ -968,7 +1060,7 @@ def get_config():
 
 @app.get("/history/{model_name}")
 def get_history(model_name: str):
-    output_name = 'diffusion_scenario' if model_name == 'diffusion' else model_name
+    output_name = 'diffusion_class_conditional' if model_name == 'diffusion' else model_name
     path = f'../outputs/{output_name}/history.json'
     if os.path.exists(path):
         with open(path, 'r') as f:
@@ -1390,13 +1482,6 @@ def build_stats_prompt() -> str:
     return ctx + "\nRecommendations:\n-"
 
 
-PRESET_PROMPTS = [
-    "Context: an IT-corridor ward with about 55% built-up area, roughly 6% green cover, a dense but congested road grid, a single choked nala, and high population density.\nRecommendations:\n-",
-    "Context: a floodplain-adjacent ward with about 34% built-up area, roughly 9% green cover, a fragmented road network, a river frontage, and moderate population density.\nRecommendations:\n-",
-    "Context: a heritage core with about 71% built-up area, roughly 3% green cover, a well-connected arterial network, two seasonal streams, and very high population density.\nRecommendations:\n-",
-]
-
-
 class PlanRequest(BaseModel):
     prompt: str | None = None
     max_new_tokens: int = 320
@@ -1405,11 +1490,13 @@ class PlanRequest(BaseModel):
 
 @app.get("/generate/plan/presets")
 def generate_plan_presets():
-    presets = list(PRESET_PROMPTS)
+    presets = []
     try:
-        presets.insert(0, build_stats_prompt())
+        stats_prompt = build_stats_prompt()
+        if stats_prompt != "Recommendations:\n-":
+            presets.append(stats_prompt)
     except Exception:
-        pass
+        return {"presets": []}
     return {"presets": presets}
 
 
@@ -1419,7 +1506,14 @@ def generate_plan(request: Request, req: PlanRequest):
     if not gpt_loaded:
         return Response(status_code=400,
                         content="MiniGPT not trained (run: python train_gpt.py)")
-    prompt = (req.prompt or "").strip() or build_stats_prompt()
+    prompt = (req.prompt or "").strip()
+    if not prompt:
+        prompt = build_stats_prompt()
+    if prompt == "Recommendations:\n-":
+        return Response(
+            status_code=400,
+            content="No live Pune GIS statistics are available. Provide a source-backed planning prompt.",
+        )
     max_new = max(16, min(int(req.max_new_tokens), 400))
     temp = float(min(max(req.temperature, 0.2), 1.5))
 
@@ -1482,22 +1576,49 @@ def get_privacy():
 @app.post("/infer/diffusion", dependencies=GUARDED)
 @limiter.limit(RATE_LIMIT)
 async def infer_diffusion(request: Request, file: UploadFile = File(...),
-                          class_name: str = Form(...), steps: int = Form(20),
+                          class_name: str = Form(...), steps: int = Form(40),
                           eta: float = Form(0.0)):
     if not refresh_diffusion_checkpoint():
         return Response(status_code=400, content="Urban scenario diffusion checkpoint unavailable. Train backend/train_diffusion.py on the GPU first.")
+    if not trans_loaded:
+        return Response(status_code=400, content="Independent land-use classifier unavailable; target-class verification is required for diffusion selection.")
     if class_name not in URBAN_CLASSES:
         return Response(status_code=400, content=f"Unknown class {class_name}")
     source = await read_image_upload(file)
-    condition = vae_transform(source).unsqueeze(0).to(device)
     c_idx = URBAN_CLASSES.index(class_name)
     c_tensor = torch.tensor([c_idx], device=device)
     steps = max(5, min(int(steps), 50))
     eta = max(0.0, min(float(eta), 1.0))
-    with torch.no_grad():
-        sample = diffusion_model.ddim_sample((1, 3, 128, 128), c_tensor, steps=steps, eta=eta, condition=condition)
-        sample = ((sample + 1.0) * 127.5).clamp(0, 255).to(torch.uint8)
-        img = transforms.ToPILImage()(sample.squeeze(0).cpu())
+    candidates = []
+    candidate_seeds = [2026, 2027, 2028, 2029]
+    for seed in candidate_seeds:
+        with torch.random.fork_rng(devices=[0] if device.type == "cuda" else []):
+            torch.manual_seed(seed)
+            candidate = diffusion_model.ddim_sample(
+                (1, 3, 128, 128),
+                c_tensor,
+                steps=steps,
+                eta=eta,
+                classifier=transformer if trans_loaded else None,
+                classifier_guidance_scale=0.01 if trans_loaded else 0.0,
+            )
+        scored = score_diffusion_candidate(candidate, c_idx)
+        scored["seed"] = seed
+        candidates.append(scored)
+
+    valid_candidates = [
+        item for item in candidates
+        if not item["dataset_novelty"]
+        or not item["dataset_novelty"]["is_exact_or_near_duplicate"]
+    ]
+    if not valid_candidates:
+        return Response(
+            status_code=422,
+            content="All sampled tiles were too close to existing dataset tiles. Please retry with a different stochasticity value.",
+        )
+    selected = max(valid_candidates, key=lambda item: item["selection_score"])
+    sample_normalized = selected["sample"]
+    img = selected["image"]
     buf = io.BytesIO()
     img.save(buf, format="JPEG", quality=92)
     b64 = base64.b64encode(buf.getvalue()).decode("ascii")
@@ -1506,14 +1627,22 @@ async def infer_diffusion(request: Request, file: UploadFile = File(...),
         "class_name": class_name,
         "class_index": c_idx,
         "steps": steps,
-        "eta": eta
+        "eta": eta,
+        "conditioning_mode": "class-conditional generation from Gaussian noise; uploaded tile is not used as model input",
+        "verified_class_name": selected["verified_class_name"],
+        "verified_class_confidence": selected["verified_class_confidence"],
+        "target_class_confidence": selected["target_class_confidence"],
+        "dataset_novelty": selected["dataset_novelty"],
+        "candidates_evaluated": len(candidates),
+        "selected_seed": selected["seed"],
+        "selection_method": "highest measured target-class probability; duplicate candidates rejected",
     }
 
 
 @app.get("/evaluate/diffusion")
 def evaluate_diffusion():
     refresh_diffusion_checkpoint()
-    history_path = '../outputs/diffusion_scenario/history.json'
+    history_path = '../outputs/diffusion_class_conditional/history.json'
     history = []
     if os.path.exists(history_path):
         try:
@@ -1522,16 +1651,16 @@ def evaluate_diffusion():
             pass
     final_loss = history[-1]['loss'] if history else None
     return {
-        "model": "Urban Scenario Image-Conditioned DDPM (DDIM 20-step Sampler)",
+        "model": "Class-Conditional DDPM (DDIM 40-step Sampler)",
         "status": "trained" if diffusion_loaded else "unavailable",
         "dataset": "UCMerced LandUse",
-        "evaluation_protocol": "Conditioned reconstruction convergence; paired before/after planning labels are not available, so future-land-use accuracy is not claimed.",
+        "evaluation_protocol": "Class-conditional noise-prediction convergence; paired before/after planning labels are not available, so source-preserving transformation and future-land-use accuracy are not claimed.",
         "epochs": len(history),
         "timesteps": 1000,
-        "sampling_steps": 20,
+        "sampling_steps": 40,
         "final_loss": final_loss,
         "best_loss": min((row.get('loss', float('inf')) for row in history), default=None),
-        "architecture": "U-Net with source-tile, sinusoidal-timestep, and land-use-label conditioning",
+        "architecture": "U-Net with sinusoidal-timestep and land-use-label conditioning; sampled from Gaussian noise",
         "parameters_millions": round(sum(p.numel() for p in diffusion_unet.parameters()) / 1e6, 2)
     }
 
@@ -1545,6 +1674,7 @@ def evaluate_summary():
     measured values. Missing models are represented as null rather than an
     invented fallback number.
     """
+    ensure_evaluation_metrics()
     return {
         "schema_version": "1.0",
         "dataset": {

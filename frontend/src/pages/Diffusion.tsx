@@ -23,15 +23,32 @@ type DiffusionMetrics = {
   parameters_millions: number;
 };
 
+type DiffusionResult = {
+  image: string;
+  class_name: string;
+  verified_class_name: string;
+  verified_class_confidence: number;
+  conditioning_mode?: string;
+  dataset_novelty?: {
+    reference_count: number;
+    nearest_tile_mse_32x32: number;
+    is_exact_or_near_duplicate: boolean;
+  } | null;
+  target_class_confidence?: number;
+  candidates_evaluated?: number;
+  selected_seed?: number;
+  selection_method?: string;
+};
+
 export default function Diffusion() {
   const [metrics, setMetrics] = useState<DiffusionMetrics | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [className, setClassName] = useState('buildings');
-  const [steps, setSteps] = useState(20);
+  const [steps, setSteps] = useState(40);
   const [eta, setEta] = useState(0);
-  const [image, setImage] = useState<string | null>(null);
+  const [result, setResult] = useState<DiffusionResult | null>(null);
   const [generating, setGenerating] = useState(false);
   const [generationError, setGenerationError] = useState<string | null>(null);
 
@@ -49,7 +66,7 @@ export default function Diffusion() {
 
   const selectFile = (next: File | null) => {
     setFile(next);
-    setImage(null);
+    setResult(null);
     setGenerationError(null);
     const isTiff = next?.name.toLowerCase().endsWith('.tif') || next?.name.toLowerCase().endsWith('.tiff');
     if (next && next.type.startsWith('image/') && !isTiff) setPreview(URL.createObjectURL(next));
@@ -60,7 +77,7 @@ export default function Diffusion() {
     if (!file || metrics?.status !== 'trained') return;
     setGenerating(true);
     setGenerationError(null);
-    setImage(null);
+    setResult(null);
     try {
       const body = new FormData();
       body.append('file', file);
@@ -70,7 +87,7 @@ export default function Diffusion() {
       const response = await apiFetch('/infer/diffusion', { method: 'POST', body });
       if (!response.ok) throw new Error(await response.text());
       const result = await response.json();
-      setImage(result.image);
+      setResult(result);
     } catch (err) {
       setGenerationError(String(err));
     } finally {
@@ -83,8 +100,9 @@ export default function Diffusion() {
       <div className="panel-header">
         <h1 className="panel-title">Urban Scenario Diffusion</h1>
         <div className="panel-desc">
-          Generate a source-conditioned aerial tile for a selected land-use class using the trained DDPM and fast DDIM sampler.
-          The source tile anchors the scene; the class controls the requested land-use condition.
+          Generate a new target-class aerial tile using the trained class-conditional DDPM and fast
+          DDIM sampler. The uploaded file is retained for the existing upload workflow, but is not
+          passed to the generator or blended into the result.
         </div>
       </div>
 
@@ -99,11 +117,11 @@ export default function Diffusion() {
 
       <div className="grid-2">
         <div className="card">
-          <div className="card-title">1. Choose source tile</div>
+          <div className="card-title">1. Upload a tile to enable generation</div>
           <label className="upload-zone" style={{ display: 'block' }}>
             <Upload className="upload-icon" />
             <p style={{ color: 'var(--text)' }}>{previewLabel}</p>
-            <p style={{ color: 'var(--muted)', fontSize: '0.85rem', marginTop: 10 }}>PNG, JPG, JPEG, or TIFF · resized to 128×128</p>
+            <p style={{ color: 'var(--muted)', fontSize: '0.85rem', marginTop: 10 }}>PNG, JPG, JPEG, or TIFF · currently used only to validate the request</p>
             <input type="file" accept="image/*,.tif,.tiff" hidden onChange={e => selectFile(e.target.files?.[0] ?? null)} />
           </label>
           {preview ? <img src={preview} alt="Selected source tile" className="image-preview" style={{ marginTop: 15 }} /> : file && <div className="image-preview" style={{ marginTop: 15, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--muted)', fontSize: '0.85rem', textAlign: 'center', padding: 16 }}>TIFF selected<br />Preview unavailable in browser<br /><strong style={{ color: 'var(--text)', marginTop: 6 }}>{file.name}</strong></div>}
@@ -132,7 +150,7 @@ export default function Diffusion() {
             <div>
               <strong>Diffusion checkpoint unavailable.</strong>
               <p style={{ color: 'var(--muted)', lineHeight: 1.55, marginTop: 7 }}>
-                The page is connected to the real inference endpoint, but generation is disabled until the image-conditioned diffusion model is trained on the GPU. No placeholder image is shown.
+                The page is connected to the real inference endpoint, but generation is disabled until the class-conditional diffusion model is trained on the GPU. No placeholder image is shown.
               </p>
               <code style={{ display: 'block', marginTop: 10, color: 'var(--text)' }}>python backend/train_diffusion.py</code>
               <p style={{ color: 'var(--muted)', fontSize: '0.8rem', marginTop: 6 }}>The training script selects CUDA automatically when it is available.</p>
@@ -143,15 +161,38 @@ export default function Diffusion() {
 
       {generationError && <div className="card" style={{ borderColor: 'var(--danger)', color: 'var(--danger)', marginBottom: 20 }}>{generationError}</div>}
 
-      {image && (
+      {result && (
         <div className="card">
-          <div className="card-title"><span>Generated scenario tile</span><span style={{ color: 'var(--success)', fontSize: '0.78rem' }}><CheckCircle2 size={15} style={{ verticalAlign: 'middle', marginRight: 5 }} />real model output</span></div>
+          <div className="card-title"><span>Generated class-conditional tile</span><span style={{ color: 'var(--success)', fontSize: '0.78rem' }}><CheckCircle2 size={15} style={{ verticalAlign: 'middle', marginRight: 5 }} />real model output</span></div>
           <div className="grid-2" style={{ marginBottom: 0 }}>
-            <div><img src={image} alt={`Generated ${className} scenario`} className="image-preview" /></div>
+            <div>
+              <img src={result.image} alt={`Generated ${className} tile`} className="image-preview" />
+              <div style={{ marginTop: 10, padding: 10, borderRadius: 6, background: 'var(--warn-wash)', color: 'var(--muted)', fontSize: '0.8rem', lineHeight: 1.5 }}>
+                <strong style={{ color: 'var(--warn)' }}>Visual-quality notice:</strong> This is a research checkpoint output. The classifier can recognize the requested class even when the tile is blurry or noisy; classifier confidence is not a visual-quality or planning-validity score.
+              </div>
+            </div>
             <div style={{ color: 'var(--muted)', fontSize: '0.88rem', lineHeight: 1.6 }}>
-              <p><strong style={{ color: 'var(--text)' }}>Condition:</strong> {className}</p>
+              <p><strong style={{ color: 'var(--text)' }}>Requested class:</strong> {className}</p>
+              <p><strong style={{ color: 'var(--text)' }}>Classifier result:</strong> {result.verified_class_name} ({(result.verified_class_confidence * 100).toFixed(1)}%)</p>
+              {result.target_class_confidence != null && (
+                <p><strong style={{ color: 'var(--text)' }}>Classifier probability for request:</strong> {(result.target_class_confidence * 100).toFixed(1)}%</p>
+              )}
               <p><strong style={{ color: 'var(--text)' }}>Sampler:</strong> DDIM, {steps} steps, η={eta.toFixed(2)}</p>
-              <p style={{ marginTop: 12 }}>This is a generated scenario visualization conditioned on the uploaded source tile. It is not a measured forecast or a substitute for planning validation.</p>
+              {result.candidates_evaluated != null && (
+                <p><strong style={{ color: 'var(--text)' }}>Candidate search:</strong> {result.candidates_evaluated} independent seeds; selected seed {result.selected_seed}</p>
+              )}
+              {result.dataset_novelty && (
+                <p>
+                  <strong style={{ color: 'var(--text)' }}>Reference-tile distance:</strong>{' '}
+                  nearest of {result.dataset_novelty.reference_count} UCMerced tiles has
+                  {' '}{result.dataset_novelty.nearest_tile_mse_32x32.toFixed(4)} MSE
+                  {' '}at 32×32 comparison; this is an audit signal, not proof of originality
+                </p>
+              )}
+              {result.selection_method && (
+                <p style={{ fontSize: '0.78rem' }}><strong style={{ color: 'var(--text)' }}>Selection:</strong> {result.selection_method}</p>
+              )}
+              <p style={{ marginTop: 12, paddingTop: 10, borderTop: '1px solid var(--border)' }}><strong style={{ color: 'var(--text)' }}>What this means:</strong> {result.conditioning_mode ?? 'Class-conditional diffusion from Gaussian noise.'} It generates a new tile for the selected class. It does not preserve the uploaded tile’s layout, predict future development, or replace planning validation.</p>
             </div>
           </div>
         </div>
@@ -160,7 +201,7 @@ export default function Diffusion() {
       <div className="card" style={{ marginTop: 24 }}>
         <div className="card-title"><ImageIcon size={17} /> How this model works</div>
         <p style={{ color: 'var(--muted)', lineHeight: 1.6, fontSize: '0.88rem' }}>
-          The model learns to predict the noise added at each point in a 1,000-step forward diffusion process. At inference, DDIM reverses that process in a smaller number of steps while receiving the source image and target class at every denoising stage. The displayed training loss is the measured noise-prediction MSE from the persisted training history; it is not fabricated when the checkpoint is unavailable.
+          The model learns to predict noise added to real UCMerced tiles over a 1,000-step forward diffusion process. At inference, DDIM starts from Gaussian noise and reverses that process in 40 steps using the selected land-use class. A restrained classifier-guidance signal and four seeded candidates help target the requested class without using the uploaded tile. The displayed training loss is the measured noise-prediction MSE from the persisted training history; it is not a visual-quality score.
         </p>
       </div>
 

@@ -1,4 +1,5 @@
-// Glossary component
+import { useEffect, useState } from 'react';
+import { apiFetch } from '../lib/api';
 
 type Row = { term: string; name: string; meaning: string; model: string; code: string };
 
@@ -18,7 +19,10 @@ function GlossaryTable({ rows }: { rows: Row[] }) {
           {rows.map((r) => (
             <tr key={r.term} style={{ borderBottom: '1px solid var(--border)', verticalAlign: 'top' }}>
               <td style={{ padding: '10px', fontFamily: 'var(--font-mono)', fontWeight: 700, color: 'var(--accent)', fontSize: '0.95rem' }}>{r.term}</td>
-              <td style={{ padding: '10px', color: 'var(--text)' }}>{r.meaning}</td>
+              <td style={{ padding: '10px', color: 'var(--text)' }}>
+                <strong style={{ display: 'block', color: 'var(--accent2)', marginBottom: 4 }}>{r.name}</strong>
+                {r.meaning}
+              </td>
               <td style={{ padding: '10px', color: 'var(--accent2)', fontWeight: 600 }}>{r.model}</td>
               <td style={{ padding: '10px', color: 'var(--muted)', fontFamily: 'var(--font-mono)', fontSize: '0.78rem' }}>{r.code}</td>
             </tr>
@@ -46,10 +50,37 @@ const LATENT: Row[] = [
 const LOSSES: Row[] = [
   { term: 'MSE', name: 'Mean Squared Error', meaning: 'Average of squared pixel-wise differences between two images. Penalizes large errors heavily; famously rewards "average" (blurry) predictions.', model: 'AE, VAE, Anomaly', code: 'backend/train_ae.py — F.mse_loss(); backend/api.py — score_anomaly()' },
   { term: 'L1', name: 'L1 Loss (Mean Absolute Error)', meaning: 'Average of absolute pixel-wise differences. Preserves edges/boundaries better than MSE and is less dominated by outliers.', model: 'VAE', code: 'backend/train_vae.py — 0.7·F.l1_loss(recon, imgs)' },
+  { term: 'nats', name: 'Natural Units of Information', meaning: 'The unit used when a probability-based loss or divergence uses the natural logarithm (ln). KL divergence and MiniGPT cross-entropy are reported in nats here; lower cross-entropy means the model assigned higher probability to the observed target.', model: 'VAE, MiniGPT', code: 'frontend/src/App.tsx; frontend/src/pages/Evaluation.tsx; PyTorch KL / CrossEntropyLoss conventions' },
   { term: 'BCE', name: 'Binary Cross-Entropy', meaning: 'A loss function for a yes/no decision — here, "is this image real or fake."', model: 'GAN', code: 'backend/train_gan.py — nn.BCEWithLogitsLoss()' },
   { term: 'PSNR', name: 'Peak Signal-to-Noise Ratio', meaning: 'An image-quality metric in decibels, derived from MSE: 10·log₁₀(peak²/MSE). Higher = closer to the original.', model: 'AE, VAE', code: 'backend/api.py — psnr = 10*math.log10(4.0/mse)' },
   { term: 'SSIM', name: 'Structural Similarity Index Measure', meaning: 'An image-quality metric (0–1) comparing local luminance, contrast, and structure between two images — more perceptually meaningful than raw pixel difference.', model: 'VAE evaluation', code: 'backend/api.py — compute_ssim()' },
   { term: 'z-score', name: 'Standard Score', meaning: 'How many standard deviations a value sits from the mean of a reference distribution. Here: how unusual a tile’s reconstruction error is versus 294 real tiles.', model: 'VAE anomaly detection', code: 'backend/api.py — score_anomaly()' },
+  { term: 'Cross-entropy', name: 'Cross-Entropy Loss', meaning: 'Penalizes probability assigned to the wrong target class or next token. Lower values mean the model assigns more probability to the observed target.', model: 'Classifier, GAN, MiniGPT', code: 'backend/train_transformer.py; backend/train_gan.py; backend/train_gpt.py' },
+  { term: 'Noise-prediction MSE', name: 'Diffusion Noise Loss', meaning: 'Mean squared error between the Gaussian noise added in the forward diffusion process and the U-Net’s predicted noise. It is the DDPM training objective, not a visual-quality score.', model: 'Diffusion', code: 'backend/models/diffusion.py — compute_loss(); backend/train_diffusion.py' },
+  { term: 'Adversarial loss', name: 'GAN Adversarial Objective', meaning: 'The binary real/fake objective that trains the discriminator and generator to distinguish and produce realistic-looking samples.', model: 'GAN', code: 'backend/train_gan.py — BCEWithLogitsLoss()' },
+  { term: 'Class-guidance loss', name: 'GAN / Diffusion Class Guidance', meaning: 'An independent classifier signal that encourages generated pixels to be recognized as the requested land-use class. It supports conditioning but does not prove photorealism.', model: 'GAN, Diffusion', code: 'backend/train_gan.py; backend/models/diffusion.py — classifier guidance' },
+  { term: 'Diversity loss', name: 'Latent-to-Image Diversity Regularizer', meaning: 'A GAN regularizer that discourages different latent inputs from collapsing to identical images by relating image differences to latent differences.', model: 'GAN', code: 'backend/train_gan.py — diversity_loss' },
+];
+
+const DIFFUSION: Row[] = [
+  { term: 'DDPM', name: 'Denoising Diffusion Probabilistic Model', meaning: 'The training formulation that gradually adds Gaussian noise and learns to reverse that process by predicting the noise at each timestep.', model: 'Diffusion', code: 'backend/models/diffusion.py — DDPM' },
+  { term: 'DDIM', name: 'Denoising Diffusion Implicit Model', meaning: 'A faster reverse sampler that uses a selected number of denoising steps instead of all 1,000 training timesteps.', model: 'Diffusion', code: 'backend/models/diffusion.py — ddim_sample()' },
+  { term: 't', name: 'Diffusion Timestep', meaning: 'An integer from 0 to 999 indicating how much noise is present in the forward process. The U-Net receives it through a sinusoidal embedding.', model: 'Diffusion', code: 'backend/models/diffusion.py — timestep_embedding()' },
+  { term: 'ε / εθ', name: 'True / Predicted Noise', meaning: 'ε is the random Gaussian noise added to a clean tile; εθ is the U-Net prediction trained to match it. Their MSE is the diffusion loss.', model: 'Diffusion', code: 'backend/models/diffusion.py — compute_loss()' },
+  { term: 'η (eta)', name: 'DDIM Stochasticity', meaning: 'Controls additional random noise during DDIM sampling. η=0 is deterministic after initialization; larger η values add sampling variation.', model: 'Diffusion UI', code: 'backend/models/diffusion.py; frontend/src/pages/Diffusion.tsx' },
+  { term: 'Condition', name: 'Class Condition', meaning: 'The requested land-use label supplied to the diffusion U-Net. The current checkpoint is class-conditional and starts each sample from Gaussian noise; the uploaded tile is not used as a spatial condition.', model: 'Diffusion', code: 'backend/train_diffusion.py; backend/models/diffusion.py' },
+  { term: 'Classifier guidance', name: 'Target-Class Gradient Guidance', meaning: 'Uses the trained land-use classifier’s class log-probability gradient to steer the predicted clean image toward the requested class during sampling.', model: 'Diffusion', code: 'backend/models/diffusion.py — classifier_guidance_scale' },
+  { term: 'DDIM steps', name: 'Sampling Step Count', meaning: 'The number of reverse denoising updates used at inference. More steps usually increase compute and can change quality; it is independent of the 1,000-step training schedule.', model: 'Diffusion UI', code: 'backend/api.py; frontend/src/pages/Diffusion.tsx' },
+];
+
+const EVALUATION: Row[] = [
+  { term: 'Recognition proxy', name: 'Classifier Recognition Rate', meaning: 'Fraction of generated GAN samples that the independently trained classifier assigns to the requested class. It is a semantic proxy, not FID, human preference, photorealism, or planning validity.', model: 'GAN evaluation', code: 'backend/api.py — compute_gan_evaluation()' },
+  { term: 'Perplexity', name: 'Language-Model Perplexity', meaning: 'exp(cross-entropy) on held-out planning text. Lower is better; it measures next-token prediction difficulty, not factuality or planning quality.', model: 'MiniGPT', code: 'backend/api.py — compute_gpt_evaluation()' },
+  { term: 'Bits per character', name: 'BPC', meaning: 'Held-out cross-entropy expressed in base-2 bits per character. Lower is better for the same corpus and tokenization.', model: 'MiniGPT', code: 'backend/api.py — compute_gpt_evaluation()' },
+  { term: 'Validation accuracy', name: 'Held-Out Classification Accuracy', meaning: 'Fraction of labels correctly predicted on the classifier validation split. It is separate from runtime representative evaluations shown in the Evaluation page.', model: 'Classifier', code: 'outputs/transformer/history.json; backend/api.py' },
+  { term: 'Confidence', name: 'Softmax Class Probability', meaning: 'The classifier’s normalized probability for a predicted class. High confidence is not proof that a generated image is visually correct.', model: 'Classifier, Diffusion verification', code: 'backend/api.py — F.softmax()' },
+  { term: 'Active latent dimensions', name: 'Latent Activity', meaning: 'Number and fraction of VAE latent dimensions with meaningful divergence from the prior. It helps distinguish an active latent space from posterior collapse.', model: 'VAE evaluation', code: 'backend/api.py — compute_vae_evaluation()' },
+  { term: 'Held-out evaluation', name: 'Evaluation Protocol', meaning: 'Metrics computed on data excluded from the corresponding training objective. Runtime representative panels are labelled separately and must not be described as a held-out benchmark.', model: 'All models', code: 'backend/api.py — /evaluate/*' },
 ];
 
 const ACTIVATIONS: Row[] = [
@@ -90,6 +121,14 @@ const CONCEPTS: Row[] = [
 ];
 
 export default function Glossary() {
+  const [summary, setSummary] = useState<any>(null);
+  useEffect(() => {
+    apiFetch('/evaluate/summary')
+      .then((response) => response.ok ? response.json() : null)
+      .then(setSummary)
+      .catch(() => setSummary(null));
+  }, []);
+
   return (
     <div>
       <div className="panel-header">
@@ -113,6 +152,16 @@ export default function Glossary() {
       </div>
 
       <div className="card" style={{ marginBottom: 20 }}>
+        <div className="card-title">Diffusion Sampling &amp; Conditioning</div>
+        <GlossaryTable rows={DIFFUSION} />
+      </div>
+
+      <div className="card" style={{ marginBottom: 20 }}>
+        <div className="card-title">Evaluation Protocol &amp; Reported Metrics</div>
+        <GlossaryTable rows={EVALUATION} />
+      </div>
+
+      <div className="card" style={{ marginBottom: 20 }}>
         <div className="card-title">Activation Functions</div>
         <GlossaryTable rows={ACTIVATIONS} />
       </div>
@@ -130,6 +179,22 @@ export default function Glossary() {
       <div className="card">
         <div className="card-title">Other Concepts &amp; Failure Modes</div>
         <GlossaryTable rows={CONCEPTS} />
+      </div>
+
+      <div className="card" style={{ marginTop: 20 }}>
+        <div className="card-title">Live Metric Source</div>
+        <div style={{ color: 'var(--muted)', fontSize: '0.86rem', lineHeight: 1.6 }}>
+          {summary ? (
+            <>
+              Current backend: <code>{summary.hardware?.device ?? 'unknown device'}</code> · dataset:{' '}
+              <code>{summary.dataset?.name ?? 'unknown'}</code> · classes: <code>{summary.dataset?.classes ?? '—'}</code>.
+              Values on Evaluation and Model Comparison are loaded from the same <code>/evaluate/*</code> contract;
+              training curves are loaded from <code>/history/&lt;model&gt;</code>.
+            </>
+          ) : (
+            'Live metric metadata is unavailable. Start the backend to read the current checkpoint and evaluation contract.'
+          )}
+        </div>
       </div>
     </div>
   );

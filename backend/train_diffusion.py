@@ -1,4 +1,4 @@
-"""Train the UrbanGenAI image-conditioned scenario diffusion model.
+"""Train the UrbanGenAI class-conditional diffusion generator.
 
 The available UCMerced data has no paired before/after planning labels. The
 reproducible training objective therefore learns conditioned reconstruction and
@@ -20,7 +20,7 @@ from PIL import Image
 from dataset import get_split_dataloaders, URBAN_CLASSES
 from models.diffusion import DiffusionUNet, DDPM
 
-OUTPUT_DIR = '../outputs/diffusion_scenario'
+OUTPUT_DIR = '../outputs/diffusion_class_conditional'
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -111,7 +111,7 @@ def write_training_graphs(history, telemetry):
             f.write(str(exc))
 
 
-def train_diffusion(epochs: int = 50, batch_size: int = 16, lr: float = 2e-4):
+def train_diffusion(epochs: int = 100, batch_size: int = 16, lr: float = 2e-4):
     print(f"--- Starting Urban Scenario DDPM Training on {device} for {epochs} epochs ---")
     torch.manual_seed(2026)
     if device.type == 'cuda':
@@ -119,19 +119,28 @@ def train_diffusion(epochs: int = 50, batch_size: int = 16, lr: float = 2e-4):
         torch.backends.cudnn.benchmark = True
     dataloader, _, _ = get_split_dataloaders(batch_size=batch_size, size=128, num_workers=0, train_aug=True)
 
-    unet = DiffusionUNet(base_ch=32, num_classes=len(URBAN_CLASSES), condition_channels=3).to(device)
+    unet = DiffusionUNet(base_ch=32, num_classes=len(URBAN_CLASSES), condition_channels=0).to(device)
+    resume_path = os.path.join(OUTPUT_DIR, 'model_best.pth')
+    if os.path.exists(resume_path):
+        unet.load_state_dict(torch.load(resume_path, map_location=device, weights_only=True))
+        print(f"Resuming class-conditional diffusion weights from {resume_path}")
     ddpm = DDPM(unet=unet, timesteps=1000).to(device)
 
     optimizer = torch.optim.AdamW(unet.parameters(), lr=lr, weight_decay=1e-4)
     lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=epochs, eta_min=1e-6)
     use_amp = device.type == 'cuda'
     scaler = torch.amp.GradScaler('cuda', enabled=use_amp)
+    history_path = os.path.join(OUTPUT_DIR, 'history.json')
     history = []
-    best_loss = math.inf
+    if os.path.exists(history_path):
+        with open(history_path, encoding='utf-8') as history_file:
+            history = json.load(history_file)
+    best_loss = min((row.get('loss', math.inf) for row in history), default=math.inf)
+    start_epoch = len(history) + 1
     start_time = time.perf_counter()
     telemetry = GpuTelemetry()
     telemetry.start()
-    for epoch in range(1, epochs + 1):
+    for epoch in range(start_epoch, epochs + 1):
         ddpm.train()
         total_loss = 0.0
         n_batches = 0
@@ -140,7 +149,7 @@ def train_diffusion(epochs: int = 50, batch_size: int = 16, lr: float = 2e-4):
             labels = labels.to(device, non_blocking=True)
             optimizer.zero_grad()
             with torch.autocast(device_type='cuda', dtype=torch.float16, enabled=use_amp):
-                loss = ddpm.compute_loss(imgs, labels, condition=imgs)
+                loss = ddpm.compute_loss(imgs, labels)
             scaler.scale(loss).backward()
             scaler.unscale_(optimizer)
             torch.nn.utils.clip_grad_norm_(unet.parameters(), 1.0)
@@ -175,12 +184,12 @@ def train_diffusion(epochs: int = 50, batch_size: int = 16, lr: float = 2e-4):
         json.dump(telemetry_summary, f, indent=2)
     with open(os.path.join(OUTPUT_DIR, 'meta.json'), 'w') as f:
         json.dump({
-            "model": "urban_scenario_image_conditioned_ddpm",
+            "model": "urban_landuse_class_conditional_ddpm",
             "dataset": "UCMerced LandUse",
-            "split": "stratified train split from backend/splits.py; condition=source tile",
+            "split": "stratified train split from backend/splits.py",
             "epochs_trained": epochs,
             "timesteps": 1000,
-            "conditioning": "source image + target land-use class",
+            "conditioning": "target land-use class only; generation starts from Gaussian noise",
             "sampling": "DDIM",
             "sampling_steps": 20,
             "device": str(device),
@@ -192,4 +201,4 @@ def train_diffusion(epochs: int = 50, batch_size: int = 16, lr: float = 2e-4):
     print(f"DDPM Training finished successfully. best_loss={best_loss:.6f} final_loss={history[-1]['loss']:.6f}")
 
 if __name__ == '__main__':
-    train_diffusion(epochs=50)
+    train_diffusion(epochs=100)
