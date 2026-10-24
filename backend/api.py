@@ -61,8 +61,25 @@ vae = VAE(latent_channels=VAE_LATENT_CHANNELS, skip_channels=64, skip0_channels=
 transformer = UrbanClassifier(num_classes=len(URBAN_CLASSES)).to(device)
 
 
+def is_git_lfs_pointer(path):
+    """Return True when a checkpoint is an unresolved Git LFS pointer file."""
+    try:
+        with open(path, 'rb') as checkpoint:
+            return checkpoint.read(128).startswith(
+                b'version https://git-lfs.github.com/spec/v1'
+            )
+    except OSError:
+        return False
+
+
 def load_model_if_exists(model, path):
     if os.path.exists(path):
+        if is_git_lfs_pointer(path):
+            print(
+                f"Warning: Checkpoint {path} is a Git LFS pointer, not downloaded weights. "
+                "Run 'git lfs pull' from the repository root and restart the API."
+            )
+            return False
         try:
             model.load_state_dict(torch.load(path, map_location=device, weights_only=True))
             model.eval()
@@ -124,6 +141,12 @@ def load_gpt():
     meta_path = os.path.join(GPT_DIR, 'meta.json')
     model_path = os.path.join(GPT_DIR, 'model.pth')
     if not (os.path.exists(meta_path) and os.path.exists(model_path)):
+        return False
+    if is_git_lfs_pointer(model_path):
+        print(
+            f"Warning: Checkpoint {model_path} is a Git LFS pointer, not downloaded weights. "
+            "Run 'git lfs pull' from the repository root and restart the API."
+        )
         return False
     try:
         meta = json.load(open(meta_path, encoding='utf-8'))
