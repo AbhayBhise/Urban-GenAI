@@ -1,275 +1,157 @@
 # UrbanGen AI
 
-> **A Multi-Model Generative AI Framework for Sustainable Smart City Planning and Digital Twin Generation**
+UrbanGen AI is a local, research-oriented web application for experimenting with generative and predictive models on aerial urban image tiles. The repository contains a React/Vite interface, a FastAPI service, trained checkpoints, evaluation records, architecture views, and the accompanying conference-paper sources.
 
-[![Python](https://img.shields.io/badge/Python-3.10%2B-blue?logo=python)](https://python.org)
-[![PyTorch](https://img.shields.io/badge/PyTorch-2.x-orange?logo=pytorch)](https://pytorch.org)
-[![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
-[![Status](https://img.shields.io/badge/Status-Phase%201%20%E2%80%94%20Architecture-yellow)]()
+The project is an assistive research prototype. Its generated images are not planning forecasts, zoning decisions, or validated municipal interventions.
 
----
+## What is implemented
 
-## Project Vision
+The current repository contains these runnable components:
 
-**UrbanGen AI** is an open-source, AI-assisted sustainable urban planning platform. It combines real-world geospatial satellite imagery, land-cover maps, elevation data, road networks, and population density to generate data-driven city plans that are both environmentally sustainable and human-centred.
+- React/Vite frontend in `frontend/` with model pages, evaluation views, architecture views, training records, governance pages, and a diffusion generator page.
+- FastAPI backend in `backend/api.py` with model status, history, evaluation, image upload, inference, governance, and planning endpoints.
+- Denoising autoencoder checkpoint in `outputs/ae/`.
+- Spatial VAE checkpoint in `outputs/vae/`.
+- ResNet-based land-use classifier checkpoint in `outputs/transformer/`.
+- Class-conditional GAN checkpoints in `outputs/gan/`.
+- MiniGPT checkpoint and metadata in `outputs/gpt/`.
+- Image-conditioned diffusion U-Net/DDPM checkpoint with DDIM sampling in `outputs/diffusion_scenario/`.
+- IEEE paper sources and figures in `docs/IEEE_Conference_Paper.tex`, `docs/IEEE_Conference_Paper.md`, and `docs/figures/`.
 
-The long-term vision is a fully automated pipeline that ingests real geospatial data, encodes spatial semantics with deep neural networks, and generates, evaluates, and explains candidate city plans — using a multi-model stack of Autoencoders, VAEs, GANs, Prediction Models, Large Language Models, and Diffusion Models.
+The checkpoints are stored with Git LFS. The training scripts are included for reproducibility, but training is not required for the normal checkpoint-backed demo.
 
----
+## Important limitations
 
-## Current Status
+The repository does not claim capabilities that are not supported by the available data.
 
-> **⚠️ Phase 1 — Project Architecture & Real Geospatial Data Pipeline**
+- The available aerial dataset is an image-classification dataset, not a paired before/after urban-intervention dataset.
+- The current diffusion training objective uses the source tile as an image condition and therefore supports source-conditioned denoising/reconstruction. It must not be described as a validated conversion from one land-use class into another.
+- Training loss is not the same as image-generation quality. Consult the recorded histories, evaluation endpoints, model card, and paper for the metric protocol and limitations.
+- Dataset-dependent explorer, sampling, evaluation, and training paths require the dataset to be supplied locally. The dataset is intentionally not committed to this repository.
+- Outputs are visual research artifacts and require independent validation before any real planning use.
 
-This repository is currently in **Phase 1**. The project architecture, directory structure, configuration system, and geospatial data pipeline skeleton are being established.
+## Repository layout
 
-**What exists now:**
-- ✅ Full repository structure and Python package skeleton
-- ✅ Configuration system (cities, datasets, model defaults)
-- ✅ Data pipeline module stubs (HLS, WorldCover, OSM, SRTM, WorldPop)
-- ✅ GIS utility stubs (AOI management, CRS handling, raster/vector ops)
-- ✅ Preprocessing module stubs
-- ✅ Data fusion and patch extraction stubs
-
-**What is NOT yet implemented:**
-- ❌ HLS Autoencoder (Phase 9)
-- ❌ VAE (Phase 10)
-- ❌ GAN (Phase 11)
-- ❌ Prediction Models (Phase 12)
-- ❌ LLM Planning Engine (Phase 13)
-- ❌ Diffusion Visualization (Phase 14)
-- ❌ Evaluation Engine (Phase 15)
-
----
-
-## Planned Architecture
-
-```
-Real Geospatial Data
-        │
-        ├── NASA HLS S30 (Multispectral Satellite Imagery)
-        ├── ESA WorldCover (Land-Use / Land-Cover)
-        ├── OpenStreetMap (Roads, Buildings, POIs)
-        ├── NASA SRTM (Elevation & Terrain)
-        └── WorldPop (Population Density)
-        │
-        ▼
-Geospatial Preprocessing & Multi-Source Alignment
-        │
-        ▼
-HLS Multispectral Autoencoder
-        │
-        ▼
-Urban Latent Representation
-        │
-        ├── VAE → Candidate Urban Plans
-        ├── GAN → Urban Structure Generation
-        │
-        ▼
-Prediction Models
-        │
-        ├── Traffic Prediction
-        ├── Air Quality Index (AQI)
-        ├── Flood Risk Assessment
-        ├── Energy Consumption
-        └── Water Resource Estimation
-        │
-        ▼
-Evaluation Engine
-        │
-        ▼
-LLM Planning & Explanation
-        │
-        ▼
-Diffusion Model Visualization
-        │
-        ▼
-Recommended Sustainable City Plan
-```
-
----
-
-## Datasets
-
-| Dataset | Provider | Purpose |
-|---|---|---|
-| **HLS S30** | NASA | 30m-resolution multispectral satellite imagery — primary Autoencoder input |
-| **WorldCover** | ESA | 10m-resolution global land-use / land-cover semantics |
-| **OpenStreetMap** | OSM Community | Roads, buildings, hospitals, schools, parks, POIs and public infrastructure |
-| **SRTM** | NASA | 30m-resolution elevation and terrain data |
-| **WorldPop** | WorldPop / Univ. of Southampton | 100m-resolution population density grids |
-
----
-
-## Technology Stack
-
-| Category | Tools |
-|---|---|
-| **Language** | Python 3.10+ |
-| **Deep Learning** | PyTorch, torchvision |
-| **Remote Sensing** | Google Earth Engine (GEE), Rasterio, GDAL |
-| **Geospatial** | GeoPandas, Shapely, PyProj, OSMnx |
-| **Data Science** | NumPy, Pandas, Scikit-learn, SciPy |
-| **Visualization** | Matplotlib, Seaborn, Folium |
-| **Configuration** | PyYAML, python-dotenv |
-| **Experiment Tracking** | Weights & Biases (optional) |
-| **Testing** | Pytest |
-| **Code Quality** | Ruff, Black, MyPy |
-
----
-
-## Project Structure
-
-```
+```text
 UrbanGenAI/
-│
-├── configs/            # YAML configuration files (cities, datasets, models)
-├── src/urbangen/       # Main Python package
-│   ├── config/         # Settings and config loading
-│   ├── data/           # Dataset downloaders and loaders
-│   ├── gis/            # GIS utilities (AOI, CRS, raster, vector ops)
-│   ├── preprocessing/  # Per-dataset preprocessing pipelines
-│   ├── fusion/         # Multi-source data alignment and stacking
-│   ├── patches/        # Patch extraction for model training
-│   ├── models/         # Neural network models (Autoencoder, VAE, GAN…)
-│   ├── evaluation/     # Evaluation metrics
-│   └── utils/          # Logging, file I/O, validation helpers
-│
-├── scripts/            # CLI entry points for each pipeline stage
-├── data/               # Local data storage (NEVER committed to GitHub)
-│   ├── raw/            # Raw downloaded datasets
-│   ├── processed/      # Preprocessed datasets
-│   ├── aligned/        # Multi-source aligned data
-│   ├── patches/        # Training/validation/test patch datasets
-│   └── manifests/      # Dataset metadata and split manifests
-├── models/             # Saved model checkpoints (NEVER committed)
-├── experiments/        # Training logs, results (NEVER committed)
-├── docs/               # Technical documentation
-├── tests/              # Automated tests
-└── notebooks/          # Optional Jupyter notebooks for exploration
+├── backend/                 FastAPI service, models, datasets, and training scripts
+├── frontend/                React/Vite web interface
+├── outputs/                 Checkpoints, histories, telemetry, and measured artifacts
+├── docs/                    Paper, model card, governance documents, and figures
+├── demo_prompts/            Prompts used by the planning demonstration
+├── scripts/                 Project utility scripts
+├── HOW_TO_RUN.md            Short local startup guide
+└── LICENSE                  Proprietary All Rights Reserved license
 ```
 
----
+## Requirements
 
-## Installation
+- Python 3.10 or newer
+- Node.js and npm
+- Git LFS for checkpoint download
+- A CUDA-capable GPU is recommended for training and faster inference, but the API can be started on CPU with lower performance.
 
-### 1. Clone the repository
+## Installation and local demo
+
+Clone the repository and download the model checkpoints:
 
 ```bash
-git clone https://github.com/disha-satpute/UrbanGenAI.git
-cd UrbanGenAI
+git clone https://github.com/AbhayBhise/Urban-GenAI.git
+cd Urban-GenAI
+git lfs install
+git lfs pull
 ```
 
-### 2. Create and activate a virtual environment
+Create a Python environment and install backend dependencies:
 
 ```bash
-# Using venv
 python -m venv .venv
+```
 
-# Activate (Linux/macOS)
+Windows PowerShell:
+
+```powershell
+.\.venv\Scripts\Activate.ps1
+pip install -r backend\requirements.txt
+```
+
+Linux/macOS:
+
+```bash
 source .venv/bin/activate
-
-# Activate (Windows)
-.venv\Scripts\activate
+pip install -r backend/requirements.txt
 ```
 
-### 3. Install the package in editable mode
+Start the API from the backend directory:
 
 ```bash
-pip install -e ".[dev]"
+cd backend
+python api.py
 ```
 
-Or install from `requirements.txt` directly:
+In another terminal, start the frontend:
 
 ```bash
-pip install -r requirements.txt
+cd frontend
+npm install
+npm run dev
 ```
 
-### 4. Configure environment variables
+Open `http://localhost:5173`.
+
+By default the frontend calls `http://127.0.0.1:8000`. To use another API host, create `frontend/.env.local` before building or starting Vite:
+
+```text
+VITE_API_URL=https://your-api-host.example
+```
+
+If the backend has `URBANGEN_API_KEY` configured, enter the same key in the frontend API-key field. See `backend/.env.example` and `docs/SECURITY.md` for the available controls.
+
+## Optional dataset setup
+
+The dataset is not part of the GitHub repository. To enable dataset-backed pages and training, obtain the permitted UCMerced LandUse files separately and place them at:
+
+```text
+UCMerced_LandUse/UCMerced_LandUse/Images/<class>/*.tif
+```
+
+The backend uses the 21 UCMerced classes defined in `backend/dataset.py`. A dataset is not required for the checkpoint-backed upload inference paths that do not select random dataset samples.
+
+## Training
+
+Training is optional and requires the dataset. The scripts select CUDA when available and write checkpoints and histories under `outputs/`.
 
 ```bash
-cp .env.example .env
-# Edit .env with your credentials (GEE service account, NASA Earthdata, etc.)
+cd backend
+python train_diffusion.py
 ```
 
-### 5. Authenticate Google Earth Engine (first-time only)
+Other model training scripts are listed in `backend/`. Do not overwrite published checkpoints without recording the dataset split, configuration, metrics, runtime, device, and energy telemetry for the replacement run.
 
-```python
-import ee
-ee.Authenticate()
-ee.Initialize(project="your-gee-project-id")
+## Verification
+
+Useful checks after setup:
+
+```bash
+# frontend
+cd frontend
+npm run build
+
+# backend syntax
+python -m py_compile api.py train_diffusion.py models/diffusion.py
 ```
 
----
+With the API running, inspect `/status`, `/evaluate/summary`, and the relevant model-specific evaluation endpoints. Missing checkpoints or datasets should be reported as unavailable; they must not be replaced with fabricated metrics or placeholder outputs.
 
-## Development Roadmap
+## Research documentation
 
-| Phase | Description | Status |
-|---|---|---|
-| **Phase 1** | Repository architecture + data pipeline skeleton | ✅ In Progress |
-| **Phase 2** | NASA HLS S30 — download, validation, preprocessing | 🔜 Planned |
-| **Phase 3** | ESA WorldCover — download and preprocessing | 🔜 Planned |
-| **Phase 4** | OpenStreetMap — road network and POI extraction | 🔜 Planned |
-| **Phase 5** | NASA SRTM — elevation preprocessing | 🔜 Planned |
-| **Phase 6** | WorldPop — population density preprocessing | 🔜 Planned |
-| **Phase 7** | Multi-source geospatial data alignment | 🔜 Planned |
-| **Phase 8** | Patch dataset creation (train/val/test splits) | 🔜 Planned |
-| **Phase 9** | HLS Multispectral Autoencoder | 🔜 Planned |
-| **Phase 10** | Variational Autoencoder (VAE) | 🔜 Planned |
-| **Phase 11** | Generative Adversarial Network (GAN) | 🔜 Planned |
-| **Phase 12** | Prediction Models (Traffic, AQI, Flood, Energy, Water) | 🔜 Planned |
-| **Phase 13** | LLM Planning and Natural Language Explanation | 🔜 Planned |
-| **Phase 14** | Diffusion Model Visualization | 🔜 Planned |
-| **Phase 15** | Evaluation Engine + End-to-End Integration | 🔜 Planned |
+- [`docs/MODEL_CARD.md`](docs/MODEL_CARD.md) — model purposes, checkpoints, metrics, and limitations.
+- [`docs/IEEE_Conference_Paper.tex`](docs/IEEE_Conference_Paper.tex) — paper source with real LaTeX equations and tables.
+- [`docs/IEEE_Conference_Paper.md`](docs/IEEE_Conference_Paper.md) — readable paper draft.
+- `docs/figures/` — recorded plots and figures referenced by the paper.
+- `docs/SECURITY.md`, `docs/PRIVACY.md`, and `docs/ETHICS.md` — governance and deployment considerations.
+- [`HOW_TO_RUN.md`](HOW_TO_RUN.md) — concise startup instructions.
 
----
+## License and ownership
 
-## Responsible AI
-
-UrbanGen AI is designed with responsible AI principles in mind:
-
-- **Human Oversight**: AI-generated urban plans are recommendations only. All outputs require review and approval by qualified urban planners, architects, and policymakers.
-- **Planning Uncertainty**: Model outputs reflect learned statistical patterns from historical data and should not be treated as definitive predictions.
-- **Data Quality**: Results are directly affected by the quality, resolution, and coverage of the underlying geospatial datasets.
-- **Geospatial Bias**: Training data is limited to specific cities and regions, which may introduce geographic and demographic biases in generated plans.
-- **Privacy**: WorldPop and OSM data used in this project are aggregated at the grid/region level. No individual-level personal data is collected or used.
-- **Model Limitations**: Deep learning models may fail to generalise across cities with different climatic, cultural, and infrastructural contexts.
-- **Non-Authoritative Recommendations**: Outputs from UrbanGen AI are intended to assist human decision-making — not replace it. No output from this system should be directly implemented without proper regulatory and professional review.
-
-### Governance documentation
-
-| Document | Covers |
-|---|---|
-| [`docs/ETHICS.md`](docs/ETHICS.md) | Fairness, transparency, accountability, explicit bias disclosure, misuse boundaries |
-| [`docs/PRIVACY.md`](docs/PRIVACY.md) | GDPR, India DPDP Act 2023, EU AI Act classification, zero-retention data handling |
-| [`docs/SECURITY.md`](docs/SECURITY.md) | Threat model, API-key auth, CORS, rate limiting, upload validation, deployment checklist |
-| [`docs/MODEL_CARD.md`](docs/MODEL_CARD.md) | Per-model purpose, data, metrics, limitations, and carbon footprint |
-
-These are also served by the API (`GET /governance/{ethics,privacy,security,model_card}`)
-and rendered in the app's **Governance** page. Security controls are configured via
-`backend/.env` (see `backend/.env.example`).
-
----
-
-## License
-
-This project is licensed under the [MIT License](LICENSE).
-
----
-
-## Citation
-
-If you use UrbanGen AI in your research, please cite this repository:
-
-```bibtex
-@software{UrbanGenAI2026,
-  author  = {Satpute, Disha},
-  title   = {UrbanGen AI: A Multi-Model Generative AI Framework for Sustainable Smart City Planning},
-  year    = {2026},
-  url     = {https://github.com/disha-satpute/UrbanGenAI}
-}
-```
-
----
-
-*Built with ❤️ for sustainable cities.*
+This work is distributed under the proprietary All Rights Reserved terms in [`LICENSE`](LICENSE). The repository may be viewed, but copying, modifying, redistributing, commercializing, or presenting the work as another person's work requires prior written permission from the copyright holders.

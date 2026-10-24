@@ -1,37 +1,76 @@
-# UrbanGen AI — How to Run
+# UrbanGen AI — Local startup
 
-## 1. Install backend dependencies
-```
-cd backend
-pip install -r requirements.txt
-cp .env.example .env          # optional: set URBANGEN_API_KEY etc. for a locked-down deployment
-```
+This guide starts the checkpoint-backed demo. It does not train models.
 
-## 2. Train models (run in order, each takes ~5-20 min on RTX 4050)
-```
-cd backend
-python train_ae.py
-python train_vae.py                     # VAE -> outputs/vae/  (reconstruction, KL, anomaly, interpolation)
-python train_transformer.py             # ResNet18 land-use classifier
-python corpus/build_corpus.py           # (re)build the urban-planning corpus
-python train_gpt.py                     # MiniGPT transformer -> outputs/gpt/  (plan generation)
+## 1. Clone and download checkpoints
+
+```bash
+git clone https://github.com/AbhayBhise/Urban-GenAI.git
+cd Urban-GenAI
+git lfs install
+git lfs pull
 ```
 
-## 3. Start API server
+## 2. Install backend dependencies
+
+```bash
+python -m venv .venv
 ```
+
+Windows PowerShell:
+
+```powershell
+.\.venv\Scripts\Activate.ps1
+pip install -r backend\requirements.txt
+```
+
+Linux/macOS:
+
+```bash
+source .venv/bin/activate
+pip install -r backend/requirements.txt
+```
+
+## 3. Start the API
+
+```bash
 cd backend
 python api.py
 ```
 
-If `URBANGEN_API_KEY` is set in `.env`, enter the same value in the "API key"
-field in the app sidebar so the frontend can call the guarded endpoints.
-See `docs/SECURITY.md`, `docs/PRIVACY.md`, `docs/ETHICS.md`, `docs/MODEL_CARD.md`.
+The API listens on `http://127.0.0.1:8000` by default. Optional security and CORS settings are documented in `backend/.env.example`.
 
-## 4. Start frontend
-```
+## 4. Start the frontend
+
+In a second terminal:
+
+```bash
 cd frontend
 npm install
 npm run dev
 ```
 
-Open http://localhost:5173
+Open `http://localhost:5173`.
+
+The frontend uses `http://127.0.0.1:8000` by default. Set `VITE_API_URL` in `frontend/.env.local` when the API is hosted elsewhere.
+
+## Dataset-dependent features
+
+The datasets are not committed to GitHub. Dataset explorer, random-sample, evaluation, and training paths require the permitted UCMerced LandUse files at:
+
+```text
+UCMerced_LandUse/UCMerced_LandUse/Images/<class>/*.tif
+```
+
+Checkpoint-backed upload inference can run without the dataset when the selected endpoint does not require a random dataset sample.
+
+## Optional training
+
+Training requires the dataset and is not part of the normal startup flow. For example:
+
+```bash
+cd backend
+python train_diffusion.py
+```
+
+Training writes measured checkpoints and histories under `outputs/`. Do not present a training loss as a complete image-quality evaluation.
