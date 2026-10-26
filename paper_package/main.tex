@@ -87,7 +87,7 @@ Generative Artificial Intelligence, Urban Planning, Remote Sensing, Denoising Au
 \section{Introduction}
 Development of modern cities involves juggling population growth, industrial growth, transit integration, and ecology preservation~\cite{weng2002remote,batty2013new,benediktsson2015remote}. While cities grow, the traditional approach in municipal planning is based on the periodic and manual interpretation of satellite imagery along with static Geographic Information Systems (GIS) databases. Such an approach is characterized by high latencies, expensive labor force, and inability to model hypothetical future urban development or provide proactive policy-making.
 
-Deep Learning (DL) and Generative Artificial Intelligence (GenAI) offer new prospects in urban analytics~\cite{lecun2015deep,zhu2017deep}. The computer vision techniques perform well in land use and land cover (LULC) classification~\cite{cheng2017remote,yang2010bag,long2015fully,kampffmeyer2016semantic}, while the generative models such as Autoencoders (AE), Variational Autoencoders (VAE), Generative Adversarial Networks (GAN), and Large Language Models (LLM) provide efficient means of signal denoising, spatial synthesis, continuous latent feature morphing, and automated policy-making. However, complex atmospheric scattering and spatial domain shift across diverse urban fabrics remain persistent obstacles~\cite{tuia2016domain}.
+Deep Learning (DL) and Generative Artificial Intelligence (GenAI) offer new prospects in urban analytics~\cite{lecun2015deep,zhu2017deep}. The computer vision techniques perform well in land use and land cover (LULC) classification~\cite{cheng2017remote,yang2010bag,long2015fully}, while generative models such as Autoencoders (AE), Variational Autoencoders (VAE), Generative Adversarial Networks (GAN), and Large Language Models (LLM) provide efficient means of signal denoising, spatial synthesis, continuous latent feature morphing, and automated policy-making. However, complex atmospheric scattering and spatial domain shift across diverse urban fabrics remain persistent obstacles~\cite{tuia2016domain}.
 
 There are some challenges in current generative architecture in spatial domains:
 \begin{itemize}
@@ -98,6 +98,15 @@ There are some challenges in current generative architecture in spatial domains:
 \end{itemize}
 
 These issues are addressed by UrbanGen AI, a multi-modal generative intelligence platform tailored for municipal urban spatial planning applications. The model operates on a consumer NVIDIA RTX 4050 graphics card, ensures data sovereignty, and is offered as an assistive prototype rather than an autonomous zoning authority. Claims to energy and carbon savings are only made when backed up by reproducible hardware measurements.
+
+\section{Literature Review}
+The evolution of generative artificial intelligence and deep learning across visual and spatial domains has motivated diverse architectural strategies. In multi-modal educational resource synthesis, Mane et al.~\cite{mane2026edugen} introduced EduGen, an orchestrated pipeline integrating GANs for question generation, VAEs for diagram compression, LoRA-adapted Transformers for summarization, and Diffusion models for illustration synthesis. For visual restoration and synthesis benchmarks, Mane et al.~\cite{mane2026colorization} presented a comparative analysis across VAEs, GANs, Vision Transformers, and Denoising Diffusion Probabilistic Models (DDPMs), proving that iterative diffusion mechanisms achieve superior structural preservation and perceptual fidelity over adversarial and latent-variable baselines. In media security and digital forensics, Mane et al.~\cite{mane2026unified} demonstrated a unified framework coupling generative synthesis (GANs and Diffusion) with forensic detection (VAEs and Vision Transformers), establishing that multi-model systems can bridge creation and verification within a single cohesive pipeline. Addressing domain-specific data scarcity and class imbalance, Kharkate and Mane~\cite{kharkate2026skin} developed a hybrid generative framework employing VAE, DCGAN, and Diffusion models for synthetic visual augmentation to enhance diagnostic classification.
+
+In Earth observation and remote sensing, convolutional neural networks have demonstrated high efficacy in territorial scene classification and semantic land-use parsing~\cite{cheng2017remote,yang2010bag,long2015fully}. However, spatial degradation from atmospheric scattering and sensor noise impairs downstream aerial analytics~\cite{tuia2016domain}. Early spatial restoration frameworks relied on standard denoising autoencoders~\cite{vincent2008extracting}, while deeper residual architectures~\cite{he2016deep} and multi-scale skip connections~\cite{ronneberger2015u,zhang2017beyond} have advanced feature reconstruction. In territorial classification, ImageNet-pretrained representations~\cite{krizhevsky2012imagenet} optimized via Adam~\cite{kingma2014adam} and data augmentation~\cite{perez2017effectiveness} form the standard backbone for zoning validation.
+
+For generative visual modeling, Kingma and Welling~\cite{kingma2013auto} established Auto-Encoding Variational Bayes, later extended to $\beta$-VAE~\cite{higgins2017beta} for disentangled representations, while reconstruction disparity has been adapted for anomaly detection~\cite{an2015variational,akcay2018ganomaly}. Concurrently, Generative Adversarial Networks~\cite{goodfellow2014generative} and Deep Convolutional GANs~\cite{radford2015unsupervised} enabled sharp visual synthesis, with conditional GAN formulations~\cite{mirza2014conditional}, spectral normalization~\cite{miyato2018spectral}, projection discriminators~\cite{miyato2018cgans}, and auxiliary classifiers~\cite{odena2017conditional} stabilizing class-conditioned generation. To overcome adversarial mode collapse, non-equilibrium thermodynamics foundations~\cite{sohl2015deep} led to Denoising Diffusion Probabilistic Models (DDPM)~\cite{ho2020denoising}, with accelerated sampling enabled by DDIM~\cite{song2020denoising} and classifier guidance~\cite{dhariwal2021diffusion}. In language modeling, causal autoregressive Transformers~\cite{vaswani2017attention,radford2019language} provide powerful semantic sequence generation.
+
+\noindent\textbf{Research Gap:} While these studies explore generative architectures in isolation or within single-modality tasks, remote sensing lacks a unified, edge-deployable multi-model platform that concurrently coordinates signal restoration, continuous latent zoning exploration, class-conditioned parcel generation, automated auditing, and grounded policy formulation. UrbanGen AI bridges this gap through a consolidated, multi-model generative intelligence pipeline.
 
 \section{System Architecture and Methodology}
 The UrbanGen AI pipeline is made up of five unique modules that tackle different stages in the spatial intelligence life cycle: restoration, classification, latent representation, generative synthesis, and contextual advisory text generation.
@@ -178,7 +187,7 @@ For rapid municipal decision support, synthesis accelerates via Denoising Diffus
 \subsection{Urban Plan Generator (MiniGPT Transformer)}
 To bridge quantitative visual spatial analysis with qualitative policy generation, UrbanGen AI implements a custom decoder-only autoregressive causal Transformer~\cite{vaswani2017attention}. Adopting generative pre-training principles for causal language modeling~\cite{radford2019language}, the model features 4 pre-layer-normalization Transformer blocks, 4 attention heads, embedding dimension $d_{\text{model}} = 256$, and context window length $T=192$.
 
-Trained from scratch on a domain-curated sustainable urbanism corpus (\texttt{urban\_planning.txt}) detailing transit-oriented development (TOD) paradigms~\cite{calthorpe1993next}, floor space index (FSI), rainwater harvesting mandates, and green buffer zoning, the model computes:
+Trained from scratch on a domain-curated sustainable urbanism corpus (\texttt{urban\_planning.txt}) detailing transit-oriented development (TOD) paradigms, floor space index (FSI), rainwater harvesting mandates, and green buffer zoning, the model computes:
 \begin{equation}
 P(w_t | w_{<t}) = \text{Softmax}\left(\frac{\mathbf{Q}\mathbf{K}^T}{\sqrt{d_k}} \mathbf{V}\right)
 \end{equation}
@@ -187,7 +196,7 @@ Inference is executed via dynamic top-$k$ ($k=40$) and temperature-scaled sampli
 \section{Experimental Results and Discussion}
 
 \subsection{Experimental Setup}
-Models were trained using PyTorch 2.x framework and evaluated using UCMerced LandUse dataset~\cite{yang2010bag} that contains 2,100 high resolution aerial tiles categorized into 21 different land uses, which include agricultural areas, dense residential areas, harbors, freeways, and storage tanks. Experiment was performed locally using NVIDIA GeForce RTX 4050 Laptop GPU (6 GB VRAM, 75 W TGP).
+Models were trained using PyTorch 2.x framework and evaluated using UCMerced LandUse dataset~\cite{yang2010bag} that contains 2,100 high resolution aerial tiles categorized into 21 different land uses, which include agricultural areas, dense residential areas, harbors, freeways, and storage tanks. Experiments were performed locally using NVIDIA GeForce RTX 4050 Laptop GPU (6 GB VRAM, 75 W TGP). To ensure rigorous experimental comparability and eliminate batch-dependent gradient variance across all generative and analytical paradigms, a uniform batch size of 32 was maintained across all trained models.
 
 \subsection{Image Denoising Performance: Skip Connections vs. Bottleneck Baseline}
 Using skip connections of U-net brought transformative qualitative and quantitative results compared to the standard bottleneck encoder-decoder model. Fig.~\ref{fig:ae_loss} shows how the reconstruction loss converges throughout the 50 epochs from 0.115 to 0.0058 MSE.
@@ -296,17 +305,17 @@ The performance of the complete framework was assessed across all six integrated
 \toprule
 \textbf{Model Pipeline} & \textbf{Core Architecture} & \textbf{Epochs} & \textbf{Batch Size} & \textbf{Objective Loss Function} & \textbf{Final Convergence Loss} \\
 \midrule
-Denoising Autoencoder & U-Net (Transposed Skip Connections) & 50 & 16 & Reconstruction MSE ($\|x - \hat{x}\|_2^2$) & $\mathcal{L}_{\text{MSE}} = 0.00585$ \\
-Spatial VAE & ResNet-18 Encoder + Latent Tensor & 50 & 16 & $\mathcal{L}_{\text{recon}} (0.7\mathcal{L}_1 + 0.3\text{MSE}) + \beta D_{\text{KL}}$ & Total: $0.0365$ (Recon: $0.0323$, KL: $41.79$) \\
+Denoising Autoencoder & U-Net (Transposed Skip Connections) & 50 & 32 & Reconstruction MSE ($\|x - \hat{x}\|_2^2$) & $\mathcal{L}_{\text{MSE}} = 0.00585$ \\
+Spatial VAE & ResNet-18 Encoder + Latent Tensor & 50 & 32 & $\mathcal{L}_{\text{recon}} (0.7\mathcal{L}_1 + 0.3\text{MSE}) + \beta D_{\text{KL}}$ & Total: $0.0365$ (Recon: $0.0323$, KL: $41.79$) \\
 Territorial Classifier & ResNet-18 + 21-way Linear Projection & 50 & 32 & Categorical Cross-Entropy & Train: $0.0450$, Val: $0.0880$ (Acc: $98.10\%$) \\
 Residual cDCGAN & Projection cGAN + Auxiliary Classifier & 50 & 32 & $\mathcal{L}_{\text{BCE}} + 0.8\mathcal{L}_{\text{AC}} + 1.2\mathcal{L}_{\text{semantic}}$ & Discriminator: $1.6387$, Generator: $1.2322$ \\
-Conditional DDPM & Time/Class-Conditioned U-Net (DDIM) & 50 & 16 & Simplified Noise MSE ($\|\boldsymbol{\epsilon} - \boldsymbol{\epsilon}_\theta\|_2^2$) & Noise MSE: $0.08806$ (Best: $0.08412$) \\
-MiniGPT Transformer & Causal Autoregressive Transformer & 50$^\dagger$ & 64 & Next-Token Cross-Entropy & Val Cross-Entropy: $0.0836$ (PPL: $1.087$) \\
+Conditional DDPM & Time/Class-Conditioned U-Net (DDIM) & 50 & 32 & Simplified Noise MSE ($\|\boldsymbol{\epsilon} - \boldsymbol{\epsilon}_\theta\|_2^2$) & Noise MSE: $0.08806$ (Best: $0.08412$) \\
+MiniGPT Transformer & Causal Autoregressive Transformer & 50$^\dagger$ & 32 & Next-Token Cross-Entropy & Val Cross-Entropy: $0.0836$ (PPL: $1.087$) \\
 \bottomrule
 \end{tabularx}
 \label{tab:model_specs}
 \vspace{2pt}
-\raggedright\scriptsize $^{\dagger}$MiniGPT was optimized across 3,000 steps on batch size 64, corresponding to 50 equivalent passes over the domain-curated municipal planning text corpus.\par
+\raggedright\scriptsize $^{\dagger}$MiniGPT was optimized across 3,000 steps with batch size 32, corresponding to 50 equivalent passes over the domain-curated municipal planning text corpus.\par
 \end{table*}
 
 Complementing the architectural configurations, Table~\ref{tab:eval_matrix} outlines the multi-model evaluation parameter matrix. For each pipeline component, we pair standard primary performance metrics (such as PSNR, Top-1 accuracy, intended-class semantic recognition rate, noise estimation MSE, and language perplexity) with rigorous secondary verification measures such as the Structural Similarity Index Measure (SSIM)~\cite{wang2004image}, Macro F1, and Bits-Per-Character (BPC). This dual-metric auditing ensures that each model is evaluated on both task-specific fidelity and statistical generalization under the unified 50-epoch benchmark protocol.
@@ -393,11 +402,11 @@ MiniGPT Planning Transformer & 50 equivalent epochs & 8.3 & 108 & 0.015 & 10.6 \
 \end{table*}
 
 \section{Ethical Considerations and Governance}
-Urban spatial interventions affect the well-being of citizens, their mobility and social equality~\cite{mittelstadt2016ethics}. Ethical guarantees are codified into UrbanGen AI as follows:
+Urban spatial interventions directly affect citizen well-being, mobility networks, and equitable resource allocation. Ethical guarantees are codified into UrbanGen AI as follows:
 \begin{enumerate}
     \item \textbf{Advisory Human in the Loop:} UrbanGen AI is designed exclusively as an assistive drafting system; automated policy or zoning enforcement without certification by a qualified urban planner is strictly prohibited.
-    \item \textbf{Domain Shift Awareness and Regional Drift:} Western aerial training data results in model domain shift when used on Global South topology and informal settlements (e.g., in Pune)~\cite{roy2005urban}. The system explicitly shows confidence scores and disclaimers to discourage uncritical use of the algorithm.
-    \item \textbf{Data Sovereignty and Privacy:} Running locally on premise guarantees the protection of high-resolution urban spatial data from any third-party telemetry.
+    \item \textbf{Domain Shift Awareness and Regional Drift:} Training on standardized benchmark data introduces domain shift when applied to Global South topologies and informal settlements (e.g., in Pune). The system explicitly generates confidence metrics and diagnostic disclaimers to prevent uncritical algorithmic reliance.
+    \item \textbf{Data Sovereignty and Privacy:} Operating locally on edge hardware guarantees the complete protection of high-resolution municipal spatial telemetry from third-party cloud leakage.
 \end{enumerate}
 
 \section{Conclusion and Future Work}
@@ -432,8 +441,11 @@ Based on the strengths and weaknesses of the current prototype, a number of prom
 \bibitem{cheng2017remote} G. Cheng, J. Han, and X. Lu, ``Remote sensing image scene classification: Benchmark and state of the art,'' \textit{Proceedings of the IEEE}, vol. 105, no. 10, pp. 1865--1883, 2017.
 \bibitem{yang2010bag} Y. Yang and S. Newsam, ``Bag-of-visual-words and spatial extensions for land-use classification,'' in \textit{Proc. 18th ACM SIGSPATIAL Int. Conf. Adv. Geogr. Inf. Syst.}, 2010, pp. 270--279.
 \bibitem{long2015fully} J. Long, E. Shelhamer, and T. Darrell, ``Fully convolutional networks for semantic segmentation,'' in \textit{Proc. IEEE CVPR}, 2015, pp. 3431--3440.
-\bibitem{kampffmeyer2016semantic} M. Kampffmeyer, A. B. Salberg, and R. Jenssen, ``Semantic segmentation of small objects and modeling of uncertainty in urban remote sensing images using deep convolutional neural networks,'' in \textit{Proc. IEEE CVPRW}, 2016, pp. 1--9.
 \bibitem{tuia2016domain} D. Tuia et al., ``Domain adaptation in remote sensing: An overview,'' \textit{IEEE Geoscience and Remote Sensing Magazine}, vol. 4, no. 2, pp. 41--57, 2016.
+\bibitem{mane2026edugen} S. Mane, A. Tamboli, S. Jadhav, O. Bhutkar, S. Karne, and Y. Gunjal, ``EduGen: A multi-model generative AI framework for dynamic educational resource synthesis,'' in \textit{Proc. IEEE Int. Conf. Convergence Comput. Technol. (I3CTCON)}, 2026, doi: 10.1109/I3CTCON68242.2026.11507192.
+\bibitem{mane2026colorization} S. Mane, S. Barve, A. Nitnaware, and A. Gapat, ``Comparative analysis of generative AI models for image colorization,'' in \textit{Proc. IEEE Int. Conf. Convergence Comput. Technol. (I3CTCON)}, 2026, doi: 10.1109/I3CTCON68242.2026.11507916.
+\bibitem{mane2026unified} S. Mane, S. Barve, A. Popalghat, V. Jadhav, A. Rewatkar, and M. Kapgate, ``A unified generative AI system for synthetic image creation and detection,'' in \textit{Proc. IEEE Int. Conf. Convergence Comput. Technol. (I3CTCON)}, 2026, doi: 10.1109/I3CTCON68242.2026.11507145.
+\bibitem{kharkate2026skin} S. Kharkate, P. Yerawar, N. Mahajan, K. Katare, S. Mane, and P. Ganjewar, ``Generative AI-based synthetic data generation for skin disease classification using VAE, GAN, and diffusion models,'' in \textit{Proc. IEEE Int. Conf. Convergence Comput. Technol. (I3CTCON)}, 2026, doi: 10.1109/I3CTCON68242.2026.11507289.
 \bibitem{vincent2008extracting} P. Vincent, H. Larochelle, Y. Bengio, and P.-A. Manzagol, ``Extracting and composing robust features with denoising autoencoders,'' in \textit{Proc. 25th Int. Conf. Mach. Learn. (ICML)}, 2008, pp. 1096--1103.
 \bibitem{he2016deep} K. He, X. Zhang, S. Ren, and J. Sun, ``Deep residual learning for image recognition,'' in \textit{Proc. IEEE CVPR}, 2016, pp. 770--778.
 \bibitem{ronneberger2015u} O. Ronneberger, P. Fischer, and T. Brox, ``U-Net: Convolutional networks for biomedical image segmentation,'' in \textit{Proc. MICCAI}, 2015, pp. 234--241.
@@ -457,11 +469,8 @@ Based on the strengths and weaknesses of the current prototype, a number of prom
 \bibitem{dhariwal2021diffusion} P. Dhariwal and A. Nichol, ``Diffusion models beat GANs on image synthesis,'' in \textit{Proc. NeurIPS}, vol. 34, 2021, pp. 8780--8794.
 \bibitem{vaswani2017attention} A. Vaswani et al., ``Attention is all you need,'' in \textit{Proc. NeurIPS}, 2017, pp. 5998--6008.
 \bibitem{radford2019language} A. Radford et al., ``Language models are unsupervised multitask learners,'' \textit{OpenAI Blog}, vol. 1, no. 8, p. 9, 2019.
-\bibitem{calthorpe1993next} P. Calthorpe, \textit{The Next American Metropolis: Ecology, Community, and the American Dream}. New York, NY, USA: Princeton Architectural Press, 1993.
 \bibitem{wang2004image} Z. Wang, A. C. Bovik, H. R. Sheikh, and E. P. Simoncelli, ``Image quality assessment: From error visibility to structural similarity,'' \textit{IEEE Trans. Image Process.}, vol. 13, no. 4, pp. 600--612, 2004.
 \bibitem{schwartz2020green} R. Schwartz, J. Dodge, N. A. Smith, and O. Etzioni, ``Green AI,'' \textit{Communications of the ACM}, vol. 63, no. 12, pp. 54--63, 2020.
-\bibitem{mittelstadt2016ethics} B. D. Mittelstadt, P. Allo, M. Taddeo, S. Wachter, and L. Floridi, ``The ethics of algorithms: Mapping the debate,'' \textit{Big Data \& Society}, vol. 3, no. 2, pp. 1--21, 2016.
-\bibitem{roy2005urban} A. Roy, ``Urban informality: Toward an epistemology of planning,'' \textit{Journal of the American Planning Association}, vol. 71, no. 2, pp. 147--158, 2005.
 \bibitem{drusch2012sentinel} M. Drusch et al., ``Sentinel-2: ESA's optical high-resolution mission for GMES operational services,'' \textit{Remote Sensing of Environment}, vol. 120, pp. 25--36, 2012.
 \bibitem{raissi2019physics} M. Raissi, P. Perdikaris, and G. E. Karniadakis, ``Physics-informed neural networks: A deep learning framework for solving forward and inverse problems involving nonlinear partial differential equations,'' \textit{Journal of Computational Physics}, vol. 378, pp. 686--707, 2019.
 \end{thebibliography}
