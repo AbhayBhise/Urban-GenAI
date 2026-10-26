@@ -15,6 +15,19 @@
 \usepackage{hyperref}
 \graphicspath{{figures/}{docs/figures/}}
 
+% Standard IEEE Float Spacing and Placement Optimization
+\renewcommand{\topfraction}{0.95}
+\renewcommand{\bottomfraction}{0.95}
+\renewcommand{\textfraction}{0.05}
+\renewcommand{\floatpagefraction}{0.85}
+\renewcommand{\dbltopfraction}{0.95}
+\renewcommand{\dblfloatpagefraction}{0.85}
+\setlength{\floatsep}{6pt plus 2pt minus 2pt}
+\setlength{\textfloatsep}{8pt plus 2pt minus 2pt}
+\setlength{\intextsep}{6pt plus 2pt minus 2pt}
+\setlength{\dblfloatsep}{6pt plus 2pt minus 2pt}
+\setlength{\dbltextfloatsep}{8pt plus 2pt minus 2pt}
+
 \def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
     T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
 
@@ -178,13 +191,13 @@ Models were trained using PyTorch 2.x framework and evaluated using UCMerced Lan
 \subsection{Image Denoising Performance: Skip Connections vs. Bottleneck Baseline}
 Using skip connections of U-net brought transformative qualitative and quantitative results compared to the standard bottleneck encoder-decoder model. Fig.~\ref{fig:ae_loss} shows how the reconstruction loss converges throughout the 50 epochs from 0.115 to 0.0058 MSE.
 
-\begin{figure}[htbp]
-\centerline{\includegraphics[width=0.92\linewidth]{figures/fig_ae_convergence.png}}
+\begin{figure}[!t]
+\centerline{\includegraphics[width=0.88\columnwidth]{figures/fig_ae_convergence.png}}
 \caption{Reconstruction MSE loss curve for the Denoising U-Net Autoencoder over 50 training epochs.}
 \label{fig:ae_loss}
 \end{figure}
 
-\begin{table}[htbp]
+\begin{table}[!t]
 \caption{Denoising Autoencoder Evaluation across 21 Aerial Classes}
 \begin{center}
 \begin{tabular}{lccc}
@@ -207,14 +220,14 @@ As demonstrated in Table~\ref{tab:ae_results} and graphically represented for se
     \item The difference in performance (easiest vs. hardest land cover categories) reduced from \textbf{7.3\,dB down to 2.6\,dB}.
 \end{itemize}
 
-\begin{figure}[htbp]
-\centerline{\includegraphics[width=0.98\linewidth]{figures/fig_psnr_comparison.png}}
+\begin{figure}[!t]
+\centerline{\includegraphics[width=\columnwidth]{figures/fig_psnr_comparison.png}}
 \caption{Class-wise PSNR comparison showing restoration improvements of the proposed Skip-AE over the baseline bottleneck Autoencoder.}
 \label{fig:psnr_comp}
 \end{figure}
 
-\begin{figure}[htbp]
-\centerline{\includegraphics[width=0.98\linewidth]{figures/fig_ae_crisp_restoration.png}}
+\begin{figure}[!t]
+\centerline{\includegraphics[width=\columnwidth]{figures/fig_ae_crisp_restoration.png}}
 \caption{Visual qualitative comparison of high-resolution aerial restoration across distinct structural classes: Ground Truth, Synthetically Corrupted ($\sigma=0.15$), and Restored Output via our Skip-Connected Autoencoder.}
 \label{fig:ae_crisp}
 \end{figure}
@@ -228,8 +241,8 @@ The ResNet-18 territorial zoning classifier converged reliably on the 90/10 trai
 \end{itemize}
 Confusion matrix evaluation confirmed zero classification overlap between open green/agricultural land parcels and high-density urban infrastructure categories, establishing a robust automated validator for real-time municipal zoning auditing.
 
-\begin{figure}[htbp]
-\centerline{\includegraphics[width=0.92\linewidth]{figures/fig_classifier_metrics.png}}
+\begin{figure}[!t]
+\centerline{\includegraphics[width=0.88\columnwidth]{figures/fig_classifier_metrics.png}}
 \caption{Validation Accuracy (\%) and Cross-Entropy Loss for the Land-Use Territorial Classifier across the uniform 50-epoch benchmark horizon.}
 \label{fig:cls_metrics}
 \end{figure}
@@ -237,13 +250,13 @@ Confusion matrix evaluation confirmed zero classification overlap between open g
 \subsection{Latent Space Traversal and Anomaly Detection}
 Fig.~\ref{fig:vae_tradeoff} shows the dynamics of optimization for the Spatial VAE. For our setting that prioritizes reconstruction ($\beta=10^{-4}$), the reconstruction loss gradually decreases to 0.075, and the KL divergence remains at 103 nats.
 
-\begin{figure}[htbp]
-\centerline{\includegraphics[width=0.92\linewidth]{figures/fig_vae_tradeoff.png}}
+\begin{figure}[!t]
+\centerline{\includegraphics[width=0.88\columnwidth]{figures/fig_vae_tradeoff.png}}
 \caption{Dual-objective training dynamics of the Spatial VAE: Reconstruction loss vs. KL divergence (nats).}
 \label{fig:vae_tradeoff}
 \end{figure}
 
-\begin{figure*}[htbp]
+\begin{figure*}[!t]
 \centerline{\includegraphics[width=0.98\textwidth]{figures/fig_vae_multi_interpolation.png}}
 \caption{Continuous multi-pair latent space interpolation ($z(\alpha) = (1-\alpha)z_A + \alpha z_B$) across $\alpha \in [0, 1]$ between diverse urban archetypes: Pair 1 (Agricultural to Buildings), Pair 2 (Golf Course to Harbor), and Pair 3 (Beach to Freeway). Demonstrates continuous topological deformation without semantic collapse.}
 \label{fig:vae_multi_interp}
@@ -254,14 +267,14 @@ As can be seen from Fig.~\ref{fig:vae_multi_interp}, the interpolation within th
 \subsection{Conditional Generative Synthesis (Residual cDCGAN)}
 Trained under the unified 50-epoch benchmark protocol using Residual Upsampling Blocks (\texttt{ResUpBlock}), Projection Conditioning ($y^T V \phi(x)$), Spectral Normalization, diversity regularizer, and Auxiliary Classifier guidance, the cDCGAN reached balanced minimax equilibrium ($D=1.639, G=1.232$ at epoch 50). Across 168 synthesized aerial tiles spanning all 21 municipal zoning classes, the independent classifier achieved an intended-class recognition rate of 99.40\% (167 out of 168 tiles correctly recognized). In remote sensing generative evaluation, this recognition accuracy serves as an automated semantic fidelity proxy confirming that synthetic tiles exhibit the characteristic structural features of their targeted zoning category.
 
-\begin{figure}[htbp]
-\centerline{\includegraphics[width=0.92\linewidth]{figures/fig_gan_dynamics.png}}
+\begin{figure}[!t]
+\centerline{\includegraphics[width=0.88\columnwidth]{figures/fig_gan_dynamics.png}}
 \caption{Adversarial training loss curves for Discriminator ($D$) and Generator ($G$) in the Residual Class-Conditional DCGAN over the 50-epoch benchmark horizon.}
 \label{fig:gan_dynamics}
 \end{figure}
 
-\begin{figure}[htbp]
-\centerline{\includegraphics[width=0.98\linewidth]{figures/fig_gan_diverse_generation.png}}
+\begin{figure}[!t]
+\centerline{\includegraphics[width=\columnwidth]{figures/fig_gan_diverse_generation.png}}
 \caption{Class-conditioned synthetic aerial generation across 21 distinct urban categories synthesized from Gaussian noise conditioned on learned class embeddings after 50 epochs.}
 \label{fig:gan_samples}
 \end{figure}
@@ -272,7 +285,7 @@ Fig.~\ref{fig:gan_samples} illustrates that the generator successfully produces 
 
 The performance of the complete framework was assessed across all six integrated models under the standardized 50-epoch benchmark protocol. Table~\ref{tab:model_specs} provides the comparative architecture and training configuration across all modules, including respective batch sizes, loss formulations, and final convergence metrics.
 
-\begin{table*}[htbp]
+\begin{table*}[!t]
 \caption{System Architecture, Training Configurations, and Convergence Losses (Uniform 50-Epoch Horizon)}
 \centering
 \scriptsize
@@ -294,12 +307,12 @@ MiniGPT Transformer & Causal Autoregressive Transformer & 50$^\dagger$ & 64 & Ne
 \raggedright\footnotesize $^{\dagger}$MiniGPT was optimized across 3,000 steps on batch size 64, corresponding to 50 equivalent passes over the domain-curated municipal planning text corpus.
 \end{table*}
 
-\begin{table*}[htbp]
+\begin{table*}[!t]
 \caption{Standard Evaluation Parameter Matrix for Multi-Model Performance Verification}
 \centering
 \scriptsize
 \setlength{\tabcolsep}{3.5pt}
-\begin{tabular}{lccccc}
+\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}lccccc@{}}
 \toprule
 \textbf{Model Pipeline} & \textbf{Core Functionality} & \textbf{Standard Primary Metric} & \textbf{Measured Benchmark} & \textbf{Secondary Evaluation Metric} & \textbf{Measured Value} \\
 \midrule
@@ -310,19 +323,19 @@ Residual cDCGAN & Fast Aerial Land-Parcel Synthesis & Semantic Recognition Rate 
 Conditional DDPM & Multi-Scale Stochastic Tile Diffusion & Noise Estimation MSE ($\mathcal{L}_{\text{diff}}$) & $\mathbf{0.0881}$ & Inference Efficiency (DDIM) & $20$ Steps ($50\times$ speedup) \\
 MiniGPT Transformer & Municipal Planning Policy Advisory & Text Perplexity (PPL) & $\mathbf{1.087}$ & Bits-Per-Character (BPC) & $\mathbf{0.1199}$ (Held-out CE: $0.0836$) \\
 \bottomrule
-\end{tabular}
+\end{tabular*}
 \label{tab:eval_matrix}
 \end{table*}
 
-\begin{figure}[htbp]
-\centerline{\includegraphics[width=0.98\linewidth]{figures/fig_multimodel_loss_bars.png}}
+\begin{figure}[!t]
+\centerline{\includegraphics[width=\columnwidth]{figures/fig_multimodel_loss_bars.png}}
 \caption{Empirical convergence comparison across all six specialized architectures under the uniform 50-epoch benchmark protocol, depicting initial vs. final 50-epoch loss magnitudes on a logarithmic scale.}
 \label{fig:loss_bars}
 \end{figure}
 
 Table~\ref{tab:published_comparison} benchmarks UrbanGen AI against state-of-the-art published remote sensing and generative aerial literature in standard IEEE format, demonstrating competitive quality while remaining fully edge-computable.
 
-\begin{table}[htbp]
+\begin{table}[!t]
 \caption{Comparative Benchmarking with Published Remote Sensing Literature}
 \centering
 \scriptsize
@@ -368,10 +381,9 @@ MiniGPT Planning Transformer & 50 equivalent epochs & 8.3 & 108 & 0.015 & 10.6 \
 \bottomrule
 \end{tabularx}
 \label{tab:energy}
+\vspace{1mm}
+\raggedright\footnotesize $^{\dagger}$Carbon emissions calculated using the standard Indian national electrical grid carbon intensity factor of 0.708 kg CO$_2$ per kWh (Central Electricity Authority). Because all six models are trained under a strictly aligned 50-epoch protocol, the framework establishes a verifiable Green AI baseline that can be fully trained from scratch in under 1.75 hours on consumer hardware.
 \end{table*}
-\FloatBarrier
-
-\footnotesize $^{\dagger}$Carbon emissions calculated using the standard Indian national electrical grid carbon intensity factor of 0.708 kg CO$_2$ per kWh (Central Electricity Authority). Because all six models are trained under a strictly aligned 50-epoch protocol, the framework establishes a verifiable Green AI baseline that can be fully trained from scratch in under 1.75 hours on consumer hardware.
 
 \section{Ethical Considerations and Governance}
 Urban spatial interventions affect the well-being of citizens, their mobility and social equality. Ethical guarantees are codified into UrbanGen AI as follows:
