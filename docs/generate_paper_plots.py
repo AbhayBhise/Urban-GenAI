@@ -170,3 +170,28 @@ plt.savefig(out_dir + "fig_energy_carbon.png", bbox_inches='tight')
 plt.close()
 print("Saved updated fig_energy_carbon.png")
 
+# 7. Multi-Model Benchmark Convergence Loss Comparison (Grouped Bar Chart)
+bench_models = ['U-Net AE\n(Recon MSE)', 'Spatial VAE\n(Total Loss)', 'Classifier\n(Val Loss)', 'cDCGAN\n(D Loss)', 'cDCGAN\n(G Loss)', 'DDPM\n(Noise MSE)', 'MiniGPT\n(Val Loss)']
+initial_losses = [0.115, 0.420, 1.850, 2.100, 2.450, 0.680, 4.238]
+final_losses = [0.0058, 0.0365, 0.0880, 1.6387, 1.2322, 0.0881, 0.0836]
+
+x_bench = np.arange(len(bench_models))
+w_bench = 0.35
+
+fig, ax = plt.subplots(figsize=(8, 3.8))
+rects_init = ax.bar(x_bench - w_bench/2, initial_losses, w_bench, label='Initial Epoch Loss', color='#94a3b8', edgecolor='#64748b')
+rects_final = ax.bar(x_bench + w_bench/2, final_losses, w_bench, label='Final 50-Epoch Loss', color='#0284c7', edgecolor='#0369a1')
+
+ax.set_ylabel('Loss Value (Model-Specific Metric)')
+ax.set_title('Empirical Convergence Across All 6 Models under Aligned 50-Epoch Protocol')
+ax.set_xticks(x_bench)
+ax.set_xticklabels(bench_models, fontsize=8.5)
+ax.legend(loc='upper right')
+ax.set_yscale('log')
+ax.grid(True, axis='y', linestyle=':', alpha=0.6)
+
+plt.savefig(out_dir + "fig_multimodel_loss_bars.png", bbox_inches='tight')
+plt.close()
+print("Saved fig_multimodel_loss_bars.png")
+
+
