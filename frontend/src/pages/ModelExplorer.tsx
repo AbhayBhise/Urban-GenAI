@@ -112,10 +112,10 @@ export default function ModelExplorer({ setActiveView }: ModelExplorerProps) {
             { label: 'Data Pipeline', status: '✓ Active', color: 'var(--success)', bg: 'var(--success-wash)' },
             { label: 'Autoencoder', status: '✓ Trained', color: 'var(--success)', bg: 'var(--success-wash)' },
             { label: 'Spatial VAE', status: '✓ Trained', color: 'var(--success)', bg: 'var(--success-wash)' },
-            { label: 'Spectral GAN', status: '◐ In Dev', color: 'var(--warn)', bg: 'var(--warn-wash)' },
-            { label: 'Prediction', status: '○ Planned', color: 'var(--muted)', bg: 'var(--surface-inset)' },
+            { label: 'Conditional GAN', status: '✓ Trained', color: 'var(--success)', bg: 'var(--success-wash)' },
+            { label: 'Land-Use Classifier', status: '✓ Trained', color: 'var(--success)', bg: 'var(--success-wash)' },
+            { label: 'Diffusion Scenario', status: '✓ Trained', color: 'var(--success)', bg: 'var(--success-wash)' },
             { label: 'MiniGPT Planner', status: '✓ Trained', color: 'var(--success)', bg: 'var(--success-wash)' },
-            { label: 'Diffusion Vis', status: '○ Planned', color: 'var(--muted)', bg: 'var(--surface-inset)' },
           ].map((item, idx) => (
             <div
               key={idx}

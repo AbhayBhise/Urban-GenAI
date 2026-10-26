@@ -22,11 +22,11 @@
 \renewcommand{\floatpagefraction}{0.80}
 \renewcommand{\dbltopfraction}{0.95}
 \renewcommand{\dblfloatpagefraction}{0.80}
-\setlength{\floatsep}{6pt plus 2pt minus 2pt}
-\setlength{\textfloatsep}{8pt plus 2pt minus 2pt}
-\setlength{\intextsep}{6pt plus 2pt minus 2pt}
-\setlength{\dblfloatsep}{6pt plus 2pt minus 2pt}
-\setlength{\dbltextfloatsep}{8pt plus 2pt minus 2pt}
+\setlength{\floatsep}{10pt plus 2pt minus 2pt}
+\setlength{\textfloatsep}{12pt plus 2pt minus 3pt}
+\setlength{\intextsep}{10pt plus 2pt minus 2pt}
+\setlength{\dblfloatsep}{10pt plus 2pt minus 2pt}
+\setlength{\dbltextfloatsep}{12pt plus 2pt minus 3pt}
 
 \def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
     T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
@@ -37,43 +37,25 @@
 \title{UrbanGen AI: A Multi-Model Generative Framework for Satellite Imagery Processing, Land-Use Analytics, and Sustainable Urban Planning\\
 \thanks{This research was developed as an open-source, edge-computable framework for generative AI applications in smart city planning and spatial analysis.}
 }
-\author{
-\IEEEauthorblockN{Abhay Bhise}
-\IEEEauthorblockA{\textit{Department of Computer Engineering} \\
+% authors: three per row, same layout as the department template
+\newcommand{\au}[2]{%
+\begin{tabular}[t]{@{}c@{}}
+\textbf{#1}\\
+\textit{Computer Engineering}\\
 \textit{MIT Academy of Engineering}\\
-Alandi, Pune, India \\
-bhiseabhay890@gmail.com}
-\and
-\IEEEauthorblockN{Disha Satpute}
-\IEEEauthorblockA{\textit{Department of Computer Engineering} \\
-\textit{MIT Academy of Engineering}\\
-Alandi, Pune, India \\
-dishasatpute44@gmail.com}
-\and
-\IEEEauthorblockN{Vaishnavi Phad}
-\IEEEauthorblockA{\textit{Department of Computer Engineering} \\
-\textit{MIT Academy of Engineering}\\
-Alandi, Pune, India \\
-phadvaishnavi1905@gmail.com}
-\and
-\IEEEauthorblockN{Vedant Ingle}
-\IEEEauthorblockA{\textit{Department of Computer Engineering} \\
-\textit{MIT Academy of Engineering}\\
-Alandi, Pune, India \\
-vedantingle05@gmail.com}
-\and
-\IEEEauthorblockN{Savita Mane}
-\IEEEauthorblockA{\textit{Department of Computer Engineering} \\
-\textit{MIT Academy of Engineering}\\
-Alandi, Pune, India \\
-savita.mane@mitaoe.ac.in}
-\and
-\IEEEauthorblockN{Pramod Ganjewar}
-\IEEEauthorblockA{\textit{Department of Computer Engineering} \\
-\textit{MIT Academy of Engineering}\\
-Alandi, Pune, India \\
-pdganjewar@mitaoe.ac.in}
-}
+\textit{Alandi, Pune}\\
+\footnotesize #2
+\end{tabular}}
+
+\author{%
+\begin{tabular*}{0.98\textwidth}{@{\extracolsep{\fill}}ccc@{}}
+\au{Abhay Bhise}{bhiseabhay890@gmail.com} &
+\au{Disha Satpute}{dishasatpute44@gmail.com} &
+\au{Vaishnavi Phad}{phadvaishnavi1905@gmail.com} \\[14pt]
+\au{Vedant Ingle}{vedantingle05@gmail.com} &
+\au{Savita Mane}{savita.mane@mitaoe.ac.in} &
+\au{Pramod Ganjewar}{pdganjewar@mitaoe.ac.in}
+\end{tabular*}}
 
 \maketitle
 \begin{abstract}
@@ -198,6 +180,12 @@ Inference is executed via dynamic top-$k$ ($k=40$) and temperature-scaled sampli
 \subsection{Experimental Setup}
 Models were trained using PyTorch 2.x framework and evaluated using UCMerced LandUse dataset~\cite{yang2010bag} that contains 2,100 high resolution aerial tiles categorized into 21 different land uses, which include agricultural areas, dense residential areas, harbors, freeways, and storage tanks. Experiments were performed locally using NVIDIA GeForce RTX 4050 Laptop GPU (6 GB VRAM, 75 W TGP). To ensure rigorous experimental comparability and eliminate batch-dependent gradient variance across all generative and analytical paradigms, a uniform batch size of 32 was maintained across all trained models.
 
+\begin{figure}[!t]
+\centerline{\includegraphics[width=0.88\columnwidth]{figures/fig_landuse_distribution.png}}
+\caption{Taxonomic distribution of the 2,100 UCMerced aerial tiles grouped into five functional municipal planning sectors.}
+\label{fig:landuse_dist}
+\end{figure}
+
 \subsection{Image Denoising Performance: Skip Connections vs. Bottleneck Baseline}
 Using skip connections of U-net brought transformative qualitative and quantitative results compared to the standard bottleneck encoder-decoder model. Fig.~\ref{fig:ae_loss} shows how the reconstruction loss converges throughout the 50 epochs from 0.115 to 0.0058 MSE.
 
@@ -296,11 +284,12 @@ Fig.~\ref{fig:gan_samples} illustrates that the generator successfully produces 
 
 The performance of the complete framework was assessed across all six integrated models under the standardized 50-epoch benchmark protocol. Table~\ref{tab:model_specs} provides the comparative architecture and training configuration across all modules, including respective batch sizes, loss formulations, and final convergence metrics.
 
-\begin{table*}[!t]
+\begin{table*}[t]
 \caption{System Architecture, Training Configurations, and Convergence Losses (Uniform 50-Epoch Horizon)}
 \centering
 \scriptsize
-\setlength{\tabcolsep}{4pt}
+\renewcommand{\arraystretch}{1.15}
+\setlength{\tabcolsep}{5pt}
 \begin{tabularx}{\textwidth}{@{}l X c c X X@{}}
 \toprule
 \textbf{Model Pipeline} & \textbf{Core Architecture} & \textbf{Epochs} & \textbf{Batch Size} & \textbf{Objective Loss Function} & \textbf{Final Convergence Loss} \\
@@ -314,17 +303,18 @@ MiniGPT Transformer & Causal Autoregressive Transformer & 50 & 32 & Next-Token C
 \bottomrule
 \end{tabularx}
 \label{tab:model_specs}
-\vspace{2pt}
+\vspace{3pt}
 \raggedright\scriptsize Note: MiniGPT was optimized across uniform 50-epoch equivalent steps with batch size 32 over the domain-curated municipal planning text corpus.\par
 \end{table*}
 
-Complementing the architectural configurations, Table~\ref{tab:eval_matrix} outlines the multi-model evaluation parameter matrix. For each pipeline component, we pair standard primary performance metrics (such as PSNR, Top-1 accuracy, intended-class semantic recognition rate, noise estimation MSE, and language perplexity) with rigorous secondary verification measures such as the Structural Similarity Index Measure (SSIM)~\cite{wang2004image}, Macro F1, and Bits-Per-Character (BPC). This dual-metric auditing ensures that each model is evaluated on both task-specific fidelity and statistical generalization under the unified 50-epoch benchmark protocol.
+Complementing the architectural configurations, Table~\ref{tab:eval_matrix} outlines the multi-model evaluation parameter matrix. For each pipeline component, we pair standard primary performance metrics (such as PSNR, Top-1 accuracy, intended-class semantic recognition rate, noise estimation MSE, and language perplexity) with secondary verification measures such as the Structural Similarity Index Measure (SSIM)~\cite{wang2004image}, Macro F1, and Bits-Per-Character (BPC).
 
-\begin{table}[!t]
+\begin{table}[htbp]
 \caption{Standard Evaluation Parameter Matrix for Multi-Model Performance Verification}
 \centering
 \scriptsize
-\setlength{\tabcolsep}{2.5pt}
+\renewcommand{\arraystretch}{1.12}
+\setlength{\tabcolsep}{3pt}
 \begin{tabularx}{\columnwidth}{@{}l l c l c@{}}
 \toprule
 \textbf{Model Pipeline} & \textbf{Primary Metric} & \textbf{Value} & \textbf{Secondary} & \textbf{Value} \\
@@ -340,18 +330,19 @@ MiniGPT Transformer & Perplexity & $\mathbf{1.110}$ & BPC & $\mathbf{0.1505}$ \\
 \label{tab:eval_matrix}
 \end{table}
 
-\begin{figure}[!t]
-\centerline{\includegraphics[width=\columnwidth]{figures/fig_multimodel_loss_bars.png}}
+\begin{figure}[htbp]
+\centerline{\includegraphics[width=0.92\columnwidth]{figures/fig_multimodel_loss_bars.png}}
 \caption{Empirical convergence comparison across all six specialized architectures under the uniform 50-epoch benchmark protocol, depicting initial vs. final 50-epoch loss magnitudes on a logarithmic scale.}
 \label{fig:loss_bars}
 \end{figure}
 
 Table~\ref{tab:published_comparison} benchmarks UrbanGen AI against state-of-the-art published remote sensing and generative aerial literature in standard IEEE format, demonstrating competitive quality while remaining fully edge-computable.
 
-\begin{table}[!t]
+\begin{table}[htbp]
 \caption{Comparative Benchmarking with Published Remote Sensing Literature}
 \centering
 \scriptsize
+\renewcommand{\arraystretch}{1.12}
 \setlength{\tabcolsep}{3pt}
 \begin{tabularx}{\columnwidth}{@{}X c c r@{}}
 \toprule
@@ -377,11 +368,12 @@ Standard cGAN~\cite{mirza2014conditional} & 50 & 72.40\% Proxy & Cloud GPU \\
 \subsection{Computational Efficiency and Carbon Footprint (Green AI Audit)}
 The design and empirical validation of all six architectures were executed locally on a single consumer-grade laptop workstation (NVIDIA GeForce RTX 4050 Laptop GPU, 6\,GB VRAM, 75\,W TGP) adhering to Green AI principles~\cite{schwartz2020green}. Table~\ref{tab:energy} presents the reproducible computational audit across the uniform 50-epoch training horizon.
 
-\begin{table}[!t]
+\begin{table}[htbp]
 \caption{Comprehensive Computational Efficiency, Duration, and Energy Audit (Uniform 50-Epoch Horizon)}
 \centering
 \scriptsize
-\setlength{\tabcolsep}{2.5pt}
+\renewcommand{\arraystretch}{1.12}
+\setlength{\tabcolsep}{3pt}
 \begin{tabularx}{\columnwidth}{@{}X c c c c@{}}
 \toprule
 \textbf{Model Architecture} & \textbf{Time (m)} & \textbf{Power (W)} & \textbf{Energy} & \textbf{CO$_2$e (g)} \\
@@ -398,10 +390,15 @@ MiniGPT Planning Transformer & 1.2 & 108 & 0.002\,kWh & 1.4 \\
 \end{tabularx}
 \label{tab:energy}
 \vspace{2pt}
-\raggedright\scriptsize Note: Carbon emissions calculated using the standard Indian national electrical grid carbon intensity factor of 0.708\,kg\,CO$_2$ per kWh (Central Electricity Authority). Because all six models are trained under a strictly aligned 50-epoch protocol with uniform batch size 32, the framework establishes a verifiable Green AI baseline that can be fully trained from scratch in just 1.1 hours (66.3 minutes) on consumer hardware.\par
+\raggedright\scriptsize Note: Carbon factor of 0.708\,kg\,CO$_2$/kWh (Central Electricity Authority).\par
 \end{table}
 
-\FloatBarrier
+\begin{figure}[htbp]
+\centerline{\includegraphics[width=0.92\columnwidth]{figures/fig_energy_carbon_breakdown.png}}
+\caption{Green AI computational audit across the 50-epoch training horizon: (left) energy consumption breakdown by architecture (total: 0.133\,kWh); (right) training duration (minutes) and associated CO$_2$e emissions (grams).}
+\label{fig:energy_carbon}
+\end{figure}
+
 \section{Ethical Considerations and Governance}
 Urban spatial interventions directly affect citizen well-being, mobility networks, and equitable resource allocation. Ethical guarantees are codified into UrbanGen AI as follows:
 \begin{enumerate}
@@ -475,7 +472,7 @@ Based on the strengths and weaknesses of the current prototype, a number of prom
 \bibitem{wang2004image} Z. Wang, A. C. Bovik, H. R. Sheikh, and E. P. Simoncelli, ``Image quality assessment: From error visibility to structural similarity,'' \textit{IEEE Trans. Image Process.}, vol. 13, no. 4, pp. 600--612, 2004.
 \bibitem{schwartz2020green} R. Schwartz, J. Dodge, N. A. Smith, and O. Etzioni, ``Green AI,'' \textit{Communications of the ACM}, vol. 63, no. 12, pp. 54--63, 2020.
 \bibitem{drusch2012sentinel} M. Drusch et al., ``Sentinel-2: ESA's optical high-resolution mission for GMES operational services,'' \textit{Remote Sensing of Environment}, vol. 120, pp. 25--36, 2012.
-\bibitem{raissi2019physics} M. Raissi, P. Perdikaris, and G. E. Karniadakis, ``Physics-informed neural networks: A deep learning framework for solving forward and inverse problems involving nonlinear partial differential equations,'' \textit{Journal of Computational Physics}, vol. 378, pp. 686--707, 2019.
+\bibitem{raissi2019physics} M. Raissi, P. Perdikaris, and G. E. Karniadakis, ``Physics-informed neural networks: A dynamic framework for solving forward and inverse problems involving nonlinear partial differential equations,'' \textit{Journal of Computational Physics}, vol. 378, pp. 686--707, 2019.
 \end{thebibliography}
 
 \end{document}

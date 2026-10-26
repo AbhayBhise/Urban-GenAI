@@ -1,0 +1,127 @@
+{
+  "timestamp": "2026-10-24 15:55:57 UTC",
+  "environment": {
+    "python_version": "3.11.9",
+    "pytorch_version": "2.14.0+cpu",
+    "device": "cpu",
+    "cuda_available": false,
+    "gpu_name": "None (CPU Execution)",
+    "vram_gb": 0.0,
+    "git_commit": "3771bf97225bd9a2a6f7a9f59c22dd9d49557346",
+    "git_branch": "feature/system-audit-and-handover",
+    "node_version": "v24.14.1",
+    "npm_version": "11.11.0"
+  },
+  "dataset": {
+    "root_path": "C:\\Users\\Disha Satpute\\Downloads\\genAI\\Urban-GenAI\\UCMerced_LandUse\\UCMerced_LandUse\\Images",
+    "exists": true,
+    "num_classes": 21,
+    "total_images": 2100,
+    "classes_valid": true,
+    "split_counts": {
+      "train": 1470,
+      "val": 315,
+      "test": 315
+    },
+    "split_seed": 42
+  },
+  "models": {
+    "autoencoder": {
+      "available": true,
+      "loaded": true,
+      "parameters": 3869635,
+      "test_sample_mse": 0.000898,
+      "test_sample_psnr_db": 30.47,
+      "test_sample_ssim": 0.8322,
+      "latency_ms_per_tile": 154.02
+    },
+    "spatial_vae": {
+      "available": true,
+      "loaded": true,
+      "parameters": 3844931,
+      "latent_spatial_shape": [
+        64,
+        8,
+        8
+      ],
+      "latent_dimensions": 4096,
+      "test_recon_mse": 0.000701,
+      "test_recon_psnr_db": 31.54,
+      "test_recon_ssim": 0.8805,
+      "test_kl_divergence": 11.9,
+      "latency_ms_per_tile": 98.95
+    },
+    "classifier": {
+      "available": true,
+      "loaded": true,
+      "parameters": 11187285,
+      "test_split_accuracy": 77.46,
+      "test_split_size": 315,
+      "latency_ms_per_tile": 157.31
+    },
+    "conditional_gan": {
+      "available": true,
+      "generator_loaded": true,
+      "generator_params": 8821728,
+      "discriminator_params": 6971926,
+      "generation_output_shape": [
+        5,
+        3,
+        128,
+        128
+      ],
+      "generation_nan": false,
+      "fid_status": "Requires large-sample benchmark run (torch-fidelity)",
+      "kid_status": "Requires large-sample benchmark run"
+    },
+    "diffusion_scenario": {
+      "available": true,
+      "best_checkpoint_available": true,
+      "loaded": true,
+      "parameters": 2798531,
+      "ddim_nan_free_checks": {
+        "eta_0.0": true,
+        "eta_0.2": true,
+        "eta_0.5": true,
+        "eta_1.0": true
+      },
+      "measured_initial_mse": 0.36231,
+      "measured_final_mse": 0.00421,
+      "measured_best_mse": 0.00384,
+      "training_wall_minutes": 16.63,
+      "average_gpu_power_w": 28.51,
+      "peak_gpu_power_w": 61.37,
+      "estimated_energy_wh": 7.9
+    },
+    "minigpt_planner": {
+      "available": true,
+      "loaded": true,
+      "parameters": 3225088,
+      "vocab_size": 64,
+      "block_size": 192,
+      "n_layer": 4,
+      "n_head": 4,
+      "n_embd": 256,
+      "final_training_loss": 0.087,
+      "held_out_val_loss": 0.0836,
+      "held_out_perplexity": 1.087,
+      "bits_per_character": 0.1206
+    }
+  },
+  "telemetry": {
+    "diffusion_gpu_board_energy_wh": 7.9,
+    "diffusion_average_power_w": 28.51,
+    "diffusion_peak_power_w": 61.37,
+    "ae_energy": "Not measured",
+    "vae_energy": "Not measured",
+    "classifier_energy": "Not measured",
+    "gan_energy": "Not measured",
+    "gpt_energy": "Not measured",
+    "note": "Per rule 1 & 2: Only diffusion has genuinely recorded hardware power samples from nvidia-smi. All other models are unmeasured."
+  },
+  "summary": {
+    "all_checkpoints_loaded": true,
+    "dataset_integrity_verified": true,
+    "overall_status": "PASS"
+  }
+}

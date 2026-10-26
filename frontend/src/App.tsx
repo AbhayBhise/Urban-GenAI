@@ -23,7 +23,7 @@ import SystemArchitecture from './pages/SystemArchitecture';
 import Diffusion from './pages/Diffusion';
 import { apiFetch, getApiKey, setApiKey } from './lib/api';
 
-type ViewType = 'landing' | 'ae' | 'vae' | 'classifier' | 'diffusion' | 'plan-generator' | 'governance' | 'gan' | 'prediction' | 'datasets' | 'system' | 'model-explorer' | 'model-comparison' | 'training' | 'evaluation' | 'research' | 'glossary' | 'future-scope' | 'system-architecture';
+type ViewType = 'landing' | 'ae' | 'vae' | 'classifier' | 'diffusion' | 'plan-generator' | 'governance' | 'gan' | 'datasets' | 'system' | 'model-explorer' | 'model-comparison' | 'training' | 'evaluation' | 'research' | 'glossary' | 'future-scope' | 'system-architecture';
 
 // Image-inference views that share the upload UI below.
 const IMAGE_VIEWS = ['ae', 'vae', 'classifier'] as const;
@@ -35,7 +35,7 @@ const HISTORY_KEY: Record<string, string> = { ae: 'ae', vae: 'vae', classifier: 
 // Every routable view id, so any #hash can deep-link straight to its page
 // (handy for demos / bookmarks / sharing a specific model with a reviewer).
 const VALID_VIEWS: ViewType[] = ['landing', 'ae', 'vae', 'classifier', 'plan-generator', 'governance',
-  'gan', 'prediction', 'datasets', 'system', 'model-explorer', 'model-comparison', 'training',
+  'gan', 'datasets', 'system', 'model-explorer', 'model-comparison', 'training',
   'evaluation', 'diffusion', 'research', 'glossary', 'future-scope', 'system-architecture'];
 
 const viewFromHash = (): ViewType | null => {
@@ -370,7 +370,6 @@ export default function App() {
     { id: 'datasets', label: 'Dataset Explorer', icon: Database, active: true },
     { id: 'system', label: 'System Info', icon: HardDrive, active: true },
     { id: 'gan', label: 'GAN Generator', icon: ImageIcon, active: true },
-    { id: 'prediction', label: 'Prediction Engine', icon: CheckCircle2, active: false, badge: 'Soon' },
   ];
 
   // backend /status reports the classifier under its legacy key 'transformer'
