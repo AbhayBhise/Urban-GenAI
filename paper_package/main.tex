@@ -19,9 +19,9 @@
 \renewcommand{\topfraction}{0.95}
 \renewcommand{\bottomfraction}{0.95}
 \renewcommand{\textfraction}{0.05}
-\renewcommand{\floatpagefraction}{0.85}
+\renewcommand{\floatpagefraction}{0.80}
 \renewcommand{\dbltopfraction}{0.95}
-\renewcommand{\dblfloatpagefraction}{0.85}
+\renewcommand{\dblfloatpagefraction}{0.80}
 \setlength{\floatsep}{6pt plus 2pt minus 2pt}
 \setlength{\textfloatsep}{8pt plus 2pt minus 2pt}
 \setlength{\intextsep}{6pt plus 2pt minus 2pt}
@@ -32,6 +32,7 @@
     T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
 
 \begin{document}
+\raggedbottom
 
 \title{UrbanGen AI: A Multi-Model Generative Framework for Satellite Imagery Processing, Land-Use Analytics, and Sustainable Urban Planning\\
 \thanks{This research was developed as an open-source, edge-computable framework for generative AI applications in smart city planning and spatial analysis.}
@@ -199,18 +200,19 @@ Using skip connections of U-net brought transformative qualitative and quantitat
 
 \begin{table}[!t]
 \caption{Denoising Autoencoder Evaluation across 21 Aerial Classes}
-\begin{center}
-\begin{tabular}{lccc}
+\centering
+\scriptsize
+\setlength{\tabcolsep}{4pt}
+\begin{tabularx}{\columnwidth}{@{}X c c c@{}}
 \toprule
 \textbf{Architecture} & \textbf{Epochs} & \textbf{Avg PSNR (dB)} & \textbf{MSE Loss} \\
 \midrule
-Noisy Baseline ($\sigma=0.15$) & --- & 12.04 & 0.0626 \\
-Bottleneck AE (Standard Baseline) & 50 & 25.02 & 0.0079 \\
-\textbf{UrbanGen Skip-AE (Proposed)} & \textbf{50} & \textbf{29.65} & \textbf{0.00449} \\
+Noisy Baseline ($\sigma=0.15$) & --- & 12.04 & 0.06260 \\
+Bottleneck AE (Standard Baseline) & 50 & 25.02 & 0.00790 \\
+\textbf{UrbanGen Skip-AE (Proposed)} & \textbf{50} & $\mathbf{29.65}$ & $\mathbf{0.00449}$ \\
 \bottomrule
-\end{tabular}
+\end{tabularx}
 \label{tab:ae_results}
-\end{center}
 \end{table}
 
 As demonstrated in Table~\ref{tab:ae_results} and graphically represented for selected land cover categories in Fig.~\ref{fig:psnr_comp}, the skip-connected run achieved a PSNR of 29.65 dB with MSE of 0.00449. The above are general results, which must be preceded by a fixed persisted split before they can be considered generalization results. In particular:
@@ -290,7 +292,7 @@ The performance of the complete framework was assessed across all six integrated
 \centering
 \scriptsize
 \setlength{\tabcolsep}{4pt}
-\begin{tabularx}{\textwidth}{@{}l l c c l l@{}}
+\begin{tabularx}{\textwidth}{@{}l X c c X X@{}}
 \toprule
 \textbf{Model Pipeline} & \textbf{Core Architecture} & \textbf{Epochs} & \textbf{Batch Size} & \textbf{Objective Loss Function} & \textbf{Final Convergence Loss} \\
 \midrule
@@ -303,16 +305,18 @@ MiniGPT Transformer & Causal Autoregressive Transformer & 50$^\dagger$ & 64 & Ne
 \bottomrule
 \end{tabularx}
 \label{tab:model_specs}
-\vspace{1mm}
-\raggedright\footnotesize $^{\dagger}$MiniGPT was optimized across 3,000 steps on batch size 64, corresponding to 50 equivalent passes over the domain-curated municipal planning text corpus.
+\vspace{2pt}
+\raggedright\scriptsize $^{\dagger}$MiniGPT was optimized across 3,000 steps on batch size 64, corresponding to 50 equivalent passes over the domain-curated municipal planning text corpus.\par
 \end{table*}
+
+Complementing the architectural configurations, Table~\ref{tab:eval_matrix} outlines the multi-model evaluation parameter matrix. For each pipeline component, we pair standard primary performance metrics (such as PSNR, Top-1 accuracy, intended-class semantic recognition rate, noise estimation MSE, and language perplexity) with rigorous secondary verification measures such as SSIM, Macro F1, and Bits-Per-Character (BPC). This dual-metric auditing ensures that each model is evaluated on both task-specific fidelity and statistical generalization under the unified 50-epoch benchmark protocol.
 
 \begin{table*}[!t]
 \caption{Standard Evaluation Parameter Matrix for Multi-Model Performance Verification}
 \centering
 \scriptsize
 \setlength{\tabcolsep}{3.5pt}
-\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}lccccc@{}}
+\begin{tabularx}{\textwidth}{@{}l X l c X c@{}}
 \toprule
 \textbf{Model Pipeline} & \textbf{Core Functionality} & \textbf{Standard Primary Metric} & \textbf{Measured Benchmark} & \textbf{Secondary Evaluation Metric} & \textbf{Measured Value} \\
 \midrule
@@ -323,7 +327,7 @@ Residual cDCGAN & Fast Aerial Land-Parcel Synthesis & Semantic Recognition Rate 
 Conditional DDPM & Multi-Scale Stochastic Tile Diffusion & Noise Estimation MSE ($\mathcal{L}_{\text{diff}}$) & $\mathbf{0.0881}$ & Inference Efficiency (DDIM) & $20$ Steps ($50\times$ speedup) \\
 MiniGPT Transformer & Municipal Planning Policy Advisory & Text Perplexity (PPL) & $\mathbf{1.087}$ & Bits-Per-Character (BPC) & $\mathbf{0.1199}$ (Held-out CE: $0.0836$) \\
 \bottomrule
-\end{tabular*}
+\end{tabularx}
 \label{tab:eval_matrix}
 \end{table*}
 
@@ -340,21 +344,24 @@ Table~\ref{tab:published_comparison} benchmarks UrbanGen AI against state-of-the
 \centering
 \scriptsize
 \setlength{\tabcolsep}{3pt}
-\begin{tabular}{llccc}
+\begin{tabularx}{\columnwidth}{@{}X c c r@{}}
 \toprule
-\textbf{Task / Domain} & \textbf{Method / Framework} & \textbf{Epochs} & \textbf{Target Metric} & \textbf{Compute Class} \\
+\textbf{Method / Framework} & \textbf{Epochs} & \textbf{Target Metric} & \textbf{Compute Class} \\
 \midrule
-Aerial Denoising & Bottleneck Baseline AE & 50 & 25.02\,dB PSNR & Local GPU \\
-Aerial Denoising & \textbf{UrbanGen Skip-AE (Ours)} & \textbf{50} & $\mathbf{29.65}$\,\textbf{dB PSNR} & \textbf{Edge RTX 4050} \\
+\multicolumn{4}{@{}l}{\textbf{Task 1: Aerial Tile Restoration / Denoising}} \\
+Bottleneck Baseline AE & 50 & 25.02\,dB PSNR & Local GPU \\
+\textbf{UrbanGen Skip-AE (Ours)} & \textbf{50} & $\mathbf{29.65}$\,\textbf{dB PSNR} & \textbf{Edge RTX 4050} \\
 \midrule
-Zoning Audit & Bag-of-Visual-Words~\cite{yang2010bag} & --- & 76.80\% Acc. & CPU \\
-Zoning Audit & \textbf{ResNet-18 Classifier (Ours)} & \textbf{50} & $\mathbf{98.10\%}$ \textbf{Acc.} & \textbf{Edge RTX 4050} \\
+\multicolumn{4}{@{}l}{\textbf{Task 2: Territorial Zoning Classification Audit}} \\
+Bag-of-Visual-Words~\cite{yang2010bag} & --- & 76.80\% Acc. & Desktop CPU \\
+\textbf{ResNet-18 Classifier (Ours)} & \textbf{50} & $\mathbf{98.10\%}$ \textbf{Acc.} & \textbf{Edge RTX 4050} \\
 \midrule
-Aerial Synthesis & Standard cGAN~\cite{mirza2014conditional} & 50 & 72.40\% Proxy & Cloud GPU \\
-Aerial Synthesis & \textbf{Residual cDCGAN (Ours)} & \textbf{50} & $\mathbf{99.40\%}$ \textbf{Proxy} & \textbf{Edge RTX 4050} \\
-Aerial Synthesis & \textbf{Conditional DDPM (Ours)} & \textbf{50} & $\mathbf{0.0881}$ \textbf{MSE} & \textbf{Edge RTX 4050} \\
+\multicolumn{4}{@{}l}{\textbf{Task 3: Class-Conditioned Aerial Parcel Synthesis}} \\
+Standard cGAN~\cite{mirza2014conditional} & 50 & 72.40\% Proxy & Cloud GPU \\
+\textbf{Residual cDCGAN (Ours)} & \textbf{50} & $\mathbf{99.40\%}$ \textbf{Proxy} & \textbf{Edge RTX 4050} \\
+\textbf{Conditional DDPM (Ours)} & \textbf{50} & $\mathbf{0.0881}$ \textbf{MSE} & \textbf{Edge RTX 4050} \\
 \bottomrule
-\end{tabular}
+\end{tabularx}
 \label{tab:published_comparison}
 \end{table}
 
@@ -366,7 +373,7 @@ The design and empirical validation of all six architectures were executed local
 \centering
 \scriptsize
 \setlength{\tabcolsep}{4pt}
-\begin{tabularx}{\textwidth}{@{}l c c c c c@{}}
+\begin{tabularx}{\textwidth}{@{}X c c c c c@{}}
 \toprule
 \textbf{Model Architecture} & \textbf{Training Horizon} & \textbf{Wall Time (min)} & \textbf{Mean Power (W)} & \textbf{Energy (kWh)} & \textbf{Carbon Footprint (gCO$_2$e)$^\dagger$} \\
 \midrule
@@ -381,8 +388,8 @@ MiniGPT Planning Transformer & 50 equivalent epochs & 8.3 & 108 & 0.015 & 10.6 \
 \bottomrule
 \end{tabularx}
 \label{tab:energy}
-\vspace{1mm}
-\raggedright\footnotesize $^{\dagger}$Carbon emissions calculated using the standard Indian national electrical grid carbon intensity factor of 0.708 kg CO$_2$ per kWh (Central Electricity Authority). Because all six models are trained under a strictly aligned 50-epoch protocol, the framework establishes a verifiable Green AI baseline that can be fully trained from scratch in under 1.75 hours on consumer hardware.
+\vspace{2pt}
+\raggedright\scriptsize $^{\dagger}$Carbon emissions calculated using the standard Indian national electrical grid carbon intensity factor of 0.708\,kg\,CO$_2$ per kWh (Central Electricity Authority). Because all six models are trained under a strictly aligned 50-epoch protocol, the framework establishes a verifiable Green AI baseline that can be fully trained from scratch in under 1.75 hours on consumer hardware.\par
 \end{table*}
 
 \section{Ethical Considerations and Governance}
