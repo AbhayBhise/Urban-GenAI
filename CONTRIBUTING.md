@@ -1,190 +1,133 @@
-# Contributing to Urban-GenAI 🏙️
+# Contributing to UrbanGen AI 🏙️
 
-Welcome! Urban-GenAI is an open-source AI-assisted urban planning platform. This guide helps you set up the project and contribute effectively.
+Welcome to **UrbanGen AI**! We welcome academic and open-source contributions to our edge-deployable multi-model urban spatial analytics platform. This guide explains how to set up your development environment, run the multi-model pipeline, and contribute effectively.
 
 ---
 
 ## 🚀 Quick Setup
 
 ### Prerequisites
-- Python 3.10+
-- Node.js 18+
-- Git
+- **Python**: 3.10+
+- **Node.js**: 18+ (with npm)
+- **Git & Git LFS**: Required for repository cloning and checkpoint management
+- **GPU (Recommended)**: NVIDIA CUDA GPU (e.g. RTX 3050/4050+) for model training and high-throughput inference; CPU execution supported for testing.
 
 ### 1. Clone & Branch
 ```bash
 git clone https://github.com/AbhayBhise/Urban-GenAI.git
 cd Urban-GenAI
+git lfs install
+git lfs pull
 git checkout -b feature/your-feature-name
 ```
 
-### 2. Backend Setup
+### 2. Backend Environment
 ```bash
-cd backend
-pip install -r requirements.txt
+python -m venv .venv
+
+# Windows PowerShell
+.\.venv\Scripts\Activate.ps1
+pip install -r backend\requirements.txt
+
+# Linux / macOS
+source .venv/bin/activate
+pip install -r backend/requirements.txt
 ```
 
-### 3. Frontend Setup
+### 3. Frontend Environment
 ```bash
 cd frontend
 npm install
-npm run dev       # starts at http://localhost:5173
+npm run dev       # Starts local development server at http://localhost:5173
 ```
 
-### 4. Start the API
+### 4. Start the FastAPI REST Backend
 ```bash
 cd backend
-uvicorn api:app --reload --port 8000
+python api.py     # Listens at http://127.0.0.1:8000 (OpenAPI docs at /docs)
 ```
 
 ---
 
-## 🤖 Training the GAN (HIGH PRIORITY for teammates)
+## 🤖 The 6 Core Model Architectures
 
-> **⚠️ The GAN (Phase 11) has been implemented but NOT yet trained.**
-> **A teammate with a GPU machine should run this ASAP.**
+All six models are fully implemented, trained, and benchmarked under our uniform 50-epoch protocol:
 
-### Step 1 — Download UCMerced Dataset (~340 MB)
-```
-http://weegee.vision.ucmerced.edu/datasets/UCMerced_LandUse.zip
-```
-Extract it so the path looks like:
-```
-Urban-GenAI/
+| Pipeline Route | Model Family | Script | Primary Checkpoint |
+|:---|:---|:---|:---|
+| `/infer/ae` | U-Net Denoising Autoencoder | `backend/train_ae.py` | `outputs/ae/best_checkpoint.pth` |
+| `/infer/vae` | Spatial $\beta$-VAE | `backend/train_vae.py` | `outputs/vae/best_checkpoint.pth` |
+| `/infer/transformer` | ResNet-18 Land Classifier | `backend/train_transformer.py` | `outputs/transformer/best_checkpoint.pth` |
+| `/infer/gan` | Residual Class-Conditional DCGAN | `backend/train_gan.py` | `outputs/gan/generator_ema.pth` |
+| `/infer/diffusion` | Conditional DDPM (DDIM sampler) | `backend/train_diffusion.py` | `outputs/diffusion_scenario/best_checkpoint.pth` |
+| `/generate/plan` | MiniGPT Planning Transformer | `backend/train_gpt.py` | `outputs/gpt/best_checkpoint.pth` |
+
+---
+
+## 🔬 Dataset Structure (UCMerced LandUse)
+
+To re-train or benchmark models:
+1. Download `UCMerced_LandUse.zip` (21 classes $\times$ 100 tiles, $256 \times 256$ RGB).
+2. Extract into the repository root:
+```text
+UrbanGenAI/
 └── UCMerced_LandUse/
     └── UCMerced_LandUse/
         └── Images/
-            ├── agricultural/   ← 100 .tif files each
+            ├── agricultural/
             ├── airplane/
             ├── buildings/
-            └── ...            (21 class folders total)
+            ├── denseresidential/
+            ├── freeway/
+            ├── harbor/
+            └── ... (21 classes total)
 ```
 
-### Step 2 — Train the GAN
+---
+
+## 📁 Repository Directory Structure
+
+```text
+UrbanGenAI/
+├── backend/                  # FastAPI service, models, and training routines
+├── frontend/                 # React / Vite / Tailwind web dashboard
+├── docs/                     # IEEE paper source, figures, and governance docs
+├── paper_package/            # Overleaf-ready submission archive and asset manifest
+├── outputs/                  # Trained checkpoints, histories, and evaluation logs
+├── scripts/                  # Packaging, slide building, and organization tools
+├── archive/                  # Archived presentations, logs, and scratch assets
+├── demo_prompts/             # Municipal prompt templates
+├── HOW_TO_RUN.md             # Local startup instructions
+└── README.md                 # Primary project overview
+```
+
+---
+
+## 🧪 Testing & Verification
+
+Before submitting pull requests, run:
+
 ```bash
+# Verify backend syntax
 cd backend
+python -m py_compile api.py dataset.py evaluate.py
 
-# GPU machine (recommended) — ~20-30 min
-python train_gan.py --epochs 100 --batch-size 32
+# Verify frontend production build
+cd ../frontend
+npm run build
 
-# CPU only — ~2-3 hours
-python train_gan.py --epochs 100 --batch-size 8
-```
-
-**CLI Options:**
-| Flag | Default | Description |
-|------|---------|-------------|
-| `--epochs` | 100 | Total training epochs |
-| `--batch-size` | 32 | Batch size (reduce to 8 on CPU) |
-| `--lr` | 2e-4 | Learning rate |
-| `--d-steps` | 2 | Discriminator updates per G step |
-| `--save-every` | 10 | Save sample grid every N epochs |
-| `--resume` | off | Resume from existing checkpoint |
-
-### Step 3 — Commit the trained weights
-```bash
-# After training completes, commit the weights
-git add outputs/gan/generator_ema.pth outputs/gan/meta.json outputs/gan/history.json
-git commit -m "feat: add trained GAN weights (100 epochs)"
-git push origin feature/gan-training
-```
-
-### What gets saved
-| File | Description |
-|------|-------------|
-| `outputs/gan/generator_ema.pth` | **EMA Generator** — used by `/infer/gan` API |
-| `outputs/gan/generator.pth` | Raw Generator checkpoint |
-| `outputs/gan/discriminator.pth` | Discriminator checkpoint |
-| `outputs/gan/history.json` | Per-epoch D-loss & G-loss |
-| `outputs/gan/meta.json` | Hyperparameter record |
-| `outputs/gan/samples/epoch_XXXX.png` | Visual sample grids |
-
----
-
-## 📁 Project Structure
-
-```
-Urban-GenAI/
-├── backend/
-│   ├── api.py                  ← FastAPI routes
-│   ├── models/
-│   │   ├── autoencoder.py      ← DenoisingAE
-│   │   ├── vae.py              ← VAE
-│   │   ├── classifier.py       ← ResNet18 classifier
-│   │   ├── gpt.py              ← MiniGPT
-│   │   └── gan.py              ← ✅ NEW: Conditional DCGAN
-│   ├── train_ae.py
-│   ├── train_vae.py
-│   ├── train_transformer.py
-│   ├── train_gpt.py
-│   └── train_gan.py            ← ✅ NEW: GAN training script
-├── frontend/
-│   └── src/
-│       ├── App.tsx
-│       └── pages/
-│           ├── GAN.tsx         ← ✅ NEW: GAN generation UI
-│           └── ...
-└── outputs/                    ← Trained model weights
-    ├── ae/
-    ├── vae/
-    ├── gpt/
-    ├── transformer/
-    └── gan/                    ← ✅ NEW: GAN outputs dir
+# Package research paper and verify asset sync
+cd ..
+python scripts/package_paper.py
 ```
 
 ---
 
-## 🔌 New API Endpoints (GAN)
+## 📝 Commit Conventions
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/infer/gan` | Generate tiles for a class |
-| `GET` | `/infer/gan/classes` | List all 21 UCMerced classes |
-| `GET` | `/infer/gan/grid` | Generate one tile per class (21-image grid) |
-
-**Example request:**
-```bash
-curl -X POST http://localhost:8000/infer/gan \
-  -H "Content-Type: application/json" \
-  -d '{"class_index": 4, "num_images": 4}'
-```
-
----
-
-## 🌿 Branch Naming Convention
-
-```
-feature/   → new feature       e.g. feature/multi-city-support
-fix/       → bug fix           e.g. fix/vae-anomaly-baseline
-docs/      → documentation     e.g. docs/update-readme
-train/     → model weights     e.g. train/gan-weights-100ep
-```
-
----
-
-## 📋 Open Tasks (Good First Issues)
-
-| Task | Difficulty | Notes |
-|------|------------|-------|
-| **Train GAN on GPU** | 🟡 Medium | Run `train_gan.py`, commit weights |
-| Multi-city RAG support | 🟡 Medium | Extend `rag_pipeline.py` beyond Pune |
-| Evaluation page | 🟡 Medium | `pages/Evaluation.tsx` is a stub |
-| Docker setup | 🟡 Medium | `Dockerfile` + `docker-compose.yml` |
-| Unit tests | 🟢 Easy | `pytest` is in requirements, no `tests/` folder yet |
-| Map integration (Leaflet) | 🔴 Hard | Add interactive map to PlanGenerator |
-
----
-
-## 🤝 Pull Request Process
-
-1. Fork / create a branch from `main`
-2. Make your changes
-3. Test locally (backend + frontend)
-4. `git push origin your-branch`
-5. Open a PR on GitHub with a clear description
-
----
-
-## 📬 Questions?
-
-Open a GitHub Issue or reach out to the maintainer [@AbhayBhise](https://github.com/AbhayBhise).
+We follow Conventional Commits:
+- `feat:` New features or pipeline modules
+- `fix:` Bug fixes or metric adjustments
+- `docs:` Documentation or paper updates
+- `refactor:` Code improvements without behavioral changes
+- `chore:` Repository maintenance, dependency updates

@@ -58,6 +58,7 @@ outputs/generated/
 outputs/vae_*
 outputs/probe_*.jpg
 outputs/presentation_assets/
+outputs/gan_120epochs_backup/
 *.pptx
 
 # ------------------------------------------------------------
