@@ -75,8 +75,9 @@ export default function PlanGenerator() {
         <div className="panel-desc">
           A decoder-only <strong>Transformer</strong> (MiniGPT) built from scratch —
           multi-head causal self-attention, learned positional embeddings, autoregressive
-          sampling — trained on an urban-planning corpus. Prompted with real Pune land-use
-          statistics, it drafts sustainability recommendations for planner review.
+          sampling — trained on an urban-planning corpus. When live Pune GIS statistics are
+          available, it can use them to draft sustainability recommendations for planner review.
+          Generated text is advisory and must be checked against authoritative planning data.
         </div>
       </div>
 

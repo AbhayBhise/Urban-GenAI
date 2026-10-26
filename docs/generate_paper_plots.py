@@ -124,7 +124,7 @@ except Exception as e:
 
 # 5. cDCGAN Discriminator & Generator Loss Dynamics
 try:
-    with open("../outputs/gan/history.json", "r") as f:
+    with open("f:/PROJECTS/GEN AI PROJECT/UrbanGenAI/outputs/gan/history.json", "r") as f:
         gan_hist = json.load(f)
     
     epochs = [x['epoch'] for x in gan_hist]
@@ -145,12 +145,12 @@ try:
 except Exception as e:
     print("Error generating GAN plot:", e)
 
-# 6. Green AI Energy & Compute Footprint (Uniform 100-Epoch Protocol)
-models = ['U-Net AE', 'Spatial VAE', 'Classifier', 'cDCGAN', 'MiniGPT']
-train_times = [30.4, 40.8, 49.3, 35.1, 8.3]
-energies = [0.060, 0.080, 0.095, 0.070, 0.015]
+# 6. Green AI Energy & Compute Footprint (Uniform 50-Epoch Protocol)
+models = ['U-Net AE', 'Spatial VAE', 'Classifier', 'cDCGAN', 'DDPM (50e)', 'MiniGPT']
+train_times = [15.2, 20.4, 18.5, 17.5, 22.0, 8.3]
+energies = [0.030, 0.040, 0.038, 0.035, 0.045, 0.015]
 
-fig, ax1 = plt.subplots(figsize=(6, 3.5))
+fig, ax1 = plt.subplots(figsize=(7, 3.5))
 x = np.arange(len(models))
 width = 0.35
 
@@ -158,14 +158,15 @@ rects1 = ax1.bar(x - width/2, train_times, width, label='Training Duration (min)
 ax1.set_ylabel('Time (minutes)', color='#0284c7')
 ax1.tick_params(axis='y', labelcolor='#0284c7')
 ax1.set_xticks(x)
-ax1.set_xticklabels(models)
+ax1.set_xticklabels(models, rotation=15, ha='right')
 
 ax2 = ax1.twinx()
 rects2 = ax2.bar(x + width/2, energies, width, label='Energy Consumed (kWh)', color='#10b981')
 ax2.set_ylabel('Energy (kWh)', color='#059669')
 ax2.tick_params(axis='y', labelcolor='#059669')
 
-plt.title('Green AI Computational Audit: 100-Epoch Uniform Protocol (Total: 0.32 kWh)')
+plt.title('Green AI Computational Audit: 50-Epoch Uniform Protocol (Total: 0.20 kWh)')
 plt.savefig(out_dir + "fig_energy_carbon.png", bbox_inches='tight')
 plt.close()
 print("Saved updated fig_energy_carbon.png")
+

@@ -118,7 +118,7 @@ export default function AEArchitecture() {
 
       <TrainingCurveCard
         modelKey="ae"
-        title="Denoising Autoencoder Training Dynamics (50 Epochs)"
+        title="Denoising Autoencoder Training Dynamics"
         description="Empirical Mean Squared Error (MSE) reconstruction loss per epoch during training on UCMerced aerial tiles with σ=0.15 Gaussian corruption. Converges smoothly from 0.1155 down to 0.0058 MSE."
         curves={[
           { key: 'loss', label: 'MSE Reconstruction Loss', color: 'var(--accent)' },

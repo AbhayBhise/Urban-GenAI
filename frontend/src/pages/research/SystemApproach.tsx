@@ -237,7 +237,7 @@ export default function SystemApproach() {
                 <span style={{ padding: '6px 12px', background: 'var(--surface-inset)', borderRadius: '4px' }}>Reconstruction &amp; Interpolation</span>
               </div>
               <div style={{ marginTop: '12px', fontSize: '0.8rem', color: 'var(--muted)' }}>
-                Verified Experiment: 50 epochs | Train Recon Loss: 0.07524 | KL Divergence: 103.25 nats | Deterministic posterior mean used for inference.
+                        Persisted artifact: recorded through epoch 49 | Train Recon Loss: 0.04799 | KL Divergence: 41.61 nats | Deterministic posterior mean used for inference.
               </div>
             </div>
           </div>

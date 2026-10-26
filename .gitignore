@@ -55,6 +55,10 @@ outputs/*/samples/
 outputs/*/prior_samples_*.png
 outputs/*/latent_interpolation_*.png
 outputs/generated/
+outputs/vae_*
+outputs/probe_*.jpg
+outputs/presentation_assets/
+*.pptx
 
 # ------------------------------------------------------------
 # Explicitly keep model weights + training history. Scoped to the

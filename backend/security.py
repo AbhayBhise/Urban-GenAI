@@ -67,7 +67,9 @@ async def read_image_upload(file: UploadFile) -> Image.Image:
     function returns its PIL image — nothing touches the filesystem.
     """
     content_type = (file.content_type or "").lower()
-    if content_type and not content_type.startswith("image/"):
+    filename = (file.filename or "").lower()
+    tiff_upload = filename.endswith((".tif", ".tiff"))
+    if content_type and not content_type.startswith("image/") and not tiff_upload:
         raise HTTPException(status_code=415, detail="Upload must be an image.")
 
     data = await file.read()

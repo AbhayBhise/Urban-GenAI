@@ -513,7 +513,7 @@ function DiffusionPanel() {
             output tied to the source scene instead of producing an unrelated random tile.
           </p>
           <p style={{ margin: 0 }}>
-            <strong>Fast inference:</strong> A deterministic 20-step DDIM sampler produces a candidate scenario.
+            <strong>Fast inference:</strong> The UI-selected DDIM step count (20 by default) produces a candidate scenario.
             Because the dataset has no paired before/after planning labels, this is a controlled visualization, not a
             validated prediction of future development.
           </p>
@@ -523,7 +523,7 @@ function DiffusionPanel() {
       <TrainingCurveCard
         modelKey="diffusion"
         title="Class-Conditional DDPM Noise Prediction Dynamics"
-        description="Recorded MSE noise prediction loss over 50 training epochs on the UCMerced dataset."
+        description="Recorded MSE noise-prediction loss read from the persisted UCMerced history. The chart reports the actual checkpoint history length."
         curves={[
           { key: 'loss', label: 'Noise Prediction MSE Loss', color: 'var(--accent)' },
         ]}

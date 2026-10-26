@@ -7,7 +7,7 @@ export default function DiffusionArchitecture() {
     <div style={{ marginTop: 28, marginBottom: 30 }}>
       <ProvenanceNote>
         This diagram describes the actual source-conditioned checkpoint loaded by the API: a 2.8M-parameter U-Net,
-        1,000-step linear noise schedule, sinusoidal timestep embeddings, land-use class embeddings, and a 20-step DDIM sampler.
+        1,000-step linear noise schedule, sinusoidal timestep embeddings, land-use class embeddings, and a configurable DDIM sampler.
         The checkpoint and training measurements are persisted under <code>outputs/diffusion_scenario/</code>.
       </ProvenanceNote>
 
@@ -18,7 +18,7 @@ export default function DiffusionArchitecture() {
           { label: 'Add Gaussian noise', sub: 'x₀ → xₜ' },
           { label: 'Conditioned U-Net', sub: 'source + t + class' },
           { label: 'Predict noise', sub: 'εθ(xₜ,t,s,c)' },
-          { label: 'DDIM reverse', sub: '20 steps' },
+          { label: 'DDIM reverse', sub: 'configurable steps' },
           { label: 'Scenario tile', sub: '128²×3' },
         ]}
         note="Training learns noise prediction at randomly sampled diffusion timesteps. Inference starts from noise and reverses the process while keeping the uploaded source tile and requested land-use class available to the U-Net."
@@ -52,7 +52,7 @@ export default function DiffusionArchitecture() {
             <Arrow x1={370} y1={289} x2={410} y2={289} />
             <Box x={410} y={260} w={230} h={58} fill="#1a1408" stroke={COLORS.warn} label="Noise MSE objective" sub="||ε − ε̂θ||²" labelColor={COLORS.warn} />
             <Arrow x1={640} y1={289} x2={680} y2={289} />
-            <Box x={680} y={260} w={220} h={58} fill={COLORS.surface} stroke={COLORS.accent} label="DDIM sampler" sub="η-controlled, 20 steps" labelColor={COLORS.accent} />
+            <Box x={680} y={260} w={220} h={58} fill={COLORS.surface} stroke={COLORS.accent} label="DDIM sampler" sub="η-controlled, UI-selected steps" labelColor={COLORS.accent} />
             <Arrow x1={900} y1={289} x2={940} y2={289} />
             <Box x={940} y={260} w={170} h={58} fill={COLORS.surface} stroke={COLORS.success} label="Scenario output" sub="candidate tile" labelColor={COLORS.success} />
           </svg>
@@ -67,16 +67,15 @@ export default function DiffusionArchitecture() {
             <div><strong style={{ color: 'var(--warn)' }}>Timestep embedding</strong> — tells the network how much noise is present.</div>
             <div><strong style={{ color: 'var(--accent2)' }}>Class embedding</strong> — supplies the requested one-of-21 land-use condition.</div>
             <div><strong style={{ color: 'var(--accent2)' }}>U-Net</strong> — predicts the noise residual using encoder/decoder features and skip connections.</div>
-            <div><strong style={{ color: 'var(--success)' }}>DDIM</strong> — reverses the process in 20 interactive inference steps.</div>
+            <div><strong style={{ color: 'var(--success)' }}>DDIM</strong> — reverses the process in the number of steps selected in the UI.</div>
           </div>
         </div>
         <div className="card">
           <div className="card-title">Measured checkpoint</div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, fontSize: '0.83rem' }}>
             <div><span className="metric-label">Parameters</span><div className="metric-value">2.8M</div></div>
-            <div><span className="metric-label">Training epochs</span><div className="metric-value">50</div></div>
-            <div><span className="metric-label">Best noise MSE</span><div className="metric-value">0.00384</div></div>
-            <div><span className="metric-label">Final noise MSE</span><div className="metric-value">0.00421</div></div>
+            <div><span className="metric-label">Training history</span><div className="metric-value">See live Evaluation</div></div>
+            <div><span className="metric-label">Best / final MSE</span><div className="metric-value">See live Evaluation</div></div>
           </div>
         </div>
       </div>
@@ -93,7 +92,7 @@ export default function DiffusionArchitecture() {
         ['Forward process', '1,000-step linear Gaussian noise schedule'],
         ['Reverse model', '2.8M-parameter residual U-Net with timestep and class embeddings'],
         ['Training objective', 'Mean-squared error between injected and predicted noise'],
-        ['Inference', '20-step DDIM sampler; η=0 is deterministic, η>0 is stochastic'],
+        ['Inference', 'UI-selected DDIM step count (default 20); η=0 is deterministic, η>0 is stochastic'],
         ['Reproducibility artifacts', 'model.pth, model_best.pth, history.json, meta.json, telemetry.json, training_metrics.png'],
       ]} />
     </div>

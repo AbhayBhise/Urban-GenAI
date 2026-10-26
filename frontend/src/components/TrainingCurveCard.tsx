@@ -7,6 +7,7 @@ export interface CurveConfig {
   label: string;
   color: string;
   yAxisId?: 'l' | 'r';
+  format?: 'decimal' | 'percent' | 'db' | 'integer';
 }
 
 interface TrainingCurveProps {
@@ -51,7 +52,11 @@ export function TrainingCurveCard({
       <div className="card-title">
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <span>📈</span>
-          <span>{title}</span>
+          <span>{title}{last && (
+            <span style={{ color: 'var(--muted)', fontWeight: 400, fontSize: '0.78rem', marginLeft: 8 }}>
+              ({xKey === 'epoch' ? `recorded through epoch ${last[xKey]}` : `recorded through step ${last[xKey]}`})
+            </span>
+          )}</span>
         </div>
         {last && (
           <span style={{ color: 'var(--muted)', fontWeight: 400, fontSize: '0.8rem', fontFamily: 'var(--font-mono)' }}>
@@ -60,9 +65,14 @@ export function TrainingCurveCard({
               .map(c => {
                 const val = last[c.key];
                 if (val == null || isNaN(val)) return null;
-                const formatted = c.key.includes('accuracy') || c.key.includes('rate')
+                const format = c.format || (c.key.includes('accuracy') || c.key.includes('rate') ? 'percent' : 'decimal');
+                const formatted = format === 'percent'
                   ? `${(Number(val) * (Number(val) <= 1 ? 100 : 1)).toFixed(1)}%`
-                  : Number(val).toFixed(4);
+                  : format === 'db'
+                    ? `${Number(val).toFixed(2)} dB`
+                    : format === 'integer'
+                      ? Math.round(Number(val)).toString()
+                      : Number(val).toFixed(4);
                 return `${c.label}=${formatted}`;
               })
               .filter(Boolean)

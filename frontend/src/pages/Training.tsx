@@ -43,8 +43,20 @@ export default function Training() {
             <div className="card-title">
               {m.label}
               {last && (
+                <span style={{ color: 'var(--muted)', fontWeight: 400, fontSize: '0.78rem', marginLeft: 8 }}>
+                  ({m.x === 'epoch' ? `recorded through epoch ${last[m.x]}` : `recorded through step ${last[m.x]}`})
+                </span>
+              )}
+              {last && (
                 <span style={{ color: 'var(--muted)', fontWeight: 400, fontSize: '0.8rem' }}>
-                  final: {m.lines.map(([k]) => `${k}=${Number(last[k]).toFixed(k.includes('accuracy') ? 3 : 4)}`).filter(s => !s.includes('NaN')).join('  ·  ')}
+                  final: {m.lines.map(([k]) => {
+                    const value = Number(last[k]);
+                    if (!Number.isFinite(value)) return null;
+                    const formatted = k.includes('accuracy')
+                      ? `${(value * (value <= 1 ? 100 : 1)).toFixed(1)}%`
+                      : value.toFixed(4);
+                    return `${k}=${formatted}`;
+                  }).filter(Boolean).join('  ·  ')}
                 </span>
               )}
             </div>

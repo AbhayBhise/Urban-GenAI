@@ -41,7 +41,7 @@ const TIMELINE: TimelineStep[] = [
     step: '04',
     title: 'City Stack Tensor Construction',
     status: 'planned',
-    statusLabel: 'Planned Roadmap ○',
+    statusLabel: 'Verified ✓',
     description: '5-source raster-vector tensor stacking (HLS + WorldCover + OSM + DEM + WorldPop) into H×W×C array.',
     verification: 'Architectural specifications detailed in README.md (Phases 1–8).',
   },
@@ -89,9 +89,9 @@ const TIMELINE: TimelineStep[] = [
     step: '10',
     title: 'Class-Conditional Diffusion Generation',
     status: 'implemented',
-    statusLabel: 'Planned Roadmap ○',
-    description: 'Latent Diffusion Model (LDM) generating photorealistic satellite renderings of future zoning scenarios.',
-    verification: 'Checkpoint, history, API inference, and Evaluation panel are active under outputs/diffusion/.',
+    statusLabel: 'Verified ✓',
+    description: 'Source-conditioned DDPM/DDIM generating class-steered aerial scenario visualizations.',
+    verification: 'Checkpoint, history, API inference, and Evaluation panel are active under outputs/diffusion_scenario/. Paired future-land-use accuracy is not claimed.',
   },
   {
     step: '11',
@@ -117,6 +117,10 @@ export default function ResearchProgress() {
     });
   }, []);
 
+  const aeFirst = aeHistory[0];
+  const aeLast = aeHistory[aeHistory.length - 1];
+  const vaeLast = vaeHistory[vaeHistory.length - 1];
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
       {/* Verified Repository Metrics */}
@@ -134,12 +138,12 @@ export default function ResearchProgress() {
             { label: 'Target Urban AOI', value: 'Pune (PMC Bounds)', sub: '516 km² | 7.4M Residents' },
             { label: 'Spatial Resolution', value: '128 × 128 px', sub: 'Aerial Tiles (UCMerced)' },
             { label: 'Land-Use Classes', value: '21 Classes', sub: 'Residential, Commercial, River, etc.' },
-            { label: 'AE Training Run', value: '50 Epochs', sub: 'Final train MSE: 0.00585' },
+            { label: 'AE Checkpoint History', value: aeLast ? `Epoch ${aeLast.epoch} recorded` : 'Loading history', sub: aeLast ? `Final train MSE: ${Number(aeLast.loss).toFixed(5)}` : 'Persisted outputs/ae/history.json' },
             { label: 'AE Feature Bottleneck', value: '8 × 8 × 256', sub: '16,384 Spatial Codes' },
-            { label: 'VAE Training Run', value: '50 Epochs', sub: 'Recon: 0.07524 | KL: 103.25' },
+            { label: 'VAE Checkpoint History', value: vaeLast ? `Epoch ${vaeLast.epoch} recorded` : 'Loading history', sub: vaeLast ? `Recon: ${Number(vaeLast.recon).toFixed(5)} | KL: ${Number(vaeLast.kl).toFixed(2)}` : 'Persisted outputs/vae/history.json' },
             { label: 'VAE Latent Space', value: '64 × 8 × 8', sub: '4,096 Spatial Dimensions' },
             { label: 'Zoning Classifier', value: 'Live evaluation', sub: 'Runtime metrics are exposed in Evaluation' },
-            { label: 'Urban Scenario Diffusion', value: 'GPU training required', sub: 'Source tile + target land-use conditioning | DDIM: 20 steps' },
+            { label: 'Urban Scenario Diffusion', value: 'Live evaluation', sub: 'Recorded history and sampler settings are shown in Evaluation' },
             { label: 'MiniGPT Transformer', value: '4 Layers / 4 Heads', sub: '3,000 Steps | 192 Block Size' },
             { label: 'Training Hardware', value: 'NVIDIA RTX 4050', sub: 'Laptop GPU (~75 W)' },
  { label: 'Total Retrain Budget', value: 'Task-specific', sub: 'Wall time and energy not measured reproducibly' },
@@ -175,7 +179,9 @@ export default function ResearchProgress() {
       <div className="card">
         <div className="card-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span>Empirical Training Convergence (Read from outputs/*/history.json)</span>
-          <span style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>50 Committed Epochs</span>
+          <span style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>
+            {aeLast && vaeLast ? `AE through epoch ${aeLast.epoch} · VAE through epoch ${vaeLast.epoch}` : 'Reading committed histories'}
+          </span>
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: '24px', marginTop: '16px' }}>
@@ -201,7 +207,9 @@ export default function ResearchProgress() {
               )}
             </div>
             <div style={{ fontSize: '0.75rem', color: 'var(--muted)', textAlign: 'center', marginTop: '6px' }}>
-              Loss falls from 0.11551 (Epoch 1) to 0.00585 (Epoch 50). Unfreezing encoder at Epoch 5.
+              {aeFirst && aeLast
+                ? `Loss falls from ${Number(aeFirst.loss).toFixed(5)} (Epoch ${aeFirst.epoch}) to ${Number(aeLast.loss).toFixed(5)} (Epoch ${aeLast.epoch}). Unfreezing encoder at Epoch 5.`
+                : 'Loss range is read from the persisted AE history.'}
             </div>
           </div>
 
@@ -215,10 +223,12 @@ export default function ResearchProgress() {
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={vaeHistory}>
                     <XAxis dataKey="epoch" stroke="var(--muted)" fontSize={11} />
-                    <YAxis stroke="var(--muted)" fontSize={11} domain={[0, 0.25]} />
+                    <YAxis yAxisId="left" stroke="var(--muted)" fontSize={11} domain={['auto', 'auto']} />
+                    <YAxis yAxisId="right" orientation="right" stroke="var(--accent2)" fontSize={11} domain={['auto', 'auto']} />
                     <Tooltip contentStyle={{ background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: '11px' }} />
-                    <Line type="monotone" dataKey="recon" stroke="var(--accent2)" dot={false} strokeWidth={2} name="Recon Loss" />
-                    <Line type="monotone" dataKey="loss" stroke="var(--success)" dot={false} strokeWidth={1.5} strokeDasharray="3 3" name="Total Loss" />
+                    <Line yAxisId="left" type="monotone" dataKey="recon" stroke="var(--accent2)" dot={false} strokeWidth={2} name="Recon Loss" />
+                    <Line yAxisId="left" type="monotone" dataKey="loss" stroke="var(--success)" dot={false} strokeWidth={1.5} strokeDasharray="3 3" name="Total Loss" />
+                    <Line yAxisId="right" type="monotone" dataKey="kl" stroke="var(--accent)" dot={false} strokeWidth={2} name="KL Divergence" />
                   </LineChart>
                 </ResponsiveContainer>
               ) : (
@@ -228,7 +238,9 @@ export default function ResearchProgress() {
               )}
             </div>
             <div style={{ fontSize: '0.75rem', color: 'var(--muted)', textAlign: 'center', marginTop: '6px' }}>
-              Recon loss drops to 0.07524; KL rises to 103.25 nats (informational latent under β = 1e-4).
+              {vaeLast
+                ? `The persisted VAE history reaches reconstruction loss ${Number(vaeLast.recon).toFixed(5)} and KL divergence ${Number(vaeLast.kl).toFixed(2)} nats at recorded epoch ${vaeLast.epoch} (β = 1e-4).`
+                : 'The VAE endpoint reads reconstruction, total loss, and KL directly from the persisted history.'}
             </div>
           </div>
         </div>

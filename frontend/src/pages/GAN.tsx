@@ -545,7 +545,7 @@ export default function GAN({ isGanTrained }: { isGanTrained?: boolean }) {
             </div>
             <div>
               <strong style={{ color: 'var(--text)' }}>Training Details</strong><br />
-              120 epochs on RTX 4050 GPU, Adam (lr=2e-4), EMA weights (decay=0.999),
+              120 recorded checkpoint epochs on RTX 4050 GPU, Adam (lr=2e-4), EMA weights (decay=0.999),
               orientation-safe augmentation. Recognition is a quality proxy, not a realism score.
             </div>
           </div>

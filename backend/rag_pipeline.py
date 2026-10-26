@@ -7,13 +7,6 @@ except ImportError:
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), "..", "pune_datasets")
 
-PUNE_PLANNING_KB = {
-    "Population": "7.4 million (2026), projected 10 million by 2041",
-    "Area": "516 sq km (PMC jurisdiction)",
-    "Major zones": "Hinjewadi (IT), Pimpri-Chinchwad (Industrial), Kalyani Nagar (Residential/Commercial)",
-    "Current initiatives": "Pune Metro Phase 1 expansion, Mula-Mutha Riverfront Development"
-}
-
 PUNE_STATS = {
     "building_count": 0,
     "total_building_area": 0.0,
@@ -110,26 +103,35 @@ def query_rag(query_text: str) -> str:
     query_text = query_text.lower()
     responses = []
     
-    if "population" in query_text:
-        responses.append(f"Population: {PUNE_PLANNING_KB['Population']}")
-    if "area" in query_text:
-        responses.append(f"Area: {PUNE_PLANNING_KB['Area']}")
-    if "zone" in query_text or "hinjewadi" in query_text:
-        responses.append(f"Major zones: {PUNE_PLANNING_KB['Major zones']}")
-    if "initiative" in query_text or "metro" in query_text or "river" in query_text:
-        responses.append(f"Current initiatives: {PUNE_PLANNING_KB['Current initiatives']}")
-        
+    if "population" in query_text or "area" in query_text or "zone" in query_text or "initiative" in query_text or "metro" in query_text:
+        responses.append("Population, administrative-area, zone, and initiative facts are not loaded from the current GIS sources.")
+
     if "building" in query_text:
-        responses.append(f"Pune has {PUNE_STATS['building_count']} buildings recorded, with a total area of {PUNE_STATS['total_building_area']:,.2f} sq meters.")
+        if PUNE_STATS["building_count"] > 0:
+            responses.append(f"Pune has {PUNE_STATS['building_count']} buildings recorded, with a total area of {PUNE_STATS['total_building_area']:,.2f} sq meters.")
+        else:
+            responses.append("Building GIS data is unavailable in the current workspace.")
     if "road" in query_text:
-        total_road = sum(PUNE_STATS['road_length_by_type'].values())
-        responses.append(f"There is a total of {total_road:,.2f} km of roads recorded.")
+        if PUNE_STATS["road_length_by_type"]:
+            total_road = sum(PUNE_STATS['road_length_by_type'].values())
+            responses.append(f"There is a total of {total_road:,.2f} km of roads recorded.")
+        else:
+            responses.append("Road GIS data is unavailable in the current workspace.")
     if "landuse" in query_text or "residential" in query_text or "commercial" in query_text:
-        responses.append(f"Landuse distribution includes {len(PUNE_STATS['landuse_distribution'])} different classes.")
+        if PUNE_STATS["landuse_distribution"]:
+            responses.append(f"Landuse distribution includes {len(PUNE_STATS['landuse_distribution'])} mapped classes.")
+        else:
+            responses.append("Land-use GIS data is unavailable in the current workspace.")
     if "water" in query_text:
-        responses.append(f"There are {PUNE_STATS['waterway_count']} waterways totaling {PUNE_STATS['waterway_total_length']:,.2f} km in length.")
+        if PUNE_STATS["waterway_count"] > 0:
+            responses.append(f"There are {PUNE_STATS['waterway_count']} waterways totaling {PUNE_STATS['waterway_total_length']:,.2f} km in length.")
+        else:
+            responses.append("Waterway GIS data is unavailable in the current workspace.")
     if "natural" in query_text:
-        responses.append(f"There are {PUNE_STATS['natural_area_count']} natural areas covering {PUNE_STATS['natural_total_area']:,.2f} sq km.")
+        if PUNE_STATS["natural_area_count"] > 0:
+            responses.append(f"There are {PUNE_STATS['natural_area_count']} natural areas covering {PUNE_STATS['natural_total_area']:,.2f} sq km.")
+        else:
+            responses.append("Natural-area GIS data is unavailable in the current workspace.")
         
     if not responses:
         return "I am a simple RAG assistant for Pune. You can ask me about Pune's population, area, zones, initiatives, buildings, roads, landuse, waterways, or natural areas."
