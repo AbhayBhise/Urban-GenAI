@@ -41,7 +41,7 @@ META_PATH = OUT_DIR / "meta.json"
 
 def get_args():
     p = argparse.ArgumentParser(description="Train Conditional DCGAN with Projection and Classifier Guidance")
-    p.add_argument("--epochs", type=int, default=80, help="Number of training epochs (default: 80)")
+    p.add_argument("--epochs", type=int, default=50, help="Number of training epochs (default: 50)")
     p.add_argument("--batch-size", type=int, default=32, help="Batch size (default: 32)")
     p.add_argument("--lr", type=float, default=2e-4, help="Learning rate (default: 2e-4)")
     p.add_argument("--d-steps", type=int, default=1, help="D updates per G update (default: 1)")

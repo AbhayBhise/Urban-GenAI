@@ -111,8 +111,8 @@ def write_training_graphs(history, telemetry):
             f.write(str(exc))
 
 
-def train_diffusion(epochs: int = 100, batch_size: int = 16, lr: float = 2e-4):
-    print(f"--- Starting Urban Scenario DDPM Training on {device} for {epochs} epochs ---")
+def train_diffusion(epochs: int = 50, batch_size: int = 32, lr: float = 2e-4, fresh: bool = False):
+    print(f"--- Starting Urban Scenario DDPM Training on {device} for {epochs} epochs (batch size {batch_size}) ---")
     torch.manual_seed(2026)
     if device.type == 'cuda':
         torch.cuda.manual_seed_all(2026)
@@ -121,20 +121,24 @@ def train_diffusion(epochs: int = 100, batch_size: int = 16, lr: float = 2e-4):
 
     unet = DiffusionUNet(base_ch=32, num_classes=len(URBAN_CLASSES), condition_channels=0).to(device)
     resume_path = os.path.join(OUTPUT_DIR, 'model_best.pth')
-    if os.path.exists(resume_path):
+    history_path = os.path.join(OUTPUT_DIR, 'history.json')
+    history = []
+
+    if fresh:
+        print("Fresh training requested: ignoring existing checkpoints and starting from epoch 1.")
+    elif os.path.exists(resume_path):
         unet.load_state_dict(torch.load(resume_path, map_location=device, weights_only=True))
         print(f"Resuming class-conditional diffusion weights from {resume_path}")
+        if os.path.exists(history_path):
+            with open(history_path, encoding='utf-8') as history_file:
+                history = json.load(history_file)
+
     ddpm = DDPM(unet=unet, timesteps=1000).to(device)
 
     optimizer = torch.optim.AdamW(unet.parameters(), lr=lr, weight_decay=1e-4)
     lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=epochs, eta_min=1e-6)
     use_amp = device.type == 'cuda'
     scaler = torch.amp.GradScaler('cuda', enabled=use_amp)
-    history_path = os.path.join(OUTPUT_DIR, 'history.json')
-    history = []
-    if os.path.exists(history_path):
-        with open(history_path, encoding='utf-8') as history_file:
-            history = json.load(history_file)
     best_loss = min((row.get('loss', math.inf) for row in history), default=math.inf)
     start_epoch = len(history) + 1
     start_time = time.perf_counter()
@@ -201,4 +205,11 @@ def train_diffusion(epochs: int = 100, batch_size: int = 16, lr: float = 2e-4):
     print(f"DDPM Training finished successfully. best_loss={best_loss:.6f} final_loss={history[-1]['loss']:.6f}")
 
 if __name__ == '__main__':
-    train_diffusion(epochs=100)
+    import argparse
+    parser = argparse.ArgumentParser(description="Train Urban Scenario DDPM")
+    parser.add_argument("--epochs", type=int, default=50, help="Number of epochs (default: 50)")
+    parser.add_argument("--batch-size", type=int, default=32, help="Batch size (default: 32)")
+    parser.add_argument("--lr", type=float, default=2e-4, help="Learning rate (default: 2e-4)")
+    parser.add_argument("--fresh", action="store_true", help="Start fresh from epoch 1")
+    args = parser.parse_args()
+    train_diffusion(epochs=args.epochs, batch_size=args.batch_size, lr=args.lr, fresh=args.fresh)

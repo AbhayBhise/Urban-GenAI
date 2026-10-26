@@ -12,7 +12,7 @@ def package_paper():
         shutil.rmtree(package_dir)
     os.makedirs(figures_dest, exist_ok=True)
     
-    # 2. Copy the LaTeX paper
+    # 2. Copy the LaTeX paper and official IEEE template files
     src_tex = os.path.join(repo_root, "docs", "IEEE_Conference_Paper.tex")
     dest_tex = os.path.join(package_dir, "IEEE_Conference_Paper.tex")
     shutil.copy2(src_tex, dest_tex)
@@ -21,6 +21,20 @@ def package_paper():
     dest_main = os.path.join(package_dir, "main.tex")
     shutil.copy2(src_tex, dest_main)
     print("Copied IEEE_Conference_Paper.tex and main.tex")
+
+    # Copy official IEEEtran.cls from conference-latex-template
+    src_cls = os.path.join(repo_root, "conference-latex-template", "IEEE-conference-template-062824", "IEEEtran.cls")
+    dest_cls = os.path.join(package_dir, "IEEEtran.cls")
+    if os.path.exists(src_cls):
+        shutil.copy2(src_cls, dest_cls)
+        print("Copied official IEEEtran.cls (2024)")
+
+    # Copy official IEEEtran.bst from IEEEtranBST2
+    src_bst = os.path.join(repo_root, "IEEEtranBST2", "IEEEtran.bst")
+    dest_bst = os.path.join(package_dir, "IEEEtran.bst")
+    if os.path.exists(src_bst):
+        shutil.copy2(src_bst, dest_bst)
+        print("Copied official IEEEtran.bst")
 
     # 3. Exactly the 9 figures referenced in the LaTeX paper
     paper_figures = [
@@ -116,6 +130,10 @@ paper_package/
     with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zipf:
         zipf.write(dest_tex, arcname="IEEE_Conference_Paper.tex")
         zipf.write(dest_main, arcname="main.tex")
+        if os.path.exists(dest_cls):
+            zipf.write(dest_cls, arcname="IEEEtran.cls")
+        if os.path.exists(dest_bst):
+            zipf.write(dest_bst, arcname="IEEEtran.bst")
         zipf.write(readme_path, arcname="README.md")
         for fig_name in paper_figures:
             fig_path = os.path.join(figures_dest, fig_name)

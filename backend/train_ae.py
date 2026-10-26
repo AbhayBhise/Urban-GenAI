@@ -9,7 +9,7 @@ from models.autoencoder import DenoisingAE
 
 FREEZE_ENCODER_EPOCHS = 5
 EPOCHS = 50
-BATCH_SIZE = 16
+BATCH_SIZE = 32
 LR = 1e-4
 NOISE_STD = 0.15
 

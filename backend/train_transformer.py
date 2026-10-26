@@ -8,8 +8,8 @@ from dataset import UCMercedDataset, URBAN_CLASSES
 from torch.utils.data import DataLoader, random_split
 from models.transformer import UrbanClassifier
 
-FREEZE_EPOCHS = 10
-EPOCHS = 30
+FREEZE_EPOCHS = 5
+EPOCHS = 50
 BATCH_SIZE = 32
 LR_HEAD = 1e-4
 LR_FINETUNE = 1e-5
@@ -41,9 +41,9 @@ def get_dataloaders_224(batch_size=BATCH_SIZE, val_split=0.1):
     train_indices, val_indices = random_split(range(len(train_base)), [train_size, val_size], generator=split_generator)
     train_ds = torch.utils.data.Subset(train_base, train_indices.indices)
     val_ds = torch.utils.data.Subset(val_base, val_indices.indices)
-    train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True, num_workers=4, pin_memory=True)
-    val_loader = DataLoader(val_ds, batch_size=batch_size, shuffle=False, num_workers=4, pin_memory=True)
-    print(f"UCMerced: {len(dataset)} images | Train: {train_size} | Val: {val_size}")
+    train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True, num_workers=0, pin_memory=True)
+    val_loader = DataLoader(val_ds, batch_size=batch_size, shuffle=False, num_workers=0, pin_memory=True)
+    print(f"UCMerced: {len(train_base)} images | Train: {train_size} | Val: {val_size}")
     return train_loader, val_loader
 
 

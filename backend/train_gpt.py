@@ -20,9 +20,9 @@ CORPUS = os.path.join(os.path.dirname(__file__), "corpus", "urban_planning.txt")
 OUT_DIR = "../outputs/gpt"
 
 BLOCK_SIZE = 192
-BATCH_SIZE = 64
-MAX_STEPS = 3000
-EVAL_EVERY = 100
+BATCH_SIZE = 32
+MAX_STEPS = 1000
+EVAL_EVERY = 50
 LR = 3e-4
 
 

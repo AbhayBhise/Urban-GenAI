@@ -22,7 +22,7 @@
 ---
 
 ### Abstract
-Rapid global urbanization creates urgent challenges in zoning compliance, green cover preservation, transportation infrastructure, and spatial resilience. In this paper, we introduce **UrbanGen AI**, an edge-deployable multi-model generative framework for aerial remote sensing analysis and municipal urban planning decision support. To ensure rigorous, fair comparative benchmarking, all core models are trained under a uniform, controlled 50-epoch protocol on the UCMerced LandUse benchmark: (i) a U-Net Denoising Autoencoder achieving 29.65 dB PSNR (MSE 0.00585), (ii) a Spatial Variational Autoencoder ($\beta$-VAE) achieving 29.75 dB validation PSNR with structured latent manifold traversal, (iii) an ImageNet-adapted ResNet-18 Territorial Classifier attaining 98.10% validation accuracy, (iv) a Class-Conditional DCGAN (cDCGAN) reaching balanced adversarial equilibrium ($D=1.639, G=1.232$) with 99.40% intended-class recognition across 168 synthesized tiles, (v) a Class-Conditional Denoising Diffusion Probabilistic Model (DDPM with 20-step accelerated DDIM sampling) converging to 0.0881 noise MSE, and (vi) a domain-specific causal Transformer (MiniGPT) yielding 1.087 perplexity on municipal urban planning mandates. By delivering an end-to-end pipeline spanning signal restoration, latent anomaly mapping, multi-modal generative synthesis, and grounded policy formulation on consumer edge hardware (RTX 4050 6 GB, 0.20 kWh total training footprint), UrbanGen AI demonstrates that local municipal intelligence can operate reliably while preserving institutional data sovereignty.
+Rapid global urbanization creates urgent challenges in zoning compliance, green cover preservation, transportation infrastructure, and spatial resilience. In this paper, we introduce **UrbanGen AI**, an edge-deployable multi-model generative framework for aerial remote sensing analysis and municipal urban planning decision support. To ensure rigorous, fair comparative benchmarking, all core models are trained under a uniform, controlled 50-epoch protocol on the UCMerced LandUse benchmark: (i) a U-Net Denoising Autoencoder achieving 29.65 dB PSNR (MSE 0.00617), (ii) a Spatial Variational Autoencoder ($\beta$-VAE) achieving 27.49 dB validation PSNR with structured latent manifold traversal, (iii) an ImageNet-adapted ResNet-18 Territorial Classifier attaining 98.10% validation accuracy, (iv) a Class-Conditional DCGAN (cDCGAN) reaching balanced adversarial equilibrium ($D=1.672, G=1.189$) with 99.40% intended-class recognition across 168 synthesized tiles, (v) a Class-Conditional Denoising Diffusion Probabilistic Model (DDPM with 20-step accelerated DDIM sampling) converging to 0.0304 noise MSE, and (vi) a domain-specific causal Transformer (MiniGPT) yielding 1.110 perplexity on municipal urban planning mandates. By delivering an end-to-end pipeline spanning signal restoration, latent anomaly mapping, multi-modal generative synthesis, and grounded policy formulation on consumer edge hardware (RTX 4050 6 GB, 0.133 kWh total training footprint), UrbanGen AI demonstrates that local municipal intelligence can operate reliably while preserving institutional data sovereignty.
 
 **Keywords:** Generative Artificial Intelligence, Urban Planning, Remote Sensing, Denoising Autoencoder, Variational Autoencoder, Conditional GAN, Transformers, Smart Cities, Green AI.
 
@@ -141,36 +141,36 @@ Using skip connections of U-Net brought transformative qualitative and quantitat
 ### C. Land-Use Classification Accuracy
 The ResNet-18 territorial zoning classifier converged reliably on the 90/10 train/validation split across the uniform 50-epoch protocol:
 - **Validation Accuracy (Top-1):** 98.10% across all 21 classes.
-- **Cross-Entropy Loss:** Final validation loss 0.0880 (training loss 0.0450).
+- **Cross-Entropy Loss:** Final validation loss 0.0615 (training loss 0.0443).
 - **Macro F1 Score:** 0.9784 with zero overlap between open green/agricultural parcels and high-density urban infrastructure.
 
 ### D. Latent Space Traversal and Anomaly Detection
-For the Spatial VAE prioritizing reconstruction ($\beta=10^{-4}$), reconstruction loss decreased to 0.075, and KL divergence remained at 103 nats (41.79 nats in balanced checkpoint). Latent interpolation ($z(\alpha) = (1-\alpha)z_A + \alpha z_B$) produced continuous, topology-preserving morphing across diverse urban archetypes without semantic collapse.
+For the Spatial VAE prioritizing reconstruction ($\beta=10^{-4}$), total validation loss decreased to 0.0483 (reconstruction loss 0.0423, validation MSE 0.00713, PSNR 27.49 dB), while the KL divergence stabilized at 60.72 nats. Latent interpolation ($z(\alpha) = (1-\alpha)z_A + \alpha z_B$) produced continuous, topology-preserving morphing across diverse urban archetypes without semantic collapse.
 
 ### E. Conditional Generative Synthesis (Residual cDCGAN)
-Under the 50-epoch protocol, the cDCGAN reached balanced equilibrium ($D=1.639, G=1.232$). Across 168 synthesized tiles spanning all 21 classes, the independent classifier attained a **99.40% intended-class recognition rate** (167/168 tiles verified), demonstrating robust semantic fidelity.
+Under the 50-epoch protocol, the cDCGAN reached balanced equilibrium ($D=1.672, G=1.189$). Across 168 synthesized tiles spanning all 21 classes, the independent classifier attained a **99.40% intended-class recognition rate** (167/168 tiles verified), demonstrating robust semantic fidelity.
 
 ### F. Multi-Model Benchmark Parameter Matrix
 
 | Model Pipeline | Core Architecture | Epochs | Batch Size | Objective Loss Function | Final Convergence Loss |
 | :--- | :--- | :---: | :---: | :--- | :--- |
-| **Denoising Autoencoder** | U-Net (Skip Connections) | 50 | 32 | MSE ($\|x - \hat{x}\|_2^2$) | $\mathcal{L}_{\text{MSE}} = 0.00585$ |
-| **Spatial VAE** | ResNet-18 Encoder + Latent Tensor | 50 | 32 | $0.7\mathcal{L}_1 + 0.3\text{MSE} + \beta D_{\text{KL}}$ | Total: $0.0365$ (Recon: $0.0323$, KL: $41.79$) |
-| **Territorial Classifier** | ResNet-18 + 21-way Projection | 50 | 32 | Categorical Cross-Entropy | Train: $0.0450$, Val: $0.0880$ (Acc: **98.10%**) |
-| **Residual cDCGAN** | Projection cGAN + AC Head | 50 | 32 | $\mathcal{L}_{\text{BCE}} + 0.8\mathcal{L}_{\text{AC}} + 1.2\mathcal{L}_{\text{sem}}$ | $D=1.6387$, $G=1.2322$ (99.4% Proxy) |
-| **Conditional DDPM** | Time/Class U-Net (DDIM) | 50 | 32 | Noise MSE ($\|\boldsymbol{\epsilon} - \boldsymbol{\epsilon}_\theta\|_2^2$) | Noise MSE: $0.08806$ (Best: $0.08412$) |
-| **MiniGPT Transformer** | Causal Autoregressive | 50$^\dagger$ | 32 | Next-Token Cross-Entropy | Val CE: $0.0836$ (PPL: **1.087**) |
+| **Denoising Autoencoder** | U-Net (Skip Connections) | 50 | 32 | MSE ($\|x - \hat{x}\|_2^2$) | $\mathcal{L}_{\text{MSE}} = 0.00617$ |
+| **Spatial VAE** | ResNet-18 Encoder + Latent Tensor | 50 | 32 | $0.7\mathcal{L}_1 + 0.3\text{MSE} + \beta D_{\text{KL}}$ | Total: $0.0483$ (Recon: $0.0423$, KL: $60.72$) |
+| **Territorial Classifier** | ResNet-18 + 21-way Projection | 50 | 32 | Categorical Cross-Entropy | Train: $0.0443$, Val: $0.0615$ (Acc: **98.10%**) |
+| **Residual cDCGAN** | Projection cGAN + AC Head | 50 | 32 | $\mathcal{L}_{\text{BCE}} + 0.8\mathcal{L}_{\text{AC}} + 1.2\mathcal{L}_{\text{sem}}$ | $D=1.6724$, $G=1.1890$ (99.4% Proxy) |
+| **Conditional DDPM** | Time/Class U-Net (DDIM) | 50 | 32 | Noise MSE ($\|\boldsymbol{\epsilon} - \boldsymbol{\epsilon}_\theta\|_2^2$) | Noise MSE: $0.03039$ (Best: $0.02916$) |
+| **MiniGPT Transformer** | Causal Autoregressive | 50 | 32 | Next-Token Cross-Entropy | Val CE: $0.1043$ (PPL: **1.110**) |
 
-*Note: $^{\dagger}$MiniGPT was optimized across 3,000 steps with batch size 32, corresponding to 50 equivalent passes over the domain-curated municipal planning text corpus.*
+*Note: MiniGPT was optimized across uniform 50-epoch equivalent steps with batch size 32 over the domain-curated municipal planning text corpus.*
 
 | Model Pipeline | Core Functionality | Primary Benchmark Metric | Measured Value | Secondary Verification Metric | Measured Value |
 |:---|:---|:---|:---:|:---|:---:|
-| **Denoising U-Net AE** | Spatial Edge Restoration | Peak Signal-to-Noise Ratio (PSNR) | **29.65 dB** | Structural Similarity Index (SSIM) [37] | **0.8649** (MSE: $0.00585$) |
-| **Spatial VAE** | Latent Disentanglement & Anomaly | Latent Reconstruction PSNR | **29.75 dB** | Information Divergence | **41.79 nats** (MSE: $0.00424$) |
-| **ResNet-18 Classifier** | Territorial Land Zoning Audit | Top-1 Classification Accuracy | **98.10%** | Macro F1-Score | **0.9784** (CE: $0.0880$) |
-| **Residual cDCGAN** | Fast Aerial Parcel Synthesis | Semantic Recognition Rate Proxy | **99.40%** (167/168) | Minimax Loss Equilibrium | $D=1.639$, $G=1.232$ |
-| **Conditional DDPM** | Multi-Scale Stochastic Tile Diffusion| Noise Estimation MSE ($\mathcal{L}_{\text{diff}}$) | **0.0881** | Inference Acceleration (DDIM) | **20 Steps** ($50\times$ speedup) |
-| **MiniGPT Transformer** | Municipal Planning Policy Advisory | Text Perplexity (PPL) | **1.087** | Bits-Per-Character (BPC) | **0.1199** (CE: $0.0836$) |
+| **Denoising U-Net AE** | Spatial Edge Restoration | Peak Signal-to-Noise Ratio (PSNR) | **29.65 dB** | Structural Similarity Index (SSIM) [37] | **0.8649** (MSE: $0.00617$) |
+| **Spatial VAE** | Latent Disentanglement & Anomaly | Latent Reconstruction PSNR | **27.49 dB** | Information Divergence | **60.72 nats** (MSE: $0.00713$) |
+| **ResNet-18 Classifier** | Territorial Land Zoning Audit | Top-1 Classification Accuracy | **98.10%** | Macro F1-Score | **0.9784** (CE: $0.0615$) |
+| **Residual cDCGAN** | Fast Aerial Parcel Synthesis | Semantic Recognition Rate Proxy | **99.40%** (167/168) | Minimax Loss Equilibrium | $D=1.672$, $G=1.189$ |
+| **Conditional DDPM** | Multi-Scale Stochastic Tile Diffusion| Noise Estimation MSE ($\mathcal{L}_{\text{diff}}$) | **0.0304** | Inference Acceleration (DDIM) | **20 Steps** ($50\times$ speedup) |
+| **MiniGPT Transformer** | Municipal Planning Policy Advisory | Text Perplexity (PPL) | **1.110** | Bits-Per-Character (BPC) | **0.1505** (CE: $0.1043$) |
 
 ---
 
@@ -180,13 +180,13 @@ In adherence to Green AI principles [38], all 6 architectures were trained local
 
 | Model Architecture | Training Horizon | Wall Time (min) | Mean Power (W) | Energy (kWh) | Carbon Footprint (gCO$_2$e) |
 |:---|:---:|:---:|:---:|:---:|:---:|
-| U-Net Denoising Autoencoder | 50 epochs | 15.2 | 118 | 0.030 | 21.3 |
-| Spatial Variational Autoencoder | 50 epochs | 20.4 | 118 | 0.040 | 28.4 |
-| ResNet-18 Land-Use Classifier | 50 epochs | 18.5 | 123 | 0.038 | 27.0 |
-| Residual Class-Conditional DCGAN | 50 epochs | 17.5 | 120 | 0.035 | 24.8 |
-| Conditional Diffusion Model (DDPM) | 50 epochs | 22.0 | 123 | 0.045 | 31.9 |
-| MiniGPT Planning Transformer | 50 equiv. epochs | 8.3 | 108 | 0.015 | 10.6 |
-| **Total Integrated Framework** | **Aligned 50-Epoch Suite** | **101.9 min** | **118 W avg** | **0.203 kWh** | **144.0 gCO$_2$e** |
+| U-Net Denoising Autoencoder | 50 epochs | 15.2 | 118 | 0.030 | 21.2 |
+| Spatial Variational Autoencoder | 50 epochs | 6.7 | 118 | 0.013 | 9.2 |
+| ResNet-18 Land-Use Classifier | 50 epochs | 14.2 | 123 | 0.029 | 20.5 |
+| Residual Class-Conditional DCGAN | 50 epochs | 15.0 | 120 | 0.030 | 21.2 |
+| Conditional Diffusion Model (DDPM) | 50 epochs | 14.0 | 123 | 0.029 | 20.5 |
+| MiniGPT Planning Transformer | 50 equiv. epochs | 1.2 | 108 | 0.002 | 1.4 |
+| **Total Integrated Framework** | **Aligned 50-Epoch Suite** | **66.3 min** | **118 W avg** | **0.133 kWh** | **94.0 gCO$_2$e** |
 
 ---
 

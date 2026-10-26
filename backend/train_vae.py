@@ -15,8 +15,8 @@ OUT_DIR = "../outputs/vae"
 LOCK_PATH = "../outputs/vae/.train_lock"
 
 FREEZE_ENCODER_EPOCHS = 5
-EPOCHS = 80
-BATCH_SIZE = 16
+EPOCHS = 50
+BATCH_SIZE = 32
 LR = 2e-4
 LR_FINETUNE = 2e-5
 LATENT_CHANNELS = 64

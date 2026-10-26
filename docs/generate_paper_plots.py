@@ -185,9 +185,9 @@ except Exception as e:
 # 6. Green AI Energy & Compute Footprint (50-Epoch Uniform Protocol)
 # ==============================================================================
 try:
-    models = ['U-Net AE', 'Spatial VAE', 'Classifier', 'cDCGAN', 'DDPM (50e)', 'MiniGPT']
-    train_times = [15.2, 20.4, 18.5, 17.5, 22.0, 8.3]
-    energies = [0.030, 0.040, 0.038, 0.035, 0.045, 0.015]
+    models = ['U-Net AE', 'Spatial VAE', 'Classifier', 'cDCGAN', 'DDPM', 'MiniGPT']
+    train_times = [15.2, 6.7, 14.2, 15.0, 14.0, 1.2]
+    energies = [0.030, 0.013, 0.029, 0.030, 0.029, 0.002]
 
     fig, ax1 = plt.subplots(figsize=(7.2, 3.6))
     x = np.arange(len(models))
@@ -198,16 +198,16 @@ try:
     ax1.tick_params(axis='y', labelcolor='#0284c7')
     ax1.set_xticks(x)
     ax1.set_xticklabels(models, rotation=15, ha='right')
-    ax1.set_ylim([0, 26])
+    ax1.set_ylim([0, 20])
 
     ax2 = ax1.twinx()
     rects2 = ax2.bar(x + width/2, energies, width, label='Energy Consumed (kWh)', color='#10b981', edgecolor='#059669')
     ax2.set_ylabel('Energy (kWh)', color='#059669')
     ax2.tick_params(axis='y', labelcolor='#059669')
-    ax2.set_ylim([0, 0.055])
+    ax2.set_ylim([0, 0.045])
 
     ax1.legend([rects1, rects2], ['Training Duration (min)', 'Energy Consumed (kWh)'], loc='upper left', frameon=True, facecolor='white', framealpha=0.95, edgecolor='#cbd5e1', fontsize=9)
-    plt.title('Green AI Computational Audit: 50-Epoch Uniform Protocol (Total: 0.20 kWh)', fontsize=11, fontweight='bold', pad=10)
+    plt.title('Green AI Computational Audit: 50-Epoch Uniform Protocol (Total: 0.13 kWh)', fontsize=11, fontweight='bold', pad=10)
     plt.tight_layout()
     plt.savefig(out_dir + "fig_energy_carbon.png", bbox_inches='tight')
     plt.close()
@@ -228,8 +228,31 @@ try:
         'DDPM\n(Noise MSE)', 
         'MiniGPT\n(Val Loss)'
     ]
-    initial_losses = [0.115, 0.420, 1.850, 2.100, 2.450, 0.680, 4.238]
-    final_losses = [0.0058, 0.0365, 0.0880, 1.6387, 1.2322, 0.0881, 0.0836]
+    with open("outputs/ae/history.json") as f: ae_h = json.load(f)
+    with open("outputs/vae/history.json") as f: vae_h = json.load(f)
+    with open("outputs/transformer/history.json") as f: cls_h = json.load(f)
+    with open("outputs/gan/history.json") as f: gan_h = json.load(f)
+    with open("outputs/diffusion_class_conditional/history.json") as f: ddpm_h = json.load(f)
+    with open("outputs/gpt/history.json") as f: gpt_h = json.load(f)
+
+    initial_losses = [
+        float(ae_h[0]['loss']),
+        float(vae_h[0]['loss']),
+        float(cls_h[0]['val_loss']),
+        float(gan_h[0]['d_loss']),
+        float(gan_h[0]['g_loss']),
+        float(ddpm_h[0]['loss']),
+        float(gpt_h[0]['val_loss'])
+    ]
+    final_losses = [
+        float(ae_h[-1]['loss']),
+        float(vae_h[-1]['loss']),
+        float(cls_h[-1]['val_loss']),
+        float(gan_h[-1]['d_loss']),
+        float(gan_h[-1]['g_loss']),
+        float(ddpm_h[-1]['loss']),
+        float(gpt_h[-1]['val_loss'])
+    ]
 
     x_bench = np.arange(len(bench_models))
     w_bench = 0.35
