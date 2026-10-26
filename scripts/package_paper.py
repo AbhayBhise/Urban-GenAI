@@ -36,8 +36,14 @@ def package_paper():
         shutil.copy2(src_bst, dest_bst)
         print("Copied official IEEEtran.bst")
 
-    # 3. Exactly the 9 figures referenced in the LaTeX paper
+    # 3. Clean figures destination directory so no orphaned images linger
+    if os.path.exists(figures_dest):
+        for f in os.listdir(figures_dest):
+            os.remove(os.path.join(figures_dest, f))
+
+    # Exactly the 11 active figures referenced in the LaTeX paper
     paper_figures = [
+        "fig_landuse_distribution.png",
         "fig_ae_convergence.png",
         "fig_psnr_comparison.png",
         "fig_ae_crisp_restoration.png",
@@ -46,7 +52,8 @@ def package_paper():
         "fig_vae_multi_interpolation.png",
         "fig_gan_dynamics.png",
         "fig_gan_diverse_generation.png",
-        "fig_multimodel_loss_bars.png"
+        "fig_multimodel_loss_bars.png",
+        "fig_energy_carbon_breakdown.png"
     ]
     
     src_figures_dir = os.path.join(repo_root, "docs", "figures")

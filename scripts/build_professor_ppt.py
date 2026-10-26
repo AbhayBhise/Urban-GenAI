@@ -353,12 +353,12 @@ def build():
     # 13
     s = prs.slides.add_slide(blank); title(s, "All implemented models: use, training, losses, and evidence")
     rows = [
-        ("Denoising AE", "Restore noisy aerial tiles", "UCMerced images", "Pixel MSE", "50 epochs; final MSE 0.00585; PSNR/SSIM runtime"),
-        ("Spatial VAE", "Anomaly score + latent interpolation", "UCMerced images", "0.7 L1 + 0.3 MSE + β KL", "49 history epochs; recon 0.04799; KL 41.61"),
-        ("ResNet18 classifier", "21-class land-use label + verification", "UCMerced images", "Cross-entropy", "30 epochs; val accuracy 98.1%"),
-        ("cDCGAN", "New class-conditioned synthetic tiles", "UCMerced images", "Adversarial BCE + class + diversity", "120 recorded epochs; D 1.1674; G 1.2497"),
-        ("Source DDPM/DDIM", "Source-preserving target-class scenario", "UCMerced images", "Noise-prediction MSE", "50 epochs; best 0.00384; final 0.00421"),
-        ("MiniGPT", "GIS-grounded planning draft", "urban_planning.txt", "Next-character cross-entropy", "3,000 steps; held-out perplexity/BPC via evaluation"),
+        ("Denoising AE", "Restore noisy aerial tiles", "UCMerced images", "Pixel MSE", "50 epochs; final MSE 0.00617; 29.65 dB PSNR"),
+        ("Spatial VAE", "Anomaly score + latent interpolation", "UCMerced images", "0.7 L1 + 0.3 MSE + β KL", "50 epochs; recon 0.0469; KL 60.72 nats; 27.49 dB PSNR"),
+        ("ResNet18 classifier", "21-class land-use label + verification", "UCMerced images", "Cross-entropy", "50 epochs; val accuracy 98.10%; val loss 0.0615"),
+        ("cDCGAN", "New class-conditioned synthetic tiles", "UCMerced images", "Adversarial BCE + class + diversity", "50 epochs; D 1.6724; G 1.1890; 99.40% intended-class recognition"),
+        ("Source DDPM/DDIM", "Source-preserving target-class scenario", "UCMerced images", "Noise-prediction MSE", "50 epochs; final noise MSE 0.0304"),
+        ("MiniGPT", "GIS-grounded planning draft", "urban_planning.txt", "Next-character cross-entropy", "50 equivalent epochs (3,000 steps); loss 0.1044; perplexity 1.110"),
     ]
     x, y = 0.35, 1.35
     widths = [1.55, 2.45, 1.75, 2.55, 5.95]

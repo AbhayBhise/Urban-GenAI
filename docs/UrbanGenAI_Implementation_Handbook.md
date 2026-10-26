@@ -233,8 +233,8 @@ npm run build
   $$\mathcal{L}_D = -\mathbb{E}_{(x, y)} [\min(0, -1 + D(x, y))] - \mathbb{E}_{(z, y)} [\min(0, -1 - D(G(z, y), y))] + \lambda_{\text{AC}} \mathcal{L}_{\text{AC}}$$
   $$\mathcal{L}_G = -\mathbb{E}_{(z, y)} [D(G(z, y), y)] + \lambda_{\text{AC}} \mathcal{L}_{\text{AC}} + \lambda_{\text{feat}} \mathcal{L}_{\text{feat}}$$
 - **Empirical Results**:
-  - 120 training epochs with exponential moving average (EMA) generator weights.
-  - Stable training loss dynamics ($D_{\text{loss}} \approx 1.16$, $G_{\text{loss}} \approx 1.25$).
+  - 50 training epochs with exponential moving average (EMA) generator weights.
+  - Balanced minimax training loss dynamics ($D_{\text{loss}} = 1.6724$, $G_{\text{loss}} = 1.1890$).
 
 ### 4.5 Urban Scenario Diffusion
 - **File**: `backend/models/diffusion.py`
@@ -347,7 +347,7 @@ All nine figures referenced in `docs/IEEE_Conference_Paper.tex` are persisted in
 | `fig:classifier_metrics` | `docs/figures/fig_classifier_metrics.png` | Accuracy and loss curves across fine-tuning epochs | `outputs/transformer/history.json` |
 | `fig:vae_tradeoff` | `docs/figures/fig_vae_tradeoff.png` | $\beta$-VAE trade-off between reconstruction MSE and KL divergence | `outputs/vae/history.json` |
 | `fig:vae_multi_interpolation` | `docs/figures/fig_vae_multi_interpolation.png` | Manifold traversals between pairs of real aerial parcels | `backend/models/vae.py` manifold sampling |
-| `fig:gan_dynamics` | `docs/figures/fig_gan_dynamics.png` | Generator and Discriminator loss dynamics over 120 epochs | `outputs/gan/history.json` |
+| `fig:gan_dynamics` | `docs/figures/fig_gan_dynamics.png` | Generator and Discriminator loss dynamics over 50 epochs | `outputs/gan/history.json` |
 | `fig:gan_samples` | `docs/figures/fig_gan_diverse_generation.png` | Class-conditional generated aerial tiles | `outputs/gan/generator_ema.pth` |
 | `fig:diffusion_training` | `docs/figures/fig_diffusion_training.png` | Measured noise-prediction MSE, elapsed wall time, and GPU power | `outputs/diffusion_scenario/telemetry.json` |
 
