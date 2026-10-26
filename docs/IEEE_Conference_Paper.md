@@ -226,9 +226,24 @@ Urban spatial interventions directly impact citizen welfare, mobility rights, an
 ---
 
 ## 5. Conclusion and Future Work
-This paper presented **UrbanGen AI**, a multi-model Generative AI architecture unifying aerial image restoration, land-use classification, spatial latent interpolation, unsupervised anomaly ranking, class-conditional diffusion tile generation, class-conditional GAN synthesis, and contextual policy synthesis. The current implementation is a locally deployable research prototype. The diffusion run includes reproducible GPU power telemetry, while whole-system energy and carbon efficiency remain outside the reported claims.
 
-Future work will expand the pipeline to ingest multi-band ESA Sentinel-2 and NASA HLS satellite feeds, incorporate cross-attention vision-language models for multimodal query answering, and integrate physical microclimate fluid dynamic simulations for urban heat island mitigation.
+### 5.1 Conclusion
+In this paper, we introduced **UrbanGen AI**, an edge-deployable, multi-model generative intelligence framework designed to support data-driven municipal spatial analytics and sustainable urban planning workflows. By coupling six complementary deep learning architectures within a unified computational pipeline, the system bridges the methodological gap between raw Earth observation processing and actionable urban policy drafting.
+
+Empirical investigations across the 21 aerial categories of the UCMerced benchmark substantiate several core architectural findings:
+1. **Morphological Fidelity via Skip Connections:** Introducing multi-scale transposed skip pathways into the Denoising Autoencoder yielded a substantial reconstruction gain (achieving 29.65 dB PSNR and 0.00449 MSE), recovering fine topological details such as clustered building envelopes and road networks that were irreversibly smeared by standard bottleneck compression.
+2. **Structured Spatial Latent Navigation:** Maintaining an explicit $8 \times 8 \times 64$ spatial tensor in the $\beta$-VAE allowed continuous, topological-preserving latent space traversals across contrasting urban archetypes without semantic collapse, providing a functional mathematical foundation for unsupervised spatial anomaly detection and zoning non-compliance screening.
+3. **Coordinated Generative Synthesis:** Combining projection-conditioned adversarial modeling (cDCGAN) with source-conditioned Denoising Diffusion Probabilistic Modeling (DDPM/DDIM) offers complementary modalities for rapid scenario sketching and structured morphological visualization, respectively.
+4. **Grounded Policy Translation:** Coupling visual land-use analytics with a causal domain-specific Transformer (MiniGPT) enables automated synthesis of structured planning recommendations, effectively translating quantitative zoning statistics into contextual municipal interventions.
+
+Throughout this work, strict methodological boundaries have been maintained: generated aerial tiles serve as exploratory scenario visualizations rather than deterministic temporal forecasts, and anomaly scores represent statistical distribution deviations rather than autonomous legal adjudications. Furthermore, by architecting the entire suite to operate on consumer edge hardware (NVIDIA RTX 4050 6 GB), UrbanGen AI provides regional planning authorities with a self-contained, privacy-preserving analytical workbench that safeguards municipal data sovereignty.
+
+### 5.2 Future Work
+Building upon the verified capabilities and identified constraints of the current prototype, several high-priority technical avenues will guide future development:
+1. **Multi-Spectral and Temporal Satellite Ingestion:** The current pipeline will be extended from three-band RGB aerial tiles to high-dimensional Earth observation constellations, specifically incorporating 12-band European Space Agency (ESA) Sentinel-2 and NASA Harmonized Landsat-Sentinel (HLS) multi-temporal surface reflectance streams. This will integrate physical spectral vegetation indices (NDVI), water indices (NDWI), and thermal infrared bands for surface heat island monitoring.
+2. **Multi-Modal Cross-Attention Conditioning:** We plan to incorporate cross-attention vision-language conditioning into the diffusion backbone, allowing municipal planners to interactively guide scenario generation via joint natural-language prompts, GIS vector shapefiles, and parcel zoning density constraints.
+3. **Physics-Informed Climate and Microclimate Modeling:** To elevate generative visualizations into physically grounded environmental decision tools, future iterations will integrate Physics-Informed Neural Networks (PINNs) and fast computational fluid dynamics (CFD) surrogates to simulate localized wind corridors, aerodynamic surface roughness, and microclimate heat dissipation over synthesized structural layouts.
+4. **Longitudinal Change Modeling and Global South Adaptation:** To address the current lack of paired temporal data and mitigate regional distribution shift across informal settlements in developing metropolitan areas (e.g., Pune), future benchmarks will implement multi-temporal paired datasets and domain-adaptive contrastive representation learning tailored to Global South urban morphology.
 
 ---
 
