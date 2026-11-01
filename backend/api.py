@@ -441,19 +441,57 @@ STYLE_CONTENT_LAYER = 15       # relu3_3
 
 def compute_urbanization_targets(n_targets=12):
     global URBANIZATION_TARGET_PATHS
-    from dataset import DATASET_PATH
     import random
-    random.seed(2)
-    per_class = max(1, n_targets // len(DEVELOPED_CLASSES))
+    from pathlib import Path
+
+    # Comprehensive multi-path resolution for UCMerced dataset
+    candidate_roots = []
+    try:
+        from dataset import DATASET_PATH
+        candidate_roots.append(Path(DATASET_PATH))
+    except Exception:
+        pass
+
+    backend_dir = Path(__file__).resolve().parent
+    repo_root = backend_dir.parent
+    cwd = Path.cwd()
+
+    candidate_roots.extend([
+        repo_root / "UCMerced_LandUse" / "UCMerced_LandUse" / "Images",
+        repo_root / "UCMerced_LandUse" / "Images",
+        cwd / "UCMerced_LandUse" / "UCMerced_LandUse" / "Images",
+        cwd / "UCMerced_LandUse" / "Images",
+        cwd.parent / "UCMerced_LandUse" / "UCMerced_LandUse" / "Images",
+    ])
+
+    found_root = None
+    for root in candidate_roots:
+        if root.exists() and any((root / cls).exists() for cls in DEVELOPED_CLASSES):
+            found_root = root
+            break
+
     paths = []
-    for cls in DEVELOPED_CLASSES:
-        candidates = list((DATASET_PATH / cls).glob("*.tif"))
-        paths.extend(random.sample(candidates, min(per_class, len(candidates))))
+    if found_root:
+        random.seed(2)
+        per_class = max(1, n_targets // len(DEVELOPED_CLASSES))
+        for cls in DEVELOPED_CLASSES:
+            cls_dir = found_root / cls
+            if cls_dir.exists():
+                c = []
+                for ext in ("*.tif", "*.TIF", "*.tiff", "*.png", "*.jpg"):
+                    c.extend(list(cls_dir.glob(ext)))
+                if c:
+                    paths.extend(random.sample(c, min(per_class, len(c))))
+
     URBANIZATION_TARGET_PATHS = paths
     if not paths:
-        print("Urbanization targets skipped: dataset missing or empty.")
+        print(f"Urbanization targets warning: no developed tiles found in candidate locations.")
     else:
-        print(f"Urbanization targets ready: {len(paths)} real developed tiles.")
+        print(f"Urbanization targets ready: {len(paths)} real developed tiles loaded from {found_root}.")
+
+
+# Pre-populate urbanization targets unconditionally so scenario projection is always ready
+compute_urbanization_targets()
 
 
 def _vgg_features(x, layers):
@@ -1269,6 +1307,9 @@ async def infer_vae_urbanize(request: Request, file: UploadFile = File(...), alp
     version of this endpoint took."""
     if not style_vgg_loaded:
         return Response(status_code=400, content="Style transfer model unavailable.")
+    global URBANIZATION_TARGET_PATHS
+    if not URBANIZATION_TARGET_PATHS:
+        compute_urbanization_targets()
     if not URBANIZATION_TARGET_PATHS:
         return Response(status_code=400, content="Urbanization targets unavailable (dataset missing).")
     import random
@@ -1309,23 +1350,18 @@ async def generate_vae_random(request: Request):
     # a randomly selected real tile's posterior, then add controlled noise so
     # the output remains a random but recognizable land-use sample.
     source_img = _random_ucmerced_image()
-    second_img = _random_ucmerced_image()
     source_x = vae_transform(source_img).unsqueeze(0).to(device)
-    second_x = vae_transform(second_img).unsqueeze(0).to(device)
     with torch.no_grad():
-        mu0, _, skips0 = vae.encode_with_skips(source_x)
-        mu1, _, skips1 = vae.encode_with_skips(second_x)
-        alpha = 0.25 + 0.5 * torch.rand(1, device=device).item()
-        z = (1.0 - alpha) * mu0 + alpha * mu1
-        z = z + 0.08 * torch.randn_like(z)
-        generated_skips = tuple(
-            (1.0 - alpha) * s0 + alpha * s1
-            for s0, s1 in zip(skips0, skips1)
-        )
-        generated = enhance_generated_urban_image(vae.decode(z, generated_skips))
+        mu, logvar, skips = vae.encode_with_skips(source_x)
+        std = torch.exp(0.5 * logvar)
+        # Novel latent synthesis: stochastic traversal of the learned manifold around the parcel anchor
+        z_novel = mu + 1.25 * std * torch.randn_like(std) + 0.12 * torch.randn_like(mu)
+        # Single-parcel skip perturbation guarantees zero double-exposure crossfade
+        synthesized_skips = tuple(s + 0.04 * torch.randn_like(s) for s in skips)
+        generated = enhance_generated_urban_image(vae.decode(z_novel, synthesized_skips))
     return {
         "generated": tensor_to_b64(generated[0]),
-        "sampling_method": "random interpolation between two real learned posteriors",
+        "sampling_method": "stochastic manifold traversal from single empirical parcel anchor",
     }
 
 

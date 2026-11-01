@@ -309,7 +309,10 @@ export default function App() {
 
   // VAE Scenario Urbanization Projection
   const handleUrbanize = async () => {
-    if (!file) return;
+    if (!file) {
+      addToast({ type: 'info', message: 'Please upload an image or click "Load Real Sample (Undeveloped)" first.' });
+      return;
+    }
     setUrbanizeResult(null, true, null);
     const formData = new FormData();
     formData.append('file', file);
@@ -349,25 +352,45 @@ export default function App() {
     }
   };
 
-  const navItems = [
-    { id: 'landing' as ViewType, label: 'Home', icon: Sparkles },
-    { id: 'model-explorer' as ViewType, label: 'Model Explorer', icon: Layers },
-    { id: 'model-comparison' as ViewType, label: 'Model Comparison', icon: FileText },
-    { id: 'system-architecture' as ViewType, label: 'System Architecture', icon: Layers },
-    { id: 'ae' as ViewType, label: 'Autoencoder', icon: Layers },
-    { id: 'vae' as ViewType, label: 'VAE', icon: FileText },
-    { id: 'diffusion' as ViewType, label: 'Diffusion Generator', icon: Sparkles },
-    { id: 'plan-generator' as ViewType, label: 'Urban Plan Generator', icon: Sparkles },
-    { id: 'classifier' as ViewType, label: 'Land-Use Classifier', icon: Cpu },
-    { id: 'training' as ViewType, label: 'Training', icon: Cpu },
-    { id: 'evaluation' as ViewType, label: 'Evaluation', icon: FileText },
-    { id: 'research' as ViewType, label: 'Research & Innovation', icon: BookOpen, badge: 'Scoping' },
-    { id: 'glossary' as ViewType, label: 'Glossary', icon: FileText },
-    { id: 'future-scope' as ViewType, label: 'Future Scope', icon: Sparkles },
-    { id: 'governance' as ViewType, label: 'Governance', icon: ShieldCheck },
-    { id: 'datasets' as ViewType, label: 'Dataset Explorer', icon: Database },
-    { id: 'system' as ViewType, label: 'System Info', icon: HardDrive },
-    { id: 'gan' as ViewType, label: 'GAN Generator', icon: ImageIcon },
+  const navSections = [
+    {
+      title: 'WORKSPACE & REFERENCE',
+      items: [
+        { id: 'landing' as ViewType, label: 'Home Dashboard', icon: Sparkles },
+        { id: 'glossary' as ViewType, label: 'Urban AI Glossary', icon: BookOpen, badge: 'Glossary' },
+        { id: 'system-architecture' as ViewType, label: 'System Architecture', icon: Layers },
+      ],
+    },
+    {
+      title: 'NEURAL GENERATIVE MODELS',
+      items: [
+        { id: 'ae' as ViewType, label: 'Denoising Autoencoder', icon: Layers, badge: '29.6 dB' },
+        { id: 'vae' as ViewType, label: 'Spatial β-VAE', icon: Layers, badge: 'Anomaly' },
+        { id: 'classifier' as ViewType, label: 'Land-Use Classifier', icon: Cpu, badge: '98.1%' },
+        { id: 'gan' as ViewType, label: 'Conditional DCGAN', icon: ImageIcon, badge: 'cDCGAN' },
+        { id: 'diffusion' as ViewType, label: 'Diffusion Generator', icon: Sparkles, badge: 'DDPM' },
+        { id: 'plan-generator' as ViewType, label: 'Urban Plan Generator', icon: FileText, badge: 'MiniGPT' },
+      ],
+    },
+    {
+      title: 'BENCHMARKS & ARCHITECTURE',
+      items: [
+        { id: 'model-comparison' as ViewType, label: 'Model Comparison', icon: FileText },
+        { id: 'model-explorer' as ViewType, label: 'Model Explorer', icon: Layers },
+        { id: 'training' as ViewType, label: 'Training Curves (50e)', icon: Cpu },
+        { id: 'evaluation' as ViewType, label: 'Quantitative Evaluation', icon: FileText },
+      ],
+    },
+    {
+      title: 'MUNICIPAL & POLICY',
+      items: [
+        { id: 'datasets' as ViewType, label: 'Dataset Explorer', icon: Database },
+        { id: 'system' as ViewType, label: 'System Hardware', icon: HardDrive },
+        { id: 'governance' as ViewType, label: 'Governance & Ethics', icon: ShieldCheck },
+        { id: 'research' as ViewType, label: 'Research & Innovation', icon: BookOpen, badge: 'Paper' },
+        { id: 'future-scope' as ViewType, label: 'Future Scope', icon: Sparkles },
+      ],
+    },
   ];
 
   const statusKey =
@@ -868,8 +891,8 @@ export default function App() {
         <div className="card" style={{ marginBottom: '30px' }}>
           <div className="card-title">Generate Random Learned-Manifold Sample</div>
           <p style={{ color: 'var(--muted)', fontSize: '0.85rem', lineHeight: 1.5, marginBottom: '15px' }}>
-            Encodes two real UCMerced tiles, interpolates their learned spatial latent codes, and decodes the
-            representation. This avoids prior collapse while guaranteeing identifiable geometric roads and parcels.
+            Samples a novel aerial variation from the learned spatial latent manifold using stochastic latent perturbation
+            on an empirical parcel anchor, synthesizing a coherent unseen land-use sample without crossfade or double-exposure artifacts.
           </p>
           <button
             className="btn"
@@ -1098,185 +1121,77 @@ export default function App() {
 
   return (
     <>
-      <style
-        dangerouslySetInnerHTML={{
-          __html: `
-        :root {
-          --bg: #F4F7FB;
-          --surface: #FFFFFF;
-          --border: #D7E0EA;
-          --accent: #04788F;
-          --accent2: #5B3FD1;
-          --text: #16283D;
-          --muted: #5B7285;
-          --success: #1C8F52;
-          --warn: #A66A08;
-          --danger: #BB3636;
-          --btn-text: #FFFFFF;
-          --hover-overlay: rgba(10, 35, 60, 0.05);
-          --active-tint: rgba(4, 120, 143, 0.10);
-          --accent-wash-light: rgba(4, 120, 143, 0.06);
-          --accent-wash: rgba(4, 120, 143, 0.12);
-          --success-wash: rgba(28, 143, 82, 0.10);
-          --warn-wash: rgba(166, 106, 8, 0.10);
-          --danger-wash: rgba(187, 54, 54, 0.10);
-          --accent2-wash: rgba(91, 63, 209, 0.10);
-          --surface-inset: #EDF1F7;
-          --cat-a: #0E7C9B;
-          --cat-b: #6941C6;
-          --cat-c: #1C8F52;
-          --cat-d: #A66A08;
-          --cat-e: #C2185B;
-          --cat-f: #0F8A8A;
-          --font-ui: 'Space Grotesk', sans-serif;
-          --font-mono: 'JetBrains Mono', monospace;
-        }
-        :root[data-theme="dark"] {
-          --bg: #080C14;
-          --surface: #0F1923;
-          --border: #1E2D40;
-          --accent: #00D4FF;
-          --accent2: #7B61FF;
-          --text: #E8EDF5;
-          --muted: #4A6080;
-          --success: #00E676;
-          --warn: #FFB84D;
-          --danger: #FF5252;
-          --btn-text: #000000;
-          --hover-overlay: rgba(255, 255, 255, 0.05);
-          --active-tint: rgba(0, 212, 255, 0.10);
-          --accent-wash-light: rgba(0, 212, 255, 0.06);
-          --accent-wash: rgba(0, 212, 255, 0.12);
-          --success-wash: rgba(0, 230, 118, 0.10);
-          --warn-wash: rgba(255, 184, 77, 0.10);
-          --danger-wash: rgba(255, 82, 82, 0.10);
-          --accent2-wash: rgba(123, 97, 255, 0.14);
-          --surface-inset: #0A0F17;
-          --cat-a: #00D4FF;
-          --cat-b: #9D85FF;
-          --cat-c: #00E676;
-          --cat-d: #FFB300;
-          --cat-e: #FF4081;
-          --cat-f: #26C6DA;
-        }
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { background-color: var(--bg); color: var(--text); font-family: var(--font-ui); }
-        .app-container { display: flex; height: 100vh; overflow: hidden; }
-        .sidebar { width: 260px; background-color: var(--surface); border-right: 1px solid var(--border); display: flex; flexDirection: column; }
-        .logo-area { padding: 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; cursor: pointer; }
-        .logo-title { font-weight: 700; font-size: 1.15rem; letter-spacing: -0.02em; }
-        .logo-subtitle { font-size: 0.75rem; color: var(--muted); }
-        .nav-links { flex: 1; overflow-y: auto; padding: 15px 10px; display: flex; flex-direction: column; gap: 4px; }
-        .nav-item { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 6px; color: var(--muted); cursor: pointer; font-size: 0.9rem; font-weight: 500; text-decoration: none; border: none; background: transparent; width: 100%; text-align: left; }
-        .nav-item:hover { color: var(--text); background-color: var(--hover-overlay); }
-        .nav-item.active { color: var(--accent); background-color: var(--active-tint); font-weight: 600; }
-        .nav-badge { margin-left: auto; font-size: 0.68rem; padding: 2px 6px; border-radius: 4px; background: var(--accent2-wash); color: var(--accent2); font-weight: 600; text-transform: uppercase; }
-        .main-content { flex: 1; display: flex; flex-direction: column; overflow-y: auto; position: relative; }
-        .topbar { padding: 15px 30px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background-color: var(--surface); }
-        .status-badge { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; padding: 6px 12px; border-radius: 20px; font-weight: 500; }
-        .status-badge.trained { background-color: var(--success-wash); color: var(--success); }
-        .status-badge.nottrained { background-color: var(--warn-wash); color: var(--warn); }
-        .status-dot { width: 8px; height: 8px; border-radius: 50%; background-color: currentColor; }
-        .theme-toggle { background: transparent; border: 1px solid var(--border); color: var(--text); padding: 7px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-        .theme-toggle:hover { background-color: var(--hover-overlay); }
-        .content-body { padding: 30px; max-width: 1200px; margin: 0 auto; width: 100%; flex: 1; }
-        .panel-header { margin-bottom: 30px; }
-        .panel-title { font-size: 1.8rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 8px; }
-        .panel-desc { color: var(--muted); font-size: 0.95rem; line-height: 1.5; }
-        .card { background-color: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 24px; margin-bottom: 24px; }
-        .card-title { font-size: 1.1rem; font-weight: 600; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; }
-        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px; }
-        @media (max-width: 900px) { .grid-2 { grid-template-columns: 1fr; } }
-        .upload-zone { border: 2px dashed var(--border); border-radius: 8px; padding: 40px; text-align: center; cursor: pointer; background: var(--bg); transition: border-color 0.2s, background-color 0.2s; margin-bottom: 16px; }
-        .upload-zone:hover { border-color: var(--accent); background-color: var(--hover-overlay); }
-        .upload-icon { width: 44px; height: 44px; color: var(--accent); margin: 0 auto 12px; }
-        .btn { width: 100%; background-color: var(--accent); color: var(--btn-text); border: none; border-radius: 6px; padding: 11px 18px; font-weight: 600; font-size: 0.9rem; cursor: pointer; transition: all 0.15s ease; margin-top: 10px; }
-        .btn:hover:not(:disabled) { opacity: 0.92; transform: translateY(-1px); }
-        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-        .image-preview { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 6px; border: 1px solid var(--border); }
-        .metrics-strip { display: flex; gap: 16px; flex-wrap: wrap; background: var(--surface-inset); border: 1px solid var(--border); padding: 14px 18px; border-radius: 6px; margin-top: 15px; }
-        .metric { display: flex; flex-direction: column; }
-        .metric-label { font-size: 0.72rem; text-transform: uppercase; color: var(--muted); letter-spacing: 0.05em; margin-bottom: 4px; }
-        .metric-value { font-family: var(--font-mono); font-size: 1.25rem; font-weight: 700; color: var(--text); }
-        .chart-container { height: 300px; width: 100%; }
-        .predictions-list { display: flex; flex-direction: column; gap: 8px; justify-content: center; }
-        .pred-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: var(--surface-inset); border-radius: 4px; border: 1px solid var(--border); }
-        .pred-class { font-weight: 500; font-size: 0.9rem; }
-        .pred-prob { font-family: var(--font-mono); font-size: 0.85rem; font-weight: 700; color: var(--accent); }
-      `,
-        }}
-      />
-
       <div className="app-container">
         {/* Left Navigation Sidebar */}
         <aside className="sidebar">
           <div className="logo-area" onClick={() => setActiveView('landing')}>
-            <div
-              style={{
-                width: 32,
-                height: 32,
-                borderRadius: 6,
-                background: 'var(--accent)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: 'var(--btn-text)',
-                fontWeight: 700,
-              }}
-            >
-              UG
-            </div>
+            <div className="logo-emblem">UG</div>
             <div>
               <div className="logo-title">UrbanGen AI</div>
-              <div className="logo-subtitle">Multi-Model Remote Sensing</div>
+              <div className="logo-subtitle">Edge Remote Sensing & GenAI</div>
             </div>
           </div>
 
           <nav className="nav-links">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = activeView === item.id;
-              return (
-                <button
-                  key={item.id}
-                  className={`nav-item ${isActive ? 'active' : ''}`}
-                  onClick={() => setActiveView(item.id)}
-                  onMouseEnter={() => preloadView(item.id)}
-                >
-                  <Icon size={18} />
-                  <span>{item.label}</span>
-                  {item.badge && <span className="nav-badge">{item.badge}</span>}
-                </button>
-              );
-            })}
+            {navSections.map((sec) => (
+              <div key={sec.title} style={{ marginBottom: 6 }}>
+                <div className="nav-section-title">{sec.title}</div>
+                {sec.items.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = activeView === item.id;
+                  return (
+                    <button
+                      key={item.id}
+                      className={`nav-item ${isActive ? 'active' : ''}`}
+                      onClick={() => setActiveView(item.id)}
+                      onMouseEnter={() => preloadView(item.id)}
+                    >
+                      <Icon size={16} />
+                      <span style={{ flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {item.label}
+                      </span>
+                      {item.badge && <span className="nav-badge">{item.badge}</span>}
+                    </button>
+                  );
+                })}
+              </div>
+            ))}
           </nav>
 
-          {/* Sidebar Footer: API Key Configuration */}
-          <div style={{ padding: '15px', borderTop: '1px solid var(--border)', fontSize: '0.8rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8, color: 'var(--muted)' }}>
-              <KeyRound size={14} />
-              <span>Edge API Gateway Key</span>
+          {/* Sidebar Footer: Hardware & API Gateway Key */}
+          <div className="sidebar-footer">
+            <div className="hardware-pill">
+              <span>⚡ RTX 4050 6GB</span>
+              <span style={{ color: 'var(--success)', fontWeight: 600 }}>0.133 kWh</span>
             </div>
-            <input
-              type="password"
-              placeholder="URBANGEN_API_KEY"
-              value={apiKeyInput}
-              onChange={(e) => setApiKeyInput(e.target.value)}
-              onBlur={() => {
-                useAppStore.getState().setApiKey(apiKeyInput);
-                addToast({ type: 'info', message: 'API key preference updated.' });
-              }}
-              style={{
-                width: '100%',
-                background: 'var(--bg)',
-                color: 'var(--text)',
-                border: '1px solid var(--border)',
-                borderRadius: 4,
-                padding: '6px 8px',
-                fontSize: '0.78rem',
-                fontFamily: 'var(--font-mono)',
-              }}
-            />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.72rem', color: 'var(--muted)' }}>
+                <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                  <KeyRound size={12} /> Edge Gateway Key
+                </span>
+                {apiKeyInput ? <span style={{ color: 'var(--success)', fontSize: '0.68rem', fontWeight: 600 }}>Active</span> : null}
+              </div>
+              <input
+                type="password"
+                placeholder="URBANGEN_API_KEY"
+                value={apiKeyInput}
+                onChange={(e) => setApiKeyInput(e.target.value)}
+                onBlur={() => {
+                  useAppStore.getState().setApiKey(apiKeyInput);
+                  addToast({ type: 'info', message: 'API key preference updated.' });
+                }}
+                style={{
+                  width: '100%',
+                  background: 'var(--surface-inset)',
+                  color: 'var(--text)',
+                  border: '1px solid var(--border)',
+                  borderRadius: 6,
+                  padding: '6px 8px',
+                  fontSize: '0.75rem',
+                  fontFamily: 'var(--font-mono)',
+                }}
+              />
+            </div>
           </div>
         </aside>
 
@@ -1284,25 +1199,74 @@ export default function App() {
         <div className="main-content">
           {/* Top Bar with Live Model State & Theme Switcher */}
           <header className="topbar">
-            <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-              <span style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>Active Pipeline:</span>
-              <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>
+            <div className="topbar-breadcrumbs">
+              <span style={{ color: 'var(--muted)', fontSize: '0.8rem' }}>UrbanGen AI</span>
+              <span style={{ color: 'var(--border-subtle)' }}>/</span>
+              <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>Pipeline</span>
+              <span style={{ color: 'var(--border-subtle)' }}>/</span>
+              <span className="topbar-badge">
                 {isImageView(activeView) ? MODEL_META[activeView].title : activeView.toUpperCase()}
               </span>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              {/* MIT AOE Academic Defense badge */}
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  fontSize: '0.74rem',
+                  fontFamily: 'var(--font-mono)',
+                  color: 'var(--muted)',
+                  padding: '4px 10px',
+                  borderRadius: 6,
+                  background: 'var(--surface-inset)',
+                  border: '1px solid var(--border)',
+                }}
+              >
+                <span>MIT AOE, Pune</span>
+                <span style={{ color: 'var(--border-subtle)' }}>|</span>
+                <span style={{ color: 'var(--accent)', fontWeight: 600 }}>60M Capstone</span>
+              </div>
+
+              {/* One-Click Urban AI Glossary Quick Access */}
+              <button
+                onClick={() => setActiveView('glossary')}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 5,
+                  fontSize: '0.74rem',
+                  fontFamily: 'var(--font-mono)',
+                  fontWeight: 600,
+                  color: activeView === 'glossary' ? 'var(--accent)' : 'var(--text)',
+                  background: activeView === 'glossary' ? 'var(--active-tint)' : 'var(--surface-inset)',
+                  border: `1px solid ${activeView === 'glossary' ? 'var(--accent)' : 'var(--border)'}`,
+                  borderRadius: 6,
+                  padding: '4px 10px',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                }}
+                title="Open Urban AI Mathematical Symbols & Terms Glossary"
+              >
+                <BookOpen size={13} style={{ color: 'var(--accent)' }} />
+                <span>Glossary</span>
+              </button>
+
               {statusKey in status ? (
                 <div className={`status-badge ${status[statusKey] === 'Trained' ? 'trained' : 'nottrained'}`}>
                   <span
                     className={`status-dot ${status[statusKey] === 'Trained' ? 'status-badge-active' : ''}`}
                   />
                   <span>
-                    {status[statusKey] === 'Trained' ? 'Model Checkpoint Active' : 'Model Not Trained'}
+                    {status[statusKey] === 'Trained' ? '50e Checkpoint Active' : 'Model Not Trained'}
                   </span>
                 </div>
               ) : isStatusLoading ? (
-                <div style={{ fontSize: '0.8rem', color: 'var(--muted)' }}>Checking hardware status...</div>
+                <div style={{ fontSize: '0.78rem', color: 'var(--muted)', fontFamily: 'var(--font-mono)' }}>
+                  Probing weights...
+                </div>
               ) : null}
 
               <button
@@ -1311,7 +1275,7 @@ export default function App() {
                 title={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
                 aria-label="Toggle visual theme"
               >
-                {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+                {theme === 'dark' ? <Sun size={15} /> : <Moon size={15} />}
               </button>
             </div>
           </header>

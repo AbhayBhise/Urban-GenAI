@@ -200,3 +200,4 @@ export function PageSkeleton({ view }: { view?: ViewType }) {
     </div>
   );
 }
+

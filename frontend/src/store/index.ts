@@ -17,3 +17,4 @@ export const useInferenceResult = () => useAppStore((state) => ({
   predictions: state.predictions,
 }));
 export const useToasts = () => useAppStore((state) => state.toasts);
+
