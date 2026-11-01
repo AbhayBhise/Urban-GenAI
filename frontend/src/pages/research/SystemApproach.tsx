@@ -195,7 +195,7 @@ export default function SystemApproach() {
                 <span style={{ padding: '6px 12px', background: 'var(--surface-inset)', borderRadius: '4px' }}>Denoised Tile (128×128×3)</span>
               </div>
               <div style={{ marginTop: '12px', fontSize: '0.8rem', color: 'var(--muted)' }}>
-        Verified Experiment: 50 epochs on UCMerced | Initial Loss: 0.11551 → Final Train MSE: 0.00585 | PSNR calculated per request.
+        Standardized Protocol: 50 epochs on UCMerced (batch size 32) | Initial Loss: 0.1754 → Final Train MSE: 0.00617 | Validation PSNR: 29.65 dB (SSIM: 0.8649).
               </div>
             </div>
           </div>
@@ -237,7 +237,7 @@ export default function SystemApproach() {
                 <span style={{ padding: '6px 12px', background: 'var(--surface-inset)', borderRadius: '4px' }}>Reconstruction &amp; Interpolation</span>
               </div>
               <div style={{ marginTop: '12px', fontSize: '0.8rem', color: 'var(--muted)' }}>
-                        Persisted artifact: recorded through epoch 49 | Train Recon Loss: 0.04799 | KL Divergence: 41.61 nats | Deterministic posterior mean used for inference.
+                        Standardized Protocol: 50 epochs (0–49, batch size 32) | Validation PSNR: 27.49 dB | Total Val Loss: 0.0483 (Recon: 0.0423, KL: 60.72 nats) | MSE: 0.00713.
               </div>
             </div>
           </div>

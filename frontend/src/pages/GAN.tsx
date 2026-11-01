@@ -244,7 +244,7 @@ export default function GAN({ isGanTrained }: { isGanTrained?: boolean }) {
                 The Generator weights have not been found. Train the model first:
                 <code className="ntb-code">
                   cd backend{'\n'}
-                  python train_gan.py --epochs 120 --batch-size 32
+                  python train_gan.py --epochs 50 --batch-size 32
                 </code>
                 Training takes ~20 min on a GPU (longer on CPU). Once done,
                 restart the API server and refresh this page.
@@ -545,7 +545,7 @@ export default function GAN({ isGanTrained }: { isGanTrained?: boolean }) {
             </div>
             <div>
               <strong style={{ color: 'var(--text)' }}>Training Details</strong><br />
-              120 recorded checkpoint epochs on RTX 4050 GPU, Adam (lr=2e-4), EMA weights (decay=0.999),
+              50 recorded checkpoint epochs on RTX 4050 GPU (batch size 32), Adam (lr=2e-4), EMA weights (decay=0.999),
               orientation-safe augmentation. Recognition is a quality proxy, not a realism score.
             </div>
           </div>

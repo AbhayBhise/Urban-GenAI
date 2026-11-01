@@ -25,7 +25,7 @@ export default function AEArchitecture() {
         ]}
         note="Gaussian noise is added to the tile, the encoder compresses it while stashing three skip
         activations, and the decoder rebuilds a clean tile using both the bottleneck and those skips. Measured
-        result: PSNR ≈ 29.7 dB, SSIM ≈ 0.86 (see the Evaluation page)."
+        result: PSNR 29.65 dB, SSIM 0.8649, MSE 0.00617 (50 epochs, batch size 32 — see the Evaluation page)."
       />
 
       <div className="card" style={{ marginBottom: 20 }}>
@@ -119,7 +119,7 @@ export default function AEArchitecture() {
       <TrainingCurveCard
         modelKey="ae"
         title="Denoising Autoencoder Training Dynamics"
-        description="Empirical Mean Squared Error (MSE) reconstruction loss per epoch during training on UCMerced aerial tiles with σ=0.15 Gaussian corruption. Converges smoothly from 0.1155 down to 0.0058 MSE."
+        description="Empirical Mean Squared Error (MSE) reconstruction loss per epoch across 50 epochs (batch size 32) on UCMerced aerial tiles with σ=0.15 Gaussian corruption. Converges smoothly down to 0.00617 MSE (PSNR 29.65 dB, SSIM 0.8649)."
         curves={[
           { key: 'loss', label: 'MSE Reconstruction Loss', color: 'var(--accent)' },
         ]}

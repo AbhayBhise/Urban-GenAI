@@ -59,7 +59,7 @@ VAE_LATENT_CHANNELS = 64
 
 # Models
 ae = DenoisingAE().to(device)
-vae = VAE(latent_channels=VAE_LATENT_CHANNELS, skip_channels=64, skip0_channels=16).to(device)
+vae = VAE(latent_channels=VAE_LATENT_CHANNELS, skip_channels=16, skip0_channels=16).to(device)
 transformer = UrbanClassifier(num_classes=len(URBAN_CLASSES)).to(device)
 
 

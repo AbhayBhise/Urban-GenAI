@@ -200,7 +200,7 @@ def run_full_validation() -> Dict[str, Any]:
     # 2. Spatial VAE
     print("\n[C.2] Auditing Spatial Variational Autoencoder (VAE)...")
     vae_path = REPO_ROOT / "outputs" / "vae" / "model.pth"
-    vae_model = VAE(latent_channels=64, skip_channels=64, skip0_channels=16).to(device)
+    vae_model = VAE(latent_channels=64, skip_channels=16, skip0_channels=16).to(device)
     vae_metrics: Dict[str, Any] = {"available": vae_path.exists()}
     if vae_path.exists():
         try:

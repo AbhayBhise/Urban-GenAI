@@ -1,19 +1,19 @@
 {
-  "timestamp": "2026-10-24 15:55:57 UTC",
+  "timestamp": "2026-11-01 05:12:05 UTC",
   "environment": {
-    "python_version": "3.11.9",
-    "pytorch_version": "2.14.0+cpu",
+    "python_version": "3.10.11",
+    "pytorch_version": "2.14.1+cpu",
     "device": "cpu",
     "cuda_available": false,
     "gpu_name": "None (CPU Execution)",
     "vram_gb": 0.0,
-    "git_commit": "3771bf97225bd9a2a6f7a9f59c22dd9d49557346",
-    "git_branch": "feature/system-audit-and-handover",
-    "node_version": "v24.14.1",
-    "npm_version": "11.11.0"
+    "git_commit": "c98ba7b66f63f1012045c6e02ce43675a3fe3dad",
+    "git_branch": "main",
+    "node_version": "v24.12.0",
+    "npm_version": "11.6.2"
   },
   "dataset": {
-    "root_path": "C:\\Users\\Disha Satpute\\Downloads\\genAI\\Urban-GenAI\\UCMerced_LandUse\\UCMerced_LandUse\\Images",
+    "root_path": "F:\\PROJECTS\\GEN AI PROJECT\\UrbanGenAI\\UCMerced_LandUse\\UCMerced_LandUse\\Images",
     "exists": true,
     "num_classes": 21,
     "total_images": 2100,
@@ -30,34 +30,34 @@
       "available": true,
       "loaded": true,
       "parameters": 3869635,
-      "test_sample_mse": 0.000898,
-      "test_sample_psnr_db": 30.47,
-      "test_sample_ssim": 0.8322,
-      "latency_ms_per_tile": 154.02
+      "test_sample_mse": 0.001187,
+      "test_sample_psnr_db": 29.25,
+      "test_sample_ssim": 0.7749,
+      "latency_ms_per_tile": 35.55
     },
     "spatial_vae": {
       "available": true,
       "loaded": true,
-      "parameters": 3844931,
+      "parameters": 3752771,
       "latent_spatial_shape": [
         64,
         8,
         8
       ],
       "latent_dimensions": 4096,
-      "test_recon_mse": 0.000701,
-      "test_recon_psnr_db": 31.54,
-      "test_recon_ssim": 0.8805,
-      "test_kl_divergence": 11.9,
-      "latency_ms_per_tile": 98.95
+      "test_recon_mse": 0.001211,
+      "test_recon_psnr_db": 29.17,
+      "test_recon_ssim": 0.8116,
+      "test_kl_divergence": 23.99,
+      "latency_ms_per_tile": 27.36
     },
     "classifier": {
       "available": true,
       "loaded": true,
       "parameters": 11187285,
-      "test_split_accuracy": 77.46,
+      "test_split_accuracy": 87.3,
       "test_split_size": 315,
-      "latency_ms_per_tile": 157.31
+      "latency_ms_per_tile": 38.64
     },
     "conditional_gan": {
       "available": true,
@@ -102,10 +102,10 @@
       "n_layer": 4,
       "n_head": 4,
       "n_embd": 256,
-      "final_training_loss": 0.087,
-      "held_out_val_loss": 0.0836,
-      "held_out_perplexity": 1.087,
-      "bits_per_character": 0.1206
+      "final_training_loss": 0.1475,
+      "held_out_val_loss": 0.1043,
+      "held_out_perplexity": 1.11,
+      "bits_per_character": 0.1505
     }
   },
   "telemetry": {

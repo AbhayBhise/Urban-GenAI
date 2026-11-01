@@ -11,6 +11,7 @@ This directory stores non-core, historical, and presentation deliverables to mai
   - `2022_REVISION _(2.0)_COMP_SYLLABUS.pdf`: Academic reference curriculum.
 - **`notebooks/`**: Exploratory data ingestion and STAC/Planetary Computer experimental notebooks (`Untitled0.ipynb`).
 - **`runtime_logs/`**: Raw training and development execution logs (`api.log`, `frontend.log`, `train_*.log`).
+- **`turnitin_reports/`**: Originality verification reports, similarity scan receipts (<20% AI probability, 20% total similarity), and pre-submission validation drafts.
 - **`scratch_debug_assets/`**: Intermediate visual verification images and quick test routines generated during model validation.
 
 All active research code, benchmark figures, trained model checkpoints, and publication assets remain in their primary directories (`backend/`, `frontend/`, `docs/`, `outputs/`, `paper_package/`).

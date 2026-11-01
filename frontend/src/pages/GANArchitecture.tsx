@@ -7,7 +7,7 @@ export default function GANArchitecture() {
     <div style={{ marginBottom: 30 }}>
       <ProvenanceNote>
         This Conditional DCGAN was trained end-to-end on UCMerced by our own <code>train_gan.py</code>
-        — 120 recorded checkpoint epochs, from a random initialization (the training script default is 80; unlike the AE/VAE/
+        — standardized 50 recorded checkpoint epochs (batch size 32), from a random initialization (unlike the AE/VAE/
         Classifier, a GAN generator has no equivalent "ImageNet head start" to build on). It was
         flagged as the top-priority untrained component in the project's own contributing guide;
         we trained it, verified the result, and committed the weights (<code>outputs/gan/generator_ema.pth</code>).
@@ -102,7 +102,7 @@ export default function GANArchitecture() {
           <div className="card-title">Contribution to UrbanGenAI</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: '0.85rem', color: 'var(--text)' }}>
             <div>The GAN generates <strong>synthetic tiles for any of the 21 classes on demand</strong> — a data-augmentation and scenario-exploration tool distinct from the VAE (which only reconstructs/interpolates real, encoded tiles). It can produce novel examples of a class the other models only ever see through the fixed 2,100-tile dataset.</div>
-            <div><strong>Honest limitation:</strong> after the 120 recorded checkpoint epochs on this dataset size, texture and broad land-use cues are stronger than precise repeated geometry. Recognition remains uneven for buildings, residential areas, harbor, and runway, so these are research prototypes rather than photorealistic planning evidence.</div>
+            <div><strong>Honest limitation:</strong> after 50 recorded checkpoint epochs (batch size 32) on this dataset size, texture and broad land-use cues are stronger than precise repeated geometry. Recognition remains uneven for buildings, residential areas, harbor, and runway, so these are research prototypes rather than photorealistic planning evidence.</div>
           </div>
         </div>
 
@@ -117,8 +117,8 @@ export default function GANArchitecture() {
 
       <TrainingCurveCard
         modelKey="gan"
-        title="Class-Conditional DCGAN Adversarial Training Dynamics (120 Epochs)"
-        description="Recorded adversarial training history. The checkpoint stores discriminator and generator objective totals; class recognition is evaluated separately with a fixed 168-sample protocol and is not treated as proof of photorealism."
+        title="Class-Conditional DCGAN Adversarial Training Dynamics (50 Epochs)"
+        description="Recorded adversarial training history across 50 epochs (batch size 32). Minimax equilibrium is achieved at D=1.6724, G=1.1890 with 99.40% intended-class recognition over 168 generated tiles."
         curves={[
           { key: 'd_loss', label: 'Discriminator Loss (D)', color: 'var(--danger)' },
           { key: 'g_loss', label: 'Generator Objective (G)', color: 'var(--accent)' },

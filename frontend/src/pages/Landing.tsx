@@ -77,7 +77,7 @@ const PIPELINE = [
     desc: 'Flags parcels whose pattern doesn’t match what real land use looks like.',
   },
   {
-    id: 'gan', icon: ImageIcon, title: 'Augment', subtitle: 'Conditional DCGAN · 120 epochs',
+    id: 'gan', icon: ImageIcon, title: 'Augment', subtitle: 'Conditional DCGAN · 50 epochs',
     desc: 'Generates class-conditional synthetic tiles for data augmentation.',
   },
   {
@@ -89,7 +89,7 @@ const PIPELINE = [
 const STATS = [
   { key: 'classifier', label: 'Classifier accuracy' },
   { key: 'ae', label: 'AE reconstruction PSNR' },
-  { value: '4', label: 'Models, one pipeline' },
+  { value: '6', label: 'Models, one pipeline' },
 ];
 
 export default function Landing({ onEnter }: { onEnter: (view: string) => void }) {
