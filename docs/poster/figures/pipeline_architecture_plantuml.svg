@@ -27,7 +27,7 @@
   <!-- Top Title Banner -->
   <rect x="14" y="14" width="1572" height="46" rx="6" fill="url(#header-grad)"/>
   <text x="30" y="42" fill="#FFFFFF" font-size="16" font-weight="800" letter-spacing="0.02em">URBANGEN AI: COMPLETE INTEGRATED SYSTEM PIPELINE &amp; SECURITY ARCHITECTURE</text>
-  <text x="1560" y="42" text-anchor="end" fill="#93C5FD" font-size="12" font-weight="600">MIT ACADEMY OF ENGINEERING &bull; IEEE PUBLICATION TRACK</text>
+  <text x="1560" y="42" text-anchor="end" fill="#93C5FD" font-size="12" font-weight="600">MIT ACADEMY OF ENGINEERING &#8226; IEEE PUBLICATION TRACK</text>
 
   <!-- ===================================================================== -->
   <!-- ROW 1: INGESTION (x:14, w:360), RESTORATION (x:390, w:380), MANIFOLD & AUDIT (x:786, w:800) -->
@@ -42,10 +42,10 @@
     <!-- Raw Data -->
     <rect x="12" y="44" width="155" height="194" rx="5" fill="#FFFFFF" stroke="#BAE6FD" stroke-width="1.2"/>
     <text x="20" y="64" fill="#0F172A" font-size="11" font-weight="800">USGS UCMerced</text>
-    <text x="20" y="82" fill="#475569" font-size="9.5">&bull; 2,100 Aerial Tiles</text>
-    <text x="20" y="98" fill="#475569" font-size="9.5">&bull; 256&times;256 px, 0.3m GSD</text>
-    <text x="20" y="114" fill="#475569" font-size="9.5">&bull; 21 Zoning Classes</text>
-    <text x="20" y="130" fill="#475569" font-size="9.5">&bull; Stratified 90/10 Split</text>
+    <text x="20" y="82" fill="#475569" font-size="9.5">&#8226; 2,100 Aerial Tiles</text>
+    <text x="20" y="98" fill="#475569" font-size="9.5">&#8226; 256&#215;256 px, 0.3m GSD</text>
+    <text x="20" y="114" fill="#475569" font-size="9.5">&#8226; 21 Zoning Classes</text>
+    <text x="20" y="130" fill="#475569" font-size="9.5">&#8226; Stratified 90/10 Split</text>
     <rect x="20" y="142" width="139" height="22" rx="3" fill="#E0F2FE"/>
     <text x="89" y="157" text-anchor="middle" fill="#0369A1" font-size="9" font-weight="700">1,890 Train / 210 Val</text>
     <rect x="20" y="170" width="139" height="58" rx="3" fill="#F8FAFC" stroke="#E2E8F0"/>
@@ -58,11 +58,11 @@
     <!-- Noise Layer -->
     <rect x="193" y="44" width="155" height="194" rx="5" fill="#FFFFFF" stroke="#FECACA" stroke-width="1.2"/>
     <text x="201" y="64" fill="#991B1B" font-size="11" font-weight="800">Atmospheric Layer</text>
-    <text x="201" y="82" fill="#475569" font-size="9.5">&bull; Synthetic Cloud Shadow</text>
-    <text x="201" y="98" fill="#475569" font-size="9.5">&bull; Scattering &amp; Fog Haze</text>
-    <text x="201" y="114" fill="#475569" font-size="9.5">&bull; Gaussian Noise &sigma;=0.15</text>
+    <text x="201" y="82" fill="#475569" font-size="9.5">&#8226; Synthetic Cloud Shadow</text>
+    <text x="201" y="98" fill="#475569" font-size="9.5">&#8226; Scattering &amp; Fog Haze</text>
+    <text x="201" y="114" fill="#475569" font-size="9.5">&#8226; Gaussian Noise &#963;=0.15</text>
     <rect x="201" y="126" width="139" height="24" rx="3" fill="#FEE2E2"/>
-    <text x="270" y="142" text-anchor="middle" fill="#991B1B" font-size="9" font-weight="700">x&#771; &in; &Ropf;^(128&times;128&times;3)</text>
+    <text x="270" y="142" text-anchor="middle" fill="#991B1B" font-size="9" font-weight="700">x&#771; &#8712; &#8477;^(128&#215;128&#215;3)</text>
     <rect x="201" y="156" width="139" height="72" rx="3" fill="#FFF1F2" stroke="#FECDD3"/>
     <text x="270" y="174" text-anchor="middle" fill="#991B1B" font-size="9" font-weight="700">Degraded Raster</text>
     <text x="270" y="194" text-anchor="middle" fill="#475569" font-size="8.5">Simulates Adverse</text>
@@ -83,14 +83,14 @@
     <!-- Architecture Box -->
     <rect x="12" y="44" width="356" height="194" rx="5" fill="#FFFFFF" stroke="#A7F3D0" stroke-width="1.2"/>
     <text x="22" y="66" fill="#0F172A" font-size="12" font-weight="800">Denoising Autoencoder (Transposed U-Net)</text>
-    <text x="22" y="86" fill="#475569" font-size="9.5">&bull; <b>Encoder:</b> Stem(64) &rarr; L1(128) &rarr; L2(256) &rarr; L3(512) &rarr; Bottleneck(512)</text>
-    <text x="22" y="104" fill="#475569" font-size="9.5">&bull; <b>Decoder:</b> 4-Stage Transposed Conv (512&rarr;256&rarr;128&rarr;64&rarr;32&rarr;3)</text>
-    <text x="22" y="122" fill="#475569" font-size="9.5">&bull; <b>Multi-Scale Skips:</b> Direct feature concatenation preserves orthogonal street grids</text>
+    <text x="22" y="86" fill="#475569" font-size="9.5">&#8226; <tspan font-weight="bold">Encoder:</tspan> Stem(64) &#8594; L1(128) &#8594; L2(256) &#8594; L3(512) &#8594; Bottleneck(512)</text>
+    <text x="22" y="104" fill="#475569" font-size="9.5">&#8226; <tspan font-weight="bold">Decoder:</tspan> 4-Stage Transposed Conv (512&#8594;256&#8594;128&#8594;64&#8594;32&#8594;3)</text>
+    <text x="22" y="122" fill="#475569" font-size="9.5">&#8226; <tspan font-weight="bold">Multi-Scale Skips:</tspan> Direct feature concatenation preserves orthogonal street grids</text>
 
     <rect x="22" y="132" width="336" height="24" rx="3" fill="#F8FAFC" stroke="#E2E8F0"/>
-    <text x="190" y="148" text-anchor="middle" fill="#059669" font-size="9" font-weight="700">Loss: L_AE = (1/N) &sum; ||x - x&#770;||_2^2 &emsp; [Converged MSE: 0.00449 | Total: 0.00617]</text>
+    <text x="190" y="148" text-anchor="middle" fill="#059669" font-size="9" font-weight="700">Loss: L_AE = (1/N) &#8721; ||x - x&#770;||_2^2 &#8195; [Converged MSE: 0.00449 | Total: 0.00617]</text>
 
-    <div style="display:flex;">
+    
       <rect x="22" y="164" width="160" height="64" rx="4" fill="#DCFCE7" stroke="#86EFAC"/>
       <text x="102" y="184" text-anchor="middle" fill="#166534" font-size="11" font-weight="800">29.65 dB PSNR</text>
       <text x="102" y="202" text-anchor="middle" fill="#166534" font-size="9.5" font-weight="700">+7.0 dB Recovery Gain</text>
@@ -100,7 +100,7 @@
       <text x="278" y="184" text-anchor="middle" fill="#166534" font-size="11" font-weight="800">SSIM = 0.8649</text>
       <text x="278" y="202" text-anchor="middle" fill="#166534" font-size="9.5" font-weight="700">Structural Fidelity</text>
       <text x="278" y="218" text-anchor="middle" fill="#475569" font-size="8.5">Sharp Boundary Retention</text>
-    </div>
+    
   </g>
 
   <!-- Arrow: Stage 2 -> Stage 3 -->
@@ -116,10 +116,10 @@
 
     <!-- Model 2: Spatial VAE -->
     <rect x="12" y="44" width="250" height="194" rx="5" fill="#FFFFFF" stroke="#DDD6FE" stroke-width="1.2"/>
-    <text x="22" y="66" fill="#6B21A8" font-size="11" font-weight="800">Spatial &beta;-VAE (Model 2)</text>
-    <text x="22" y="84" fill="#475569" font-size="9">&bull; ResNet-18 &rarr; &mu;, log &sigma;^2 &in; &Ropf;^(64&times;8&times;8)</text>
-    <text x="22" y="100" fill="#475569" font-size="9">&bull; Preserves 2D Spatial Topology</text>
-    <text x="22" y="116" fill="#475569" font-size="9">&bull; &beta;=10^-4 prevents collapse</text>
+    <text x="22" y="66" fill="#6B21A8" font-size="11" font-weight="800">Spatial &#946;-VAE (Model 2)</text>
+    <text x="22" y="84" fill="#475569" font-size="9">&#8226; ResNet-18 &#8594; &#956;, log &#963;^2 &#8712; &#8477;^(64&#215;8&#215;8)</text>
+    <text x="22" y="100" fill="#475569" font-size="9">&#8226; Preserves 2D Spatial Topology</text>
+    <text x="22" y="116" fill="#475569" font-size="9">&#8226; &#946;=10^-4 prevents collapse</text>
     <rect x="22" y="126" width="230" height="20" rx="3" fill="#F3E8FF"/>
     <text x="137" y="140" text-anchor="middle" fill="#6B21A8" font-size="8.5" font-weight="700">L_VAE: 0.0483 (KL: 60.72 nats)</text>
     <rect x="22" y="152" width="230" height="76" rx="3" fill="#FAF5FF" stroke="#E9D5FF"/>
@@ -133,9 +133,9 @@
     <!-- Anomaly Detector -->
     <rect x="278" y="44" width="230" height="194" rx="5" fill="#FFFFFF" stroke="#FDE68A" stroke-width="1.2"/>
     <text x="288" y="66" fill="#B45309" font-size="11" font-weight="800">Unsupervised Anomaly</text>
-    <text x="288" y="84" fill="#475569" font-size="9">&bull; Disparity: |x_restored - x_vae|</text>
-    <text x="288" y="100" fill="#475569" font-size="9">&bull; Flagging Threshold: &gt; 3&sigma;</text>
-    <text x="288" y="116" fill="#475569" font-size="9">&bull; Autonomous Encroachment Pin</text>
+    <text x="288" y="84" fill="#475569" font-size="9">&#8226; Disparity: |x_restored - x_vae|</text>
+    <text x="288" y="100" fill="#475569" font-size="9">&#8226; Flagging Threshold: &gt; 3&#963;</text>
+    <text x="288" y="116" fill="#475569" font-size="9">&#8226; Autonomous Encroachment Pin</text>
     <rect x="288" y="126" width="210" height="20" rx="3" fill="#FEF3C7"/>
     <text x="393" y="140" text-anchor="middle" fill="#B45309" font-size="8.5" font-weight="700">Statistical Boundary Shift</text>
     <rect x="288" y="152" width="210" height="76" rx="3" fill="#FFFBEB" stroke="#FDE68A"/>
@@ -146,9 +146,9 @@
     <!-- Model 3: Land-Use Classifier Auditor -->
     <rect x="524" y="44" width="264" height="194" rx="5" fill="#FFFFFF" stroke="#BAE6FD" stroke-width="1.2"/>
     <text x="534" y="66" fill="#0369A1" font-size="11" font-weight="800">Land-Use Classifier (Model 3)</text>
-    <text x="534" y="84" fill="#475569" font-size="9">&bull; ResNet-18 Transfer Backbone</text>
-    <text x="534" y="100" fill="#475569" font-size="9">&bull; 21-Way Linear Projection Head</text>
-    <text x="534" y="116" fill="#475569" font-size="9">&bull; <b>Role:</b> Frozen Semantic Auditor</text>
+    <text x="534" y="84" fill="#475569" font-size="9">&#8226; ResNet-18 Transfer Backbone</text>
+    <text x="534" y="100" fill="#475569" font-size="9">&#8226; 21-Way Linear Projection Head</text>
+    <text x="534" y="116" fill="#475569" font-size="9">&#8226; <tspan font-weight="bold">Role:</tspan> Frozen Semantic Auditor</text>
     <rect x="534" y="126" width="244" height="20" rx="3" fill="#E0F2FE"/>
     <text x="656" y="140" text-anchor="middle" fill="#0369A1" font-size="8.5" font-weight="700">L_CE = 0.0615 | Adam lr=10^-4</text>
     <rect x="534" y="152" width="244" height="76" rx="3" fill="#F0F9FF" stroke="#BAE6FD"/>
@@ -170,13 +170,13 @@
     <!-- Model 4: Residual cDCGAN -->
     <rect x="12" y="44" width="354" height="204" rx="5" fill="#FFFFFF" stroke="#FDE68A" stroke-width="1.2"/>
     <text x="22" y="66" fill="#B45309" font-size="11.5" font-weight="800">Residual cDCGAN (Model 4)</text>
-    <text x="22" y="86" fill="#475569" font-size="9.5">&bull; <b>Generator:</b> 4&times; ResUpBlocks with conditional BatchNorm</text>
-    <text x="22" y="104" fill="#475569" font-size="9.5">&bull; <b>Discriminator:</b> Projection Head + Spectral Normalization</text>
-    <text x="22" y="122" fill="#475569" font-size="9.5">&bull; <b>Conditioning:</b> Class label y &in; [0..20] injected via inner product</text>
+    <text x="22" y="86" fill="#475569" font-size="9.5">&#8226; <tspan font-weight="bold">Generator:</tspan> 4&#215; ResUpBlocks with conditional BatchNorm</text>
+    <text x="22" y="104" fill="#475569" font-size="9.5">&#8226; <tspan font-weight="bold">Discriminator:</tspan> Projection Head + Spectral Normalization</text>
+    <text x="22" y="122" fill="#475569" font-size="9.5">&#8226; <tspan font-weight="bold">Conditioning:</tspan> Class label y &#8712; [0..20] injected via inner product</text>
     <rect x="22" y="132" width="334" height="24" rx="3" fill="#FEF3C7"/>
     <text x="189" y="148" text-anchor="middle" fill="#B45309" font-size="9" font-weight="700">Minimax Equilibrium: D = 1.672, G = 1.189</text>
 
-    <div style="display:flex;">
+    
       <rect x="22" y="166" width="160" height="70" rx="4" fill="#FEF3C7" stroke="#FDE68A"/>
       <text x="102" y="186" text-anchor="middle" fill="#B45309" font-size="11" font-weight="800">99.40% Proxy Rec</text>
       <text x="102" y="204" text-anchor="middle" fill="#B45309" font-size="9.5" font-weight="700">167/168 Verified</text>
@@ -185,19 +185,19 @@
       <rect x="196" y="166" width="160" height="70" rx="4" fill="#DCFCE7" stroke="#86EFAC"/>
       <text x="276" y="186" text-anchor="middle" fill="#166534" font-size="11" font-weight="800">&lt; 35 ms Latency</text>
       <text x="276" y="204" text-anchor="middle" fill="#166534" font-size="9.5" font-weight="700">32 ms Avg Inference</text>
-      <text x="276" y="222" text-anchor="middle" fill="#475569" font-size="8.5">56&times; Faster Than DDPM</text>
-    </div>
+      <text x="276" y="222" text-anchor="middle" fill="#475569" font-size="8.5">56&#215; Faster Than DDPM</text>
+    
 
     <!-- Model 5: Conditional DDPM -->
     <rect x="390" y="44" width="354" height="204" rx="5" fill="#FFFFFF" stroke="#FECACA" stroke-width="1.2"/>
     <text x="400" y="66" fill="#991B1B" font-size="11.5" font-weight="800">Conditional DDPM (Model 5)</text>
-    <text x="400" y="86" fill="#475569" font-size="9.5">&bull; <b>Diffusion U-Net:</b> Timestep- &amp; class-conditioned reverse SDE</text>
-    <text x="400" y="104" fill="#475569" font-size="9.5">&bull; <b>Accelerated Sampler:</b> 20-step deterministic DDIM sampler</text>
-    <text x="400" y="122" fill="#475569" font-size="9.5">&bull; <b>Loss:</b> 5-Loss Composite (L_simple + L_vlb + L_guide + L_sp + L_reg)</text>
+    <text x="400" y="86" fill="#475569" font-size="9.5">&#8226; <tspan font-weight="bold">Diffusion U-Net:</tspan> Timestep- &amp; class-conditioned reverse SDE</text>
+    <text x="400" y="104" fill="#475569" font-size="9.5">&#8226; <tspan font-weight="bold">Accelerated Sampler:</tspan> 20-step deterministic DDIM sampler</text>
+    <text x="400" y="122" fill="#475569" font-size="9.5">&#8226; <tspan font-weight="bold">Loss:</tspan> 5-Loss Composite (L_simple + L_vlb + L_guide + L_sp + L_reg)</text>
     <rect x="400" y="132" width="334" height="24" rx="3" fill="#FEE2E2"/>
     <text x="567" y="148" text-anchor="middle" fill="#991B1B" font-size="9" font-weight="700">Noise MSE: 0.03040 | VLB Loss: 0.02916</text>
 
-    <div style="display:flex;">
+    
       <rect x="400" y="166" width="160" height="70" rx="4" fill="#FEE2E2" stroke="#FECACA"/>
       <text x="480" y="186" text-anchor="middle" fill="#991B1B" font-size="11" font-weight="800">Pristine Crispness</text>
       <text x="480" y="204" text-anchor="middle" fill="#991B1B" font-size="9.5" font-weight="700">Highest Realism</text>
@@ -205,9 +205,9 @@
 
       <rect x="574" y="166" width="160" height="70" rx="4" fill="#DCFCE7" stroke="#86EFAC"/>
       <text x="654" y="186" text-anchor="middle" fill="#166534" font-size="11" font-weight="800">1.82s DDIM</text>
-      <text x="654" y="204" text-anchor="middle" fill="#166534" font-size="9.5" font-weight="700">15.6&times; Accelerated</text>
+      <text x="654" y="204" text-anchor="middle" fill="#166534" font-size="9.5" font-weight="700">15.6&#215; Accelerated</text>
       <text x="654" y="222" text-anchor="middle" fill="#475569" font-size="8.5">Down from 28.4s</text>
-    </div>
+    
   </g>
 
   <!-- STAGE 5: GROUNDED MUNICIPAL POLICY FORMULATION -->
@@ -219,13 +219,13 @@
     <!-- MiniGPT Architecture -->
     <rect x="12" y="44" width="374" height="204" rx="5" fill="#FFFFFF" stroke="#A7F3D0" stroke-width="1.2"/>
     <text x="22" y="66" fill="#166534" font-size="11.5" font-weight="800">Municipal Plan Generator (MiniGPT)</text>
-    <text x="22" y="86" fill="#475569" font-size="9.5">&bull; 4-Layer Pre-LayerNorm Causal Transformer (d_model=256)</text>
-    <text x="22" y="104" fill="#475569" font-size="9.5">&bull; 4 Multi-Head Attention Heads | Context Window T=192</text>
-    <text x="22" y="122" fill="#475569" font-size="9.5">&bull; Trained from scratch on Pune Municipal Corp (PMC) bylaws</text>
+    <text x="22" y="86" fill="#475569" font-size="9.5">&#8226; 4-Layer Pre-LayerNorm Causal Transformer (d_model=256)</text>
+    <text x="22" y="104" fill="#475569" font-size="9.5">&#8226; 4 Multi-Head Attention Heads | Context Window T=192</text>
+    <text x="22" y="122" fill="#475569" font-size="9.5">&#8226; Trained from scratch on Pune Municipal Corp (PMC) bylaws</text>
     <rect x="22" y="132" width="354" height="24" rx="3" fill="#F8FAFC" stroke="#E2E8F0"/>
-    <text x="199" y="148" text-anchor="middle" fill="#059669" font-size="9" font-weight="700">L_causal = -&sum; log P(w_t | w_&lt;t) = 0.10430 (Cross-Entropy)</text>
+    <text x="199" y="148" text-anchor="middle" fill="#059669" font-size="9" font-weight="700">L_causal = -&#8721; log P(w_t | w_&lt;t) = 0.10430 (Cross-Entropy)</text>
 
-    <div style="display:flex;">
+    
       <rect x="22" y="166" width="170" height="70" rx="4" fill="#DCFCE7" stroke="#86EFAC"/>
       <text x="107" y="186" text-anchor="middle" fill="#166534" font-size="11" font-weight="800">1.110 Perplexity</text>
       <text x="107" y="204" text-anchor="middle" fill="#166534" font-size="9.5" font-weight="700">Near-Theoretical (1.0)</text>
@@ -235,7 +235,7 @@
       <text x="291" y="186" text-anchor="middle" fill="#166534" font-size="11" font-weight="800">0.1505 Bits/Char</text>
       <text x="291" y="204" text-anchor="middle" fill="#166534" font-size="9.5" font-weight="700">Dense Domain Code</text>
       <text x="291" y="222" text-anchor="middle" fill="#475569" font-size="8.5">High Token Retention</text>
-    </div>
+    
 
     <!-- Actionable Bylaws Box -->
     <rect x="402" y="44" width="386" height="204" rx="5" fill="#FFFFFF" stroke="#A7F3D0" stroke-width="1.2"/>
@@ -251,14 +251,14 @@
 
     <rect x="412" y="190" width="366" height="48" rx="4" fill="#F0FDF4" stroke="#BBF7D0"/>
     <text x="422" y="208" fill="#166534" font-size="9.5" font-weight="700">Percolation &amp; Rooftop Mandate:</text>
-    <text x="422" y="226" fill="#475569" font-size="9">Mandates on-site rainwater harvesting &amp; solar installation on commercial plots &gt;1,000 m&sup2;.</text>
+    <text x="422" y="226" fill="#475569" font-size="9">Mandates on-site rainwater harvesting &amp; solar installation on commercial plots &gt;1,000 m&#178;.</text>
   </g>
 
   <!-- Connecting Arrows Between Stage 3, 4, and 5 -->
   <!-- CLS down to GAN & DIFF -->
   <path d="M 1442 322 L 1442 332 L 191 332 L 191 340" fill="none" stroke="#0284C7" stroke-width="2" marker-end="url(#arrow-blue)"/>
   <rect x="1390" y="325" width="105" height="15" rx="3" fill="#FFFFFF" stroke="#0284C7"/>
-  <text x="1442" y="336" text-anchor="middle" fill="#0284C7" font-size="7.5" font-weight="700">Condition y &in; [0..20]</text>
+  <text x="1442" y="336" text-anchor="middle" fill="#0284C7" font-size="7.5" font-weight="700">Condition y &#8712; [0..20]</text>
 
   <!-- CLS to Policy Engine -->
   <line x1="1442" y1="322" x2="1442" y2="340" stroke="#059669" stroke-width="2" marker-end="url(#arrow-green)"/>
@@ -274,33 +274,33 @@
     <!-- Edge Gateway -->
     <rect x="12" y="40" width="496" height="82" rx="5" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.2"/>
     <text x="22" y="58" fill="#0F172A" font-size="10.5" font-weight="800">1. Guarded API Gateway &amp; File Sanitization</text>
-    <text x="22" y="74" fill="#475569" font-size="9">&bull; <b>URBANGEN_API_KEY:</b> Header injection required for all internal REST microservices.</text>
-    <text x="22" y="90" fill="#475569" font-size="9">&bull; <b>SlowAPI Token-Bucket Rate Limiter:</b> Prevents query abuse, DoS, and GPU tensor buffer saturation.</text>
-    <text x="22" y="106" fill="#475569" font-size="9">&bull; <b>Magic-Byte Inspection:</b> Strictly validates image headers (&lt;10MB) to prevent shell execution.</text>
+    <text x="22" y="74" fill="#475569" font-size="9">&#8226; <tspan font-weight="bold">URBANGEN_API_KEY:</tspan> Header injection required for all internal REST microservices.</text>
+    <text x="22" y="90" fill="#475569" font-size="9">&#8226; <tspan font-weight="bold">SlowAPI Token-Bucket Rate Limiter:</tspan> Prevents query abuse, DoS, and GPU tensor buffer saturation.</text>
+    <text x="22" y="106" fill="#475569" font-size="9">&#8226; <tspan font-weight="bold">Magic-Byte Inspection:</tspan> Strictly validates image headers (&lt;10MB) to prevent shell execution.</text>
 
     <!-- Green AI Hardware -->
     <rect x="522" y="40" width="528" height="82" rx="5" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.2"/>
     <text x="532" y="58" fill="#0F172A" font-size="10.5" font-weight="800">2. Air-Gapped Edge Hardware &amp; Green AI Audit</text>
-    <text x="532" y="74" fill="#475569" font-size="9">&bull; <b>100% On-Premises Execution:</b> Consumer NVIDIA RTX 4050 Laptop GPU (6GB VRAM, 75W TGP capped).</text>
-    <text x="532" y="90" fill="#475569" font-size="9">&bull; <b>Complete Data Sovereignty:</b> Air-gapped deployment prevents sensitive municipal GIS leakage to external clouds.</text>
-    <text x="532" y="106" fill="#475569" font-size="9">&bull; <b>Certified Energy Audit:</b> 66.3 min training &bull; 0.133 kWh energy &bull; 94.8 g CO&#8322;e carbon (CEA factor 0.713 kg/kWh).</text>
+    <text x="532" y="74" fill="#475569" font-size="9">&#8226; <tspan font-weight="bold">100% On-Premises Execution:</tspan> Consumer NVIDIA RTX 4050 Laptop GPU (6GB VRAM, 75W TGP capped).</text>
+    <text x="532" y="90" fill="#475569" font-size="9">&#8226; <tspan font-weight="bold">Complete Data Sovereignty:</tspan> Air-gapped deployment prevents sensitive municipal GIS leakage to external clouds.</text>
+    <text x="532" y="106" fill="#475569" font-size="9">&#8226; <tspan font-weight="bold">Certified Energy Audit:</tspan> 66.3 min training &#8226; 0.133 kWh energy &#8226; 94.8 g CO&#8322;e carbon (CEA factor 0.713 kg/kWh).</text>
 
     <!-- Closed Loop Governance -->
     <rect x="1064" y="40" width="496" height="82" rx="5" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.2"/>
     <text x="1074" y="58" fill="#0F172A" font-size="10.5" font-weight="800">3. Closed-Loop Human-in-the-Loop Municipal Governance</text>
-    <text x="1074" y="74" fill="#475569" font-size="9">&bull; <b>Advisory Decision Support:</b> System serves strictly as assistive drafting support for municipal architects.</text>
-    <text x="1074" y="90" fill="#475569" font-size="9">&bull; <b>Autonomous Enforcement Prohibited:</b> Automated legal zoning sanctions or penal actions strictly forbidden.</text>
-    <text x="1074" y="106" fill="#475569" font-size="9">&bull; <b>Domain Shift Uncertainty:</b> Flags high reconstruction disparity when applied outside pre-trained fabrics.</text>
+    <text x="1074" y="74" fill="#475569" font-size="9">&#8226; <tspan font-weight="bold">Advisory Decision Support:</tspan> System serves strictly as assistive drafting support for municipal architects.</text>
+    <text x="1074" y="90" fill="#475569" font-size="9">&#8226; <tspan font-weight="bold">Autonomous Enforcement Prohibited:</tspan> Automated legal zoning sanctions or penal actions strictly forbidden.</text>
+    <text x="1074" y="106" fill="#475569" font-size="9">&#8226; <tspan font-weight="bold">Domain Shift Uncertainty:</tspan> Flags high reconstruction disparity when applied outside pre-trained fabrics.</text>
   </g>
 
   <!-- Bottom Legend Banner -->
   <g transform="translate(14, 768)">
     <rect width="1572" height="42" rx="6" fill="#F1F5F9" stroke="#E2E8F0"/>
     <text x="24" y="794" fill="#334155" font-size="10" font-weight="700">PIPELINE SUMMARY &amp; COOPERATIVE PROTOCOL:</text>
-    <text x="310" y="794" fill="#475569" font-size="9.5">Raw Ingestion (USGS) &rarr; U-Net DAE (+7.0 dB PSNR) &rarr; Spatial &beta;-VAE (&mu;,&sigma;&sup2;) &rarr; ResNet-18 Auditor (98.10%) &rarr; Dual cDCGAN (99.40%) &amp; DDPM (0.0304 MSE) &rarr; MiniGPT Policy (1.110 PPL)</text>
+    <text x="310" y="794" fill="#475569" font-size="9.5">Raw Ingestion (USGS) &#8594; U-Net DAE (+7.0 dB PSNR) &#8594; Spatial &#946;-VAE (&#956;,&#963;&#178;) &#8594; ResNet-18 Auditor (98.10%) &#8594; Dual cDCGAN (99.40%) &amp; DDPM (0.0304 MSE) &#8594; MiniGPT Policy (1.110 PPL)</text>
   </g>
 
   <!-- Footer Banner -->
-  <text x="30" y="836" fill="#64748B" font-size="9">UrbanGen AI Architecture &bull; Department of Computer Engineering, MIT Academy of Engineering, Pune &bull; Uniform 50-Epoch Protocol</text>
-  <text x="1570" y="836" text-anchor="end" fill="#64748B" font-size="9">Certified Academic Capstone Track 2026 &bull; NVIDIA RTX 4050 6GB (0.133 kWh Green AI)</text>
+  <text x="30" y="836" fill="#64748B" font-size="9">UrbanGen AI Architecture &#8226; Department of Computer Engineering, MIT Academy of Engineering, Pune &#8226; Uniform 50-Epoch Protocol</text>
+  <text x="1570" y="836" text-anchor="end" fill="#64748B" font-size="9">Certified Academic Capstone Track 2026 &#8226; NVIDIA RTX 4050 6GB (0.133 kWh Green AI)</text>
 </svg>

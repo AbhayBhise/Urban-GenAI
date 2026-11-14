@@ -150,6 +150,29 @@ NOISY .down.> GATEWAY : Gateway File Sanitization
 @enduml"""
     return puml_code
 
+def clean_svg_xml(svg_text):
+    replacements = [
+        ("&bull;", "&#8226;"),
+        ("&times;", "&#215;"),
+        ("&sigma;", "&#963;"),
+        ("&rarr;", "&#8594;"),
+        ("&in;", "&#8712;"),
+        ("&Ropf;", "&#8477;"),
+        ("&beta;", "&#946;"),
+        ("&mu;", "&#956;"),
+        ("&sup2;", "&#178;"),
+        ("&sum;", "&#8721;"),
+        ("&emsp;", "&#8195;"),
+        ("<div style=\"display:flex;\">", ""),
+        ("<div style='display:flex;'>", ""),
+        ("</div>", ""),
+        ("<b>", "<tspan font-weight=\"bold\">"),
+        ("</b>", "</tspan>"),
+    ]
+    for old, new in replacements:
+        svg_text = svg_text.replace(old, new)
+    return svg_text
+
 def render_vector_svg_and_png(workspace):
     """
     Renders high-resolution vector SVG and 300 DPI PNG of the architecture diagram
@@ -463,6 +486,8 @@ def render_vector_svg_and_png(workspace):
   <text x="30" y="836" fill="#64748B" font-size="9">UrbanGen AI Architecture &bull; Department of Computer Engineering, MIT Academy of Engineering, Pune &bull; Uniform 50-Epoch Protocol</text>
   <text x="1570" y="836" text-anchor="end" fill="#64748B" font-size="9">Certified Academic Capstone Track 2026 &bull; NVIDIA RTX 4050 6GB (0.133 kWh Green AI)</text>
 </svg>"""
+
+    svg_code = clean_svg_xml(svg_code)
 
     svg_path = os.path.join(workspace, "docs", "poster", "figures", "clean_project_architecture.svg")
     png_path = os.path.join(workspace, "docs", "poster", "figures", "clean_project_architecture.png")
