@@ -254,11 +254,11 @@ Inference is executed via dynamic top-$p$ ($p=0.9$, $\tau=0.7$) nucleus sampling
 \label{tab:arch_specs}
 \centering
 \scriptsize
-\renewcommand{\arraystretch}{1.12}
-\setlength{\tabcolsep}{4pt}
-\begin{tabularx}{\textwidth}{@{}l l l l c c c@{}}
+\renewcommand{\arraystretch}{1.15}
+\setlength{\tabcolsep}{3.5pt}
+\begin{tabularx}{\textwidth}{@{}l c >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X c c c@{}}
 \toprule
-\textbf{Module} & \textbf{Input Dimension} & \textbf{Encoder / Backbone} & \textbf{Decoder / Output Head} & \textbf{Param Count} & \textbf{Inference Latency} & \textbf{VRAM Footprint} \\
+\textbf{Module} & \textbf{Input Dimension} & \textbf{Encoder / Backbone} & \textbf{Decoder / Output Head} & \textbf{Params} & \textbf{Latency} & \textbf{VRAM} \\
 \midrule
 \textbf{Model 1: U-Net DAE} & $3 \times 128 \times 128$ & ResNet Stem $\to$ L1(64) $\to$ L2(128) $\to$ L3(256) & 4-Stage Transposed Conv + Skips & 3.87\,M & 8.4\,ms & 410\,MB \\
 \textbf{Model 2: Spatial $\beta$-VAE} & $3 \times 128 \times 128$ & Deep Conv Stem $\to \boldsymbol{\mu}, \log\boldsymbol{\sigma}^2 \in \mathbb{R}^{64 \times 8 \times 8}$ & 4-Stage Transposed Conv (0.2 Drop) & 3.75\,M & 11.2\,ms & 528\,MB \\
@@ -351,27 +351,26 @@ ResNet-18 achieves near-optimal classification (98.10\% accuracy, 0.9784 Macro F
 \subsection{Task 3: Generative Aerial Parcel Synthesis Benchmark}
 Table~\ref{tab:bench_generative} compares the proposed Residual cDCGAN and Conditional DDPM against standard generative aerial models across semantic recognition proxy, sampling latency, and edge feasibility.
 
-\begin{table}[htbp]
+\begin{table*}[!t]
 \caption{Generative Synthesis Benchmark: Fidelity vs. Edge Efficiency}
 \label{tab:bench_generative}
 \centering
 \scriptsize
-\renewcommand{\arraystretch}{1.12}
-\setlength{\tabcolsep}{3pt}
-\begin{tabularx}{\columnwidth}{@{}X c c c r@{}}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}l l c c l@{}}
 \toprule
 \textbf{Generative Architecture} & \textbf{Sampling Method} & \textbf{Semantic Proxy} $\uparrow$ & \textbf{Inference Latency} $\downarrow$ & \textbf{Edge Status} \\
 \midrule
 Vanilla DCGAN~\cite{radford2015unsupervised} & 1-Step Direct & 68.20\% & 24\,ms & Severe Mode Drop \\
-cGAN (Mirza et al.~\cite{mirza2014conditional}) & 1-Step Direct & 72.40\% & 26\,ms & Edge Real-Time \\
+cGAN~\cite{mirza2014conditional} & 1-Step Direct & 72.40\% & 26\,ms & Edge Real-Time \\
 WGAN-GP~\cite{gulrajani2017improved} & 1-Step Direct & 81.50\% & 28\,ms & Edge Real-Time \\
 StyleGAN2-ADA~\cite{karras2020training} & 1-Step Direct & 91.20\% & 68\,ms & High VRAM (4.8GB) \\
-Standard DDPM~\cite{ho2020denoising} & 1000-Step Ancestral & 96.80\% & 28,400\,ms & Impractical at Edge \\
+Standard DDPM~\cite{ho2020denoising} & 1000-Step Ancestral & 96.80\% & 28,400\,ms (28.4\,s) & Impractical at Edge \\
 \textbf{UrbanGen cDCGAN (Ours)} & \textbf{1-Step Residual} & $\mathbf{99.40\%}$ & $\mathbf{32\,ms}$ & \textbf{Champion Speed} \\
-\textbf{UrbanGen DDPM (Ours)} & \textbf{20-Step DDIM} & $\mathbf{98.60\%}$ & $\mathbf{1,820\,ms}$ & \textbf{Champion Fidelity} \\
+\textbf{UrbanGen DDPM (Ours)} & \textbf{20-Step DDIM} & $\mathbf{98.60\%}$ & $\mathbf{1,820\,ms}$ ($\mathbf{1.82\,s}$) & \textbf{Champion Fidelity} \\
 \bottomrule
-\end{tabularx}
-\end{table}
+\end{tabular*}
+\end{table*}
 
 \noindent\textbf{Empirical Analysis of Generative Trade-offs:}
 \begin{itemize}
@@ -403,7 +402,8 @@ To rigorously assess the individual architectural components, four dedicated abl
 \label{tab:ablation_skips}
 \centering
 \scriptsize
-\renewcommand{\arraystretch}{1.1}
+\renewcommand{\arraystretch}{1.15}
+\setlength{\tabcolsep}{3.5pt}
 \begin{tabularx}{\columnwidth}{@{}X c c c@{}}
 \toprule
 \textbf{Skip Configuration} & \textbf{Avg PSNR (dB)} $\uparrow$ & \textbf{SSIM} $\uparrow$ & \textbf{Dense Housing Gain} \\
@@ -423,10 +423,11 @@ Stem + Layer 1 ($64 \to 64$) & 28.15 & 0.8240 & +4.2\,dB \\
 \label{tab:ablation_beta}
 \centering
 \scriptsize
-\renewcommand{\arraystretch}{1.1}
-\begin{tabularx}{\columnwidth}{@{}l c c l@{}}
+\renewcommand{\arraystretch}{1.2}
+\setlength{\tabcolsep}{3pt}
+\begin{tabularx}{\columnwidth}{@{}l c c >{\raggedright\arraybackslash}X@{}}
 \toprule
-$\boldsymbol{\beta}$ \textbf{Value} & \textbf{Recon PSNR (dB)} $\uparrow$ & \textbf{KL Divergence (nats)} & \textbf{Manifold Quality} \\
+$\boldsymbol{\beta}$ \textbf{Value} & \textbf{PSNR (dB)} $\uparrow$ & \textbf{KL (nats)} & \textbf{Manifold Quality} \\
 \midrule
 $\beta = 1.0$ (Standard) & 21.40 & 4.12 & Posterior Collapse / Severe Blur \\
 $\beta = 10^{-2}$ & 24.15 & 18.50 & Blurry Edges / Smudged Grids \\
@@ -447,9 +448,8 @@ Table~\ref{tab:eval_matrix} presents the unified performance parameters across a
 \caption{Standard Evaluation Parameter Matrix for Multi-Model Performance Verification}
 \centering
 \scriptsize
-\renewcommand{\arraystretch}{1.12}
-\setlength{\tabcolsep}{3pt}
-\begin{tabularx}{\columnwidth}{@{}l l c l c@{}}
+\renewcommand{\arraystretch}{1.15}
+\begin{tabular*}{\columnwidth}{@{\extracolsep{\fill}}l l c l c@{}}
 \toprule
 \textbf{Model Pipeline} & \textbf{Primary Metric} & \textbf{Value} & \textbf{Secondary} & \textbf{Value} \\
 \midrule
@@ -460,7 +460,7 @@ Residual cDCGAN & Proxy Rec. & $\mathbf{99.40\%}$ & Minimax & $D{=}1.67, G{=}1.1
 Conditional DDPM & Noise MSE & $\mathbf{0.0304}$ & DDIM Speed & $20$ Steps (1.82s) \\
 MiniGPT Transformer & Perplexity & $\mathbf{1.110}$ & BPC & $\mathbf{0.1505}$ \\
 \bottomrule
-\end{tabularx}
+\end{tabular*}
 \label{tab:eval_matrix}
 \end{table}
 
