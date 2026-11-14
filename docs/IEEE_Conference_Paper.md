@@ -24,12 +24,12 @@
 Rapid global urbanization presents pressing challenges in zoning compliance, green cover preservation, transit infrastructure allocation, and microclimate resilience. Traditional Geographic Information System (GIS) workflows demand extensive manual photointerpretation and lack real-time scenario simulation capabilities. In this paper, we propose **UrbanGen AI**, an end-to-end, edge-deployable multi-model generative artificial intelligence framework engineered specifically for sustainable smart city planning and digital twin prototyping. To bridge the critical gap between pixel-level remote sensing restoration and qualitative municipal policy formulation, UrbanGen AI coordinates six specialized deep learning architectures under a unified, reproducible 50-epoch benchmark protocol on the UCMerced LandUse dataset:
 1. A multi-scale skip-connected **U-Net Denoising Autoencoder** achieving **29.65 dB PSNR** (+7.0 dB gain over baseline, SSIM **0.8649**) to eliminate atmospheric scattering and sensor noise ($\sigma = 0.15$);
 2. A **Spatial Variational Autoencoder ($\beta$-VAE)** preserving 2D spatial topology in an explicit $\mathbb{R}^{64 \times 8 \times 8}$ latent tensor, achieving **27.49 dB PSNR** with smooth continuous manifold interpolation and unsupervised anomaly detection ($>3\sigma$ reconstruction disparity);
-3. A frozen ImageNet-adapted **ResNet-18 Territorial Classifier** attaining **98.10% validation accuracy** (Macro F1: **0.9784**) serving as an autonomous semantic fidelity auditor;
+3. A frozen ImageNet-adapted **ResNet-18 Territorial Classifier** attaining **98.10% validation accuracy** (87.30% held-out test accuracy, Macro F1: **0.9784**) serving as an autonomous semantic fidelity auditor;
 4. A **Residual Class-Conditional DCGAN (cDCGAN)** incorporating Spectral Normalization and projection conditioning that synthesizes aerial parcels in **32 ms** with **99.40% intended-class proxy recognition**;
 5. A **Class-Conditional Denoising Diffusion Probabilistic Model (DDPM)** accelerated by a 20-step deterministic DDIM sampler achieving **0.0304 noise MSE** and superior structural photorealism; and
 6. A domain-specialized causal **Transformer (MiniGPT)** yielding **1.110 perplexity** (0.1505 bits/character) to formulate legally grounded Floor Space Index (FSI) and Transit-Oriented Development (TOD) bylaws.
 
-Executed entirely on consumer edge hardware (NVIDIA RTX 4050 6 GB, **0.133 kWh cumulative energy, 94.0 g CO$_2$e**), UrbanGen AI demonstrates that municipal intelligence can operate with high structural fidelity while preserving institutional data sovereignty.
+Executed entirely on consumer edge hardware (NVIDIA RTX 4050 6 GB, **0.112 kWh cumulative energy, 79.1 g CO$_2$e**), UrbanGen AI demonstrates that municipal intelligence can operate with high structural fidelity while preserving institutional data sovereignty.
 
 **Keywords:** Generative Artificial Intelligence, Remote Sensing, Denoising Autoencoder, Variational Autoencoder, Conditional GAN, Diffusion Models, Causal Transformer, Smart Cities, Green AI.
 
@@ -56,7 +56,7 @@ Despite these advances, existing generative architectures in the remote sensing 
 1. **Unified Cooperative Architecture:** An end-to-end framework integrating six neural network modules that bridge raw satellite imagery ingestion, signal restoration, continuous latent space traversal, generative synthesis, frozen semantic auditing, and municipal policy drafting.
 2. **Topology-Preserving Spatial Manifold and Disparity Anomaly Engine:** A Spatial $\beta$-VAE that retains a 3D tensor latent representation $\mathbb{R}^{64 \times 8 \times 8}$ under a calibrated $\beta = 10^{-4}$ Pareto objective, enabling smooth land-use morphing without posterior collapse and flagging unauthorized zoning encroachments ($>3\sigma$ disparity).
 3. **Dual-Modality Synthesis with Objective Frozen Auditing:** An adversarial cDCGAN stabilized via Spectral Normalization and projection conditioning alongside a 20-step accelerated DDIM diffusion sampler, benchmarked against an independent, frozen ResNet-18 classifier (99.40% semantic proxy fidelity).
-4. **Edge-Feasible Green AI Audit & Grounded Policy Engine:** Benchmarking on a consumer NVIDIA RTX 4050 Laptop GPU under a uniform 50-epoch protocol (0.133 kWh total footprint, 94.0 g CO$_2$e) while demonstrating zero cloud data leakage for municipal data sovereignty.
+4. **Edge-Feasible Green AI Audit & Grounded Policy Engine:** Benchmarking on a consumer NVIDIA RTX 4050 Laptop GPU under a uniform 50-epoch protocol (0.112 kWh total footprint, 79.1 g CO$_2$e) while demonstrating zero cloud data leakage for municipal data sovereignty.
 
 ---
 
@@ -98,12 +98,12 @@ Despite these advances, existing generative architectures in the remote sensing 
 ```
 
 ### Complete Layer Specifications & Parameter Counts
-- **Model 1 (U-Net DAE):** 2.45M parameters | 8.4 ms latency | 412 MB VRAM
-- **Model 2 (Spatial $\beta$-VAE):** 3.12M parameters | 11.2 ms latency | 528 MB VRAM
-- **Model 3 (ResNet-18 Auditor):** 11.18M parameters | 5.1 ms latency | 380 MB VRAM
-- **Model 4 (Residual cDCGAN):** 4.86M parameters | 32.0 ms latency | 620 MB VRAM
-- **Model 5 (Conditional DDPM):** 2.82M parameters | 1,820 ms latency | 890 MB VRAM
-- **Model 6 (MiniGPT Transformer):** 1.84M parameters | 45.0 ms latency | 290 MB VRAM
+- **Model 1 (U-Net DAE):** 3.87M parameters (3,869,635) | 8.4 ms latency | 410 MB VRAM
+- **Model 2 (Spatial $\beta$-VAE):** 3.75M parameters (3,752,771) | 11.2 ms latency | 528 MB VRAM
+- **Model 3 (ResNet-18 Auditor):** 11.19M parameters (11,187,285) | 5.1 ms latency | 380 MB VRAM
+- **Model 4 (Residual cDCGAN):** 15.79M parameters (8.82M Gen, 6.97M Disc) | 32.0 ms latency | 620 MB VRAM
+- **Model 5 (Conditional DDPM):** 2.80M parameters (2,798,531) | 1,820 ms latency | 890 MB VRAM
+- **Model 6 (MiniGPT Transformer):** 3.23M parameters (3,225,088) | 45.0 ms latency | 290 MB VRAM
 
 ---
 

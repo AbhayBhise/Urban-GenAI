@@ -57,9 +57,9 @@ We have executed a **complete, top-to-bottom scientific overhaul** of the manusc
 * **Concrete Remediation Implemented:**
   1. **Added Algorithm 1 (Cooperative Pipeline Execution):** A formal, 25-line algorithmic pseudocode specification in LaTeX `algorithmic` format detailing step-by-step tensor flow from ingestion through restoration, latent projection, dual synthesis, frozen auditing, and policy decoding.
   2. **Added Table I (Architectural Layer Specifications & Parameters):** An exhaustive technical table detailing:
-     - Exact input tensor shapes ($3 \times 128 \times 128$, $\mathbb{R}^{100}$, $\mathbb{R}^{192}$).
+     - Exact input tensor shapes ($3 \times 128 \times 128$, $\mathbb{R}^{128}$, $\mathbb{R}^{192}$).
      - Layer-by-layer encoder/decoder compositions (ResNet stem, transposed convolutions, attention heads).
-     - Parameter counts for all 6 models (from 1.84M in MiniGPT to 11.18M in ResNet-18).
+     - Parameter counts for all 6 models verified directly against model checkpoints: 3.87M (DAE), 3.75M (VAE), 11.19M (ResNet-18), 15.79M (cDCGAN: 8.82M Gen, 6.97M Disc), 2.80M (DDPM), 3.23M (MiniGPT).
      - Inference latency per patch (from 5.1 ms to 1,820 ms).
      - Peak VRAM footprint (from 290 MB to 890 MB).
   3. **Complete Loss Derivations:** Wrote out full mathematical objective formulations for all 6 models ($\mathcal{L}_{\text{AE}}$, $\mathcal{L}_{\text{VAE}}$, $\mathcal{L}_{\text{CE}}$, $\mathcal{L}_G$, $\mathcal{L}_{\text{DDPM}}$, $\mathcal{L}_{\text{causal}}$).
