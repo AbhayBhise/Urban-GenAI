@@ -1,0 +1,1166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UrbanGen AI — Academic Research & Defense Poster</title>
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@600;700;800&family=JetBrains+Mono:wght@500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- MathJax -->
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$']]
+      },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" async></script>
+
+  <style>
+    /* ==========================================================================
+       AUTHENTIMARK-INSPIRED ACADEMIC POSTER (MIT AOE)
+       Large Readable Fonts · Genuine PlantUML Architecture · 6 Complete Models & Losses
+       ========================================================================== */
+    :root {
+      --navy-950: #040A14;
+      --navy-900: #0A192F; /* AuthentiMark Deep Navy */
+      --navy-850: #0F2342;
+      --navy-800: #142B50;
+      --gold-500: #F59E0B; /* Section Bar Accent */
+      --gold-400: #FBBF24;
+      --blue-600: #0284C7;
+      --blue-700: #0369A1;
+      --cyan-400: #38BDF8;
+      --cyan-50:  #F0F9FF;
+      --emerald-600: #059669;
+      --emerald-700: #047857;
+      --emerald-50:  #ECFDF5;
+      --purple-600:  #7C3AED;
+      --purple-50:   #F5F3FF;
+      --rose-600:    #E11D48;
+      --rose-50:     #FFF1F2;
+      --amber-600:   #D97706;
+      --amber-50:    #FFFBEB;
+      --slate-50:  #F8FAFC;
+      --slate-100: #F1F5F9;
+      --slate-200: #E2E8F0;
+      --slate-300: #CBD5E1;
+      --slate-600: #475569;
+      --slate-700: #334155;
+      --slate-800: #1E293B;
+      --slate-900: #0F172A;
+      --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      --font-display: 'Space Grotesk', system-ui, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: #94A3B8;
+      font-family: var(--font-sans);
+      color: var(--slate-900);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 24px 16px;
+      -webkit-font-smoothing: antialiased;
+      font-size: 16px;
+    }
+
+    /* Screen Action Bar */
+    .screen-toolbar {
+      width: 100%;
+      max-width: 1440px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--navy-900);
+      color: #FFFFFF;
+      padding: 14px 28px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+      border: 1px solid rgba(255,255,255,0.12);
+    }
+    .toolbar-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      font-size: 1.05rem;
+      font-weight: 700;
+    }
+    .toolbar-pill {
+      background: rgba(245, 158, 11, 0.25);
+      border: 1px solid var(--gold-500);
+      color: var(--gold-400);
+      padding: 4px 12px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-family: var(--font-mono);
+      font-weight: 700;
+    }
+    .toolbar-right {
+      display: flex;
+      gap: 14px;
+      align-items: center;
+    }
+    .btn-green {
+      background: linear-gradient(135deg, #059669 0%, #047857 100%);
+      color: #FFFFFF;
+      text-decoration: none;
+      padding: 10px 22px;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 4px 12px rgba(5, 150, 105, 0.35);
+      transition: transform 0.15s;
+    }
+    .btn-green:hover { transform: translateY(-1px); }
+    .btn-blue {
+      background: linear-gradient(135deg, #0284C7 0%, #0369A1 100%);
+      color: #FFFFFF;
+      border: none;
+      padding: 10px 22px;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 4px 12px rgba(2, 132, 199, 0.35);
+      transition: transform 0.15s;
+    }
+    .btn-blue:hover { transform: translateY(-1px); }
+
+    /* ==========================================================================
+       MAIN POSTER CANVAS (Large, Bold Typography & Flawless Proportion)
+       ========================================================================== */
+    .poster-canvas {
+      width: 100%;
+      max-width: 1440px;
+      background: #FFFFFF;
+      border: 2px solid var(--slate-300);
+      border-radius: 12px;
+      box-shadow: 0 25px 70px rgba(0,0,0,0.28);
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      box-sizing: border-box;
+    }
+
+    /* ---- 1. HEADER BANNER ---- */
+    .poster-header {
+      background: var(--navy-900);
+      color: #FFFFFF;
+      border-radius: 10px;
+      padding: 24px 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 28px;
+      border: 1px solid rgba(255,255,255,0.15);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+    }
+    .header-left-col {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+    .college-logo-container {
+      background: #FFFFFF;
+      border-radius: 8px;
+      padding: 8px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.25);
+      flex-shrink: 0;
+    }
+    .college-logo-container img {
+      height: 56px;
+      width: auto;
+      display: block;
+    }
+    .header-title-block {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .inst-tag {
+      font-size: 0.95rem;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      color: var(--gold-500);
+      text-transform: uppercase;
+    }
+    .main-title {
+      font-family: var(--font-display);
+      font-size: 2.80rem;
+      font-weight: 800;
+      color: #FFFFFF;
+      letter-spacing: -0.02em;
+      line-height: 1.1;
+    }
+    .sub-title {
+      font-size: 1.10rem;
+      color: #CBD5E1;
+      line-height: 1.35;
+      margin-top: 3px;
+      font-weight: 500;
+    }
+    .header-right-col {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      text-align: right;
+      gap: 6px;
+      border-left: 2px solid rgba(255,255,255,0.18);
+      padding-left: 24px;
+      flex-shrink: 0;
+    }
+    .group-label {
+      font-size: 0.85rem;
+      font-weight: 800;
+      color: var(--gold-500);
+      letter-spacing: 0.10em;
+      text-transform: uppercase;
+    }
+    .members-list {
+      font-size: 0.92rem;
+      color: #F1F5F9;
+      line-height: 1.45;
+      font-family: var(--font-mono);
+      font-weight: 600;
+    }
+    .guide-label {
+      font-size: 0.85rem;
+      font-weight: 800;
+      color: #38BDF8;
+      letter-spacing: 0.10em;
+      text-transform: uppercase;
+      margin-top: 6px;
+    }
+    .guide-name {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #FFFFFF;
+    }
+
+    /* ---- 2. SECTION TITLES (Gold Bar | Title) ---- */
+    .section-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: var(--navy-900);
+      letter-spacing: -0.01em;
+      margin-bottom: 12px;
+    }
+    .title-bar {
+      width: 6px;
+      height: 24px;
+      background: var(--gold-500);
+      border-radius: 3px;
+      display: inline-block;
+    }
+
+    /* ---- 3. ROW 1: PROBLEM STATEMENT & OBJECTIVES ---- */
+    .top-cards-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    .content-card {
+      background: #FFFFFF;
+      border: 1.8px solid var(--slate-200);
+      border-radius: 10px;
+      padding: 20px 24px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.03);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .content-p {
+      font-size: 1.05rem;
+      line-height: 1.60;
+      color: var(--slate-700);
+    }
+    .content-p strong {
+      color: var(--navy-900);
+      font-weight: 700;
+    }
+    .content-bullets {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 6px;
+    }
+    .content-bullets li {
+      font-size: 1.02rem;
+      line-height: 1.55;
+      color: var(--slate-700);
+      position: relative;
+      padding-left: 18px;
+    }
+    .content-bullets li::before {
+      content: "•";
+      position: absolute;
+      left: 0;
+      color: var(--gold-500);
+      font-weight: 900;
+      font-size: 1.2rem;
+      line-height: 1.2;
+    }
+
+    /* ---- 4. ROW 2: FOUR HIGH-IMPACT METRIC CARDS ---- */
+    .metrics-strip {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 18px;
+    }
+    .metric-block {
+      background: var(--navy-900);
+      border-radius: 10px;
+      padding: 20px 24px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      box-shadow: 0 5px 16px rgba(10, 25, 47, 0.22);
+      border: 1px solid rgba(255,255,255,0.10);
+    }
+    .metric-val {
+      font-family: var(--font-display);
+      font-size: 2.50rem;
+      font-weight: 800;
+      color: #FFFFFF;
+      letter-spacing: -0.02em;
+      line-height: 1.1;
+    }
+    .metric-sub {
+      font-size: 0.95rem;
+      color: var(--cyan-400);
+      font-family: var(--font-mono);
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+
+    /* ---- 5. ROW 3: FULL-WIDTH PLANTUML SYSTEM ARCHITECTURE ---- */
+    .arch-section {
+      background: #FFFFFF;
+      border: 1.8px solid var(--slate-200);
+      border-radius: 10px;
+      padding: 20px 24px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.03);
+    }
+    .arch-diagram-wrapper {
+      width: 100%;
+      background: #FFFFFF;
+      border: 1.5px solid var(--slate-200);
+      border-radius: 8px;
+      padding: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: visible;
+    }
+    .arch-diagram-wrapper img {
+      width: 100%;
+      height: auto;
+      max-height: 440px;
+      object-fit: contain;
+      display: block;
+    }
+
+    /* ---- 6. ROW 4: 6 COOPERATIVE DEEP LEARNING MODELS ---- */
+    .models-section {
+      background: #FFFFFF;
+      border: 1.8px solid var(--slate-200);
+      border-radius: 10px;
+      padding: 20px 24px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.03);
+    }
+    .models-3col-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 18px;
+      margin-top: 14px;
+    }
+    .model-box {
+      border: 2px solid var(--slate-300);
+      border-radius: 8px;
+      background: #FFFFFF;
+      padding: 16px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+    }
+    .model-box:hover {
+      border-color: var(--blue-600);
+    }
+    .model-box-hdr {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px solid var(--slate-200);
+      padding-bottom: 8px;
+    }
+    .model-box-name {
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: var(--navy-900);
+    }
+    .pill {
+      font-size: 0.78rem;
+      font-family: var(--font-mono);
+      font-weight: 800;
+      padding: 3px 8px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .pill-green { background: var(--emerald-50); color: var(--emerald-700); border: 1.2px solid #A7F3D0; }
+    .pill-purple { background: var(--purple-50); color: var(--purple-600); border: 1.2px solid #DDD6FE; }
+    .pill-blue { background: var(--cyan-50); color: var(--blue-700); border: 1.2px solid #BAE6FD; }
+    .pill-amber { background: var(--amber-50); color: var(--amber-600); border: 1.2px solid #FDE68A; }
+    .pill-red { background: var(--rose-50); color: var(--rose-600); border: 1.2px solid #FECDD3; }
+
+    .model-desc {
+      font-size: 0.92rem;
+      line-height: 1.48;
+      color: var(--slate-700);
+    }
+    .model-desc strong {
+      color: var(--navy-900);
+    }
+    .model-img-frame {
+      width: 100%;
+      height: 160px;
+      background: #FFFFFF;
+      border: 1.5px solid var(--slate-200);
+      border-radius: 6px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 4px 0;
+    }
+    .model-img-frame img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      display: block;
+    }
+    .model-formula-box {
+      background: var(--slate-50);
+      border: 1.5px solid var(--slate-200);
+      border-left: 4px solid var(--blue-600);
+      padding: 6px 10px;
+      font-family: var(--font-mono);
+      font-size: 0.88rem;
+      color: var(--navy-900);
+      font-weight: 700;
+      overflow-x: auto;
+      white-space: nowrap;
+    }
+    .loss-callout {
+      background: var(--slate-100);
+      border: 1px solid var(--slate-300);
+      border-radius: 4px;
+      padding: 5px 8px;
+      font-family: var(--font-mono);
+      font-size: 0.88rem;
+      color: var(--slate-800);
+      font-weight: 700;
+      display: flex;
+      justify-content: space-between;
+    }
+    .loss-callout span.val {
+      color: var(--rose-600);
+      font-weight: 800;
+    }
+    .model-stat-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.90rem;
+      font-weight: 800;
+      color: var(--emerald-700);
+      background: var(--emerald-50);
+      border: 1.2px solid #A7F3D0;
+      padding: 6px 10px;
+      border-radius: 6px;
+      margin-top: 2px;
+    }
+
+    /* ---- 7. ROW 5: RESEARCH EVALUATION PARAMETRICS & HEROIC GRAPHS ---- */
+    .eval-section {
+      background: #FFFFFF;
+      border: 1.8px solid var(--slate-200);
+      border-radius: 10px;
+      padding: 20px 24px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.03);
+    }
+    .eval-large-grid {
+      display: grid;
+      grid-template-columns: 1.15fr 1.85fr;
+      gap: 22px;
+      margin-top: 14px;
+    }
+    .tables-subcol {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+    .table-title {
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: var(--navy-900);
+      margin-bottom: 8px;
+    }
+    .academic-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.92rem;
+      line-height: 1.45;
+    }
+    .academic-table th {
+      background: var(--navy-900);
+      color: #FFFFFF;
+      font-weight: 800;
+      padding: 9px 12px;
+      text-align: left;
+      font-size: 0.90rem;
+      letter-spacing: 0.02em;
+    }
+    .academic-table td {
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--slate-200);
+      color: var(--slate-700);
+      font-family: var(--font-mono);
+      font-size: 0.90rem;
+    }
+    .academic-table tr:nth-child(even) td { background: var(--slate-50); }
+    .academic-table td.bold { font-weight: 800; color: var(--slate-900); font-family: var(--font-sans); }
+    .academic-table td.champ { font-weight: 800; color: var(--emerald-700); }
+    .academic-table td.loss { font-weight: 800; color: var(--rose-600); }
+
+    /* Heroic Large Graphs 2x2 Grid */
+    .heroic-graphs-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+    }
+    .hero-graph-card {
+      border: 1.8px solid var(--slate-200);
+      border-radius: 8px;
+      background: #FFFFFF;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.05);
+    }
+    .hero-graph-hdr {
+      background: var(--slate-100);
+      padding: 9px 12px;
+      font-size: 0.92rem;
+      font-weight: 800;
+      color: var(--navy-900);
+      border-bottom: 1.5px solid var(--slate-200);
+    }
+    .hero-graph-img {
+      width: 100%;
+      height: 220px; /* Big, generous, perfectly clear height! */
+      object-fit: contain;
+      background: #FFFFFF;
+      display: block;
+      padding: 6px;
+    }
+
+    /* ---- 8. ROW 6: SECURITY & HARDENING + OVERALL RANKING ---- */
+    .security-ranking-row {
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 20px;
+    }
+    .sec-card {
+      border-color: var(--rose-600);
+      background: #FFFDFD;
+    }
+    .sec-item {
+      font-size: 0.96rem;
+      line-height: 1.55;
+      color: var(--slate-700);
+      margin-bottom: 6px;
+    }
+    .sec-item strong {
+      color: var(--rose-600);
+      font-weight: 800;
+    }
+    .sec-item code {
+      font-family: var(--font-mono);
+      background: #FFE4E6;
+      color: #9F1239;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 700;
+      font-size: 0.88rem;
+    }
+    .rank-card {
+      border-color: var(--emerald-600);
+      background: #FAFCFA;
+    }
+    .rank-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px dashed var(--slate-200);
+      padding: 8px 0;
+    }
+    .rank-item:last-child { border-bottom: none; }
+    .rank-name {
+      font-size: 0.96rem;
+      font-weight: 800;
+      color: var(--navy-900);
+    }
+    .rank-val {
+      font-family: var(--font-mono);
+      font-size: 0.90rem;
+      font-weight: 800;
+      background: #DCFCE7;
+      color: #065F46;
+      padding: 4px 10px;
+      border-radius: 4px;
+    }
+
+    /* ---- 9. FOOTER BANNER ---- */
+    .poster-footer {
+      background: var(--navy-900);
+      color: #FFFFFF;
+      border-radius: 10px;
+      padding: 18px 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 24px;
+      border: 1px solid rgba(255,255,255,0.15);
+    }
+    .footer-left {
+      font-size: 1.00rem;
+      color: #CBD5E1;
+      line-height: 1.5;
+    }
+    .footer-left strong {
+      color: var(--gold-500);
+      font-weight: 800;
+    }
+    .footer-right {
+      font-size: 0.95rem;
+      color: #94A3B8;
+      font-family: var(--font-mono);
+      text-align: right;
+      font-weight: 600;
+      line-height: 1.45;
+    }
+
+    /* Print media */
+    @media print {
+      body {
+        background: #FFFFFF !important;
+        padding: 0 !important;
+        margin: 0 !important;
+      }
+      .screen-toolbar {
+        display: none !important;
+      }
+      .poster-canvas {
+        max-width: 100% !important;
+        width: 100% !important;
+        border: none !important;
+        box-shadow: none !important;
+        padding: 10mm !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Screen Toolbar -->
+  <div class="screen-toolbar">
+    <div class="toolbar-left">
+      <span>MIT Academy of Engineering · Department of Computer Engineering</span>
+      <span class="toolbar-pill">PlantUML 300 DPI Vector Flow · Uniform 50-Epoch Protocol</span>
+    </div>
+    <div class="toolbar-right">
+      <a class="btn-green" href="UrbanGen_AI_Poster_AuthentiMark.pptx" download="UrbanGen_AI_Poster_AuthentiMark.pptx">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Download Canva PPTX (.pptx)
+      </a>
+      <a class="btn-green" style="background: linear-gradient(135deg, #7C3AED 0%, #5B21B6 100%);" href="project_architecture.puml" download="project_architecture.puml">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+        Download PlantUML (.puml)
+      </a>
+      <a class="btn-green" style="background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);" href="UrbanGen_AI_Model_Performance_and_Glossary.pdf" download="UrbanGen_AI_Model_Performance_and_Glossary.pdf">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        Download Evaluation & Glossary PDF
+      </a>
+      <button class="btn-blue" onclick="window.print()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+        Print / Save PDF Poster
+      </button>
+    </div>
+  </div>
+
+  <!-- MAIN POSTER CANVAS -->
+  <div class="poster-canvas" id="poster">
+
+    <!-- 1. AUTHENTIMARK-STYLE HEADER BANNER -->
+    <header class="poster-header">
+      <div class="header-left-col">
+        <!-- Official MIT AOE Logo -->
+        <div class="college-logo-container">
+          <img src="figures/mit_aoe_logo.png" alt="MIT Academy of Engineering Logo" />
+        </div>
+        <div class="header-title-block">
+          <div class="inst-tag">MIT ACADEMY OF ENGINEERING · DEPT. OF COMPUTER ENGINEERING</div>
+          <h1 class="main-title">UrbanGen AI</h1>
+          <div class="sub-title">Multi-Model Deep Generative Framework for Satellite Imagery Processing &amp; Autonomous Urban Planning</div>
+        </div>
+      </div>
+
+      <div class="header-right-col">
+        <div class="group-label">GROUP MEMBERS:</div>
+        <div class="members-list">
+          Abhay Bhise (202201040024)<br>
+          Disha Satpute (202201040027)<br>
+          Vaishnavi Phad (202201040033)<br>
+          Vedant Ingle (202201040065)
+        </div>
+        <div class="guide-label">GUIDES:</div>
+        <div class="guide-name">PROF. SAVITA MANE &amp; PROF. PRAMOD GANJEWAR</div>
+      </div>
+    </header>
+
+    <!-- 2. ROW 1: PROBLEM STATEMENT & OBJECTIVES -->
+    <div class="top-cards-row">
+      <!-- Problem Statement -->
+      <div class="content-card">
+        <div class="section-title"><span class="title-bar"></span>Problem Statement</div>
+        <p class="content-p">
+          Optical remote sensing rasters suffer from atmospheric cloud attenuation and sensor noise ($\sigma=0.15$). Cadastral municipal datasets lack labeled samples for minority urban land-use categories. Monolithic foundation models cannot simultaneously restore high-frequency signal fidelity, navigate spatial latent manifolds, augment minority classes, and draft legally grounded municipal zoning bylaws.
+        </p>
+      </div>
+
+      <!-- Objectives -->
+      <div class="content-card">
+        <div class="section-title"><span class="title-bar"></span>Objectives</div>
+        <ul class="content-bullets">
+          <li><strong>Modular Multi-Model Pipeline:</strong> Deploy 6 specialized deep neural networks (DAE, $\beta$-VAE, Classifier, cDCGAN, DDPM, MiniGPT).</li>
+          <li><strong>Guaranteed 50-Epoch Benchmark:</strong> Benchmark all models under uniform batch size 32, eliminating batch-dependent gradient bias.</li>
+          <li><strong>Air-Gapped Edge Sovereignty:</strong> Execute 100% on-premises on consumer hardware (NVIDIA RTX 4050, 0.133 kWh), eliminating GIS data leaks.</li>
+          <li><strong>Grounded Policy Formulation:</strong> Translate spatial analytics into actionable municipal bylaws (FSI, TOD, and green buffers).</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 3. ROW 2: FOUR HIGH-IMPACT METRIC KPI BLOCKS -->
+    <div class="metrics-strip">
+      <div class="metric-block">
+        <div class="metric-val">2,100</div>
+        <div class="metric-sub">UCMerced Aerial Imagery Tiles</div>
+      </div>
+      <div class="metric-block">
+        <div class="metric-val">256 &times; 256</div>
+        <div class="metric-sub">0.3m GSD, 21 Zoning Classes</div>
+      </div>
+      <div class="metric-block">
+        <div class="metric-val">1,890 / 210</div>
+        <div class="metric-sub">Stratified Train / Val Split (50 Epochs)</div>
+      </div>
+      <div class="metric-block">
+        <div class="metric-val">6 Models</div>
+        <div class="metric-sub">RTX 4050 6GB · 0.133 kWh Green AI</div>
+      </div>
+    </div>
+
+    <!-- 4. ROW 3: FULL-WIDTH SHARED PIPELINE & PLANTUML ARCHITECTURE -->
+    <div class="arch-section">
+      <div class="section-title"><span class="title-bar"></span>Integrated End-to-End System Pipeline &amp; PlantUML Architecture</div>
+      <div class="arch-diagram-wrapper">
+        <img src="figures/full_project_architecture_plantuml.svg" alt="Integrated System Architecture Diagram Generated with PlantUML" />
+      </div>
+    </div>
+
+    <!-- 5. ROW 4: COOPERATIVE NEURAL ARCHITECTURES (6 Core Models with Embedded Outputs & Losses) -->
+    <div class="models-section">
+      <div class="section-title"><span class="title-bar"></span>Cooperative Neural Architectures: Model Roles, Losses &amp; Empirical Outputs</div>
+      
+      <div class="models-3col-grid">
+        <!-- Model 1: U-Net DAE -->
+        <div class="model-box">
+          <div class="model-box-hdr">
+            <span class="model-box-name">Model 1: Denoising AE (U-Net)</span>
+            <span class="pill pill-green">Restoration</span>
+          </div>
+          <div class="model-desc">
+            <strong>Architecture:</strong> Stem &rarr; L1(64) &rarr; L2(128) &rarr; L3(256) &rarr; Bottleneck(512) with multi-scale skip connections.
+          </div>
+          <div class="model-img-frame">
+            <img src="figures/fig_ae_crisp_restoration.png" alt="Crisp Restoration Output" />
+          </div>
+          <div class="model-formula-box">
+            $\mathcal{L}_{\text{AE}} = \frac{1}{N}\sum \|x - \hat{x}\|_2^2$
+          </div>
+          <div class="loss-callout">
+            <span>Final Conv Loss:</span>
+            <span class="val">0.00449 MSE (0.00617 total)</span>
+          </div>
+          <div class="model-stat-row">
+            <span>PSNR: 29.65 dB (+7.0 dB Gain)</span>
+            <span>SSIM: 0.8649</span>
+          </div>
+        </div>
+
+        <!-- Model 2: Spatial β-VAE -->
+        <div class="model-box">
+          <div class="model-box-hdr">
+            <span class="model-box-name">Model 2: Spatial β-VAE</span>
+            <span class="pill pill-purple">Manifold</span>
+          </div>
+          <div class="model-desc">
+            <strong>Architecture:</strong> ResNet-18 Encoder &rarr; Spatial Latent $z \in \mathbb{R}^{64\times 8\times 8}$ &rarr; 4-Stage Transposed Conv Decoder.
+          </div>
+          <div class="model-img-frame">
+            <img src="figures/fig_vae_multi_interpolation.png" alt="Spatial VAE Manifold Traversal" />
+          </div>
+          <div class="model-formula-box">
+            $\mathcal{L}_{\text{VAE}} = (0.7\mathcal{L}_1 + 0.3\mathcal{L}_{\text{MSE}}) + 10^{-4} D_{\text{KL}}$
+          </div>
+          <div class="loss-callout">
+            <span>Final Conv Loss:</span>
+            <span class="val">0.04830 (KL: 60.72 nats)</span>
+          </div>
+          <div class="model-stat-row">
+            <span>PSNR: 27.49 dB</span>
+            <span>Anomaly Disparity: &gt;3&sigma;</span>
+          </div>
+        </div>
+
+        <!-- Model 3: Land-Use Classifier -->
+        <div class="model-box">
+          <div class="model-box-hdr">
+            <span class="model-box-name">Model 3: Land-Use Classifier</span>
+            <span class="pill pill-blue">Zoning Audit</span>
+          </div>
+          <div class="model-desc">
+            <strong>Architecture:</strong> ResNet-18 Transfer Backbone + Adaptive AvgPool + 21-Class Territorial Validation Head.
+          </div>
+          <div class="model-img-frame">
+            <img src="figures/fig_classifier_metrics.png" alt="Classifier Metrics" />
+          </div>
+          <div class="model-formula-box">
+            $\mathcal{L}_{\text{CE}} = -\sum_{i=1}^{21} y_i \log \hat{y}_i$
+          </div>
+          <div class="loss-callout">
+            <span>Final Cross-Entropy:</span>
+            <span class="val">0.06150 (Epoch 50)</span>
+          </div>
+          <div class="model-stat-row">
+            <span>Val Accuracy: 98.10%</span>
+            <span>Macro F1: 0.9784</span>
+          </div>
+        </div>
+
+        <!-- Model 4: Residual cDCGAN -->
+        <div class="model-box">
+          <div class="model-box-hdr">
+            <span class="model-box-name">Model 4: Residual cDCGAN</span>
+            <span class="pill pill-amber">Fast Synthesis</span>
+          </div>
+          <div class="model-desc">
+            <strong>Architecture:</strong> 4x ResUpBlock Generator + Projection Discriminator with Spectral Normalization + AC-GAN Head.
+          </div>
+          <div class="model-img-frame">
+            <img src="figures/fig_gan_diverse_generation.png" alt="cDCGAN 21-Class Synthesis Grid" />
+          </div>
+          <div class="model-formula-box">
+            $D(x, y) = \psi(\phi(x)) + y^T V \phi(x), \quad \mathcal{L}_G = \mathcal{L}_{\text{adv}} + 0.8\mathcal{L}_{\text{AC}}$
+          </div>
+          <div class="loss-callout">
+            <span>Equilibrium Loss:</span>
+            <span class="val">D=1.67, G=1.19</span>
+          </div>
+          <div class="model-stat-row">
+            <span>Semantic Proxy: 99.40%</span>
+            <span>Latency: &lt;35 ms</span>
+          </div>
+        </div>
+
+        <!-- Model 5: Conditional DDPM (5 Losses) -->
+        <div class="model-box" style="border-color: var(--rose-600);">
+          <div class="model-box-hdr">
+            <span class="model-box-name" style="color: var(--rose-600);">Model 5: Conditional DDPM (5 Losses)</span>
+            <span class="pill pill-red">Diffusion</span>
+          </div>
+          <div class="model-desc">
+            <strong>Architecture:</strong> Timestep &amp; Class-Conditioned U-Net ($T=1000$ schedule) with 20-step deterministic DDIM sampler.
+          </div>
+          <div class="model-img-frame">
+            <img src="figures/fig_diffusion_metrics.png" alt="Diffusion Noise MSE Convergence" />
+          </div>
+          <div class="model-formula-box" style="border-left-color: var(--rose-600); font-size: 0.78rem;">
+            $\mathcal{L}_{\text{total}} = \mathcal{L}_{\text{simple}} + \mathcal{L}_{\text{vlb}} + \mathcal{L}_{\text{guide}} + \mathcal{L}_{\text{spatial}} + \mathcal{L}_{\text{reg}}$
+          </div>
+          <div class="loss-callout">
+            <span>Noise MSE / VLB Loss:</span>
+            <span class="val">0.0304 / 0.02916</span>
+          </div>
+          <div class="model-stat-row" style="background: var(--rose-50); color: var(--rose-600); border-color: #FECDD3;">
+            <span>20-Step DDIM: 1.82s (15.6&times; faster)</span>
+            <span>Crisp Boundaries</span>
+          </div>
+        </div>
+
+        <!-- Model 6: MiniGPT Policy Engine -->
+        <div class="model-box" style="border-color: var(--emerald-600);">
+          <div class="model-box-hdr">
+            <span class="model-box-name" style="color: var(--emerald-600);">Model 6: Urban Plan (MiniGPT)</span>
+            <span class="pill pill-green">Policy NLP</span>
+          </div>
+          <div class="model-desc">
+            <strong>Architecture:</strong> 4-Layer Pre-LN Causal Transformer ($d_{\text{model}}=256$, 4 heads, $T=192$) trained on PMC Development Control Rules.
+          </div>
+          <div class="content-card" style="padding: 10px 14px; margin: 4px 0; background: var(--slate-50); border: 1.5px solid var(--slate-200); height: 160px; justify-content: center;">
+            <div style="font-size: 0.88rem; font-weight: 800; color: var(--navy-900);">Actionable Municipal Bylaw Directives:</div>
+            <div style="font-size: 0.84rem; color: var(--slate-700); line-height: 1.45; margin-top: 4px;">
+              • <strong>FSI Allocation:</strong> Base FSI 1.8&ndash;2.4 along transit spines with density caps.<br>
+              • <strong>TOD Corridors:</strong> Mandates 15% riverbank green buffer setback.<br>
+              • <strong>Environmental:</strong> Mandates solar canopy &amp; rainwater tanks on plots &gt;1000m&sup2;.
+            </div>
+          </div>
+          <div class="model-formula-box" style="border-left-color: var(--emerald-600);">
+            $\mathcal{L}_{\text{causal}} = -\sum \log P(w_t \mid w_{<t})$
+          </div>
+          <div class="loss-callout">
+            <span>Final Causal Loss:</span>
+            <span class="val">0.10430 (PPL: 1.110)</span>
+          </div>
+          <div class="model-stat-row">
+            <span>Perplexity: 1.110</span>
+            <span>0.1505 Bits/Char (BPC)</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 6. ROW 5: PERFORMANCE METRICS & HEROIC LARGE RESEARCH GRAPHS -->
+    <div class="eval-section">
+      <div class="section-title"><span class="title-bar"></span>Performance Metrics &amp; Comparative Analysis (Uniform 50-Epoch Protocol)</div>
+      
+      <div class="eval-large-grid">
+        <!-- Left Sub-Col: Tables -->
+        <div class="tables-subcol">
+          <div>
+            <div class="table-title">TABLE I: Multi-Model Performance Verification (50 Epochs / 32 Batch)</div>
+            <table class="academic-table">
+              <thead>
+                <tr>
+                  <th>Model Pipeline</th>
+                  <th>Primary Metric</th>
+                  <th>Secondary Metric</th>
+                  <th>Final Loss</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="bold">Denoising U-Net AE</td>
+                  <td class="champ">29.65 dB PSNR</td>
+                  <td>SSIM: 0.8649</td>
+                  <td class="loss">0.00617</td>
+                </tr>
+                <tr>
+                  <td class="bold">Spatial β-VAE</td>
+                  <td>27.49 dB PSNR</td>
+                  <td>KL: 60.72 nats</td>
+                  <td class="loss">0.04830</td>
+                </tr>
+                <tr>
+                  <td class="bold">ResNet-18 Classifier</td>
+                  <td class="champ">98.10% Val Acc</td>
+                  <td>Macro F1: 0.9784</td>
+                  <td class="loss">0.06150</td>
+                </tr>
+                <tr>
+                  <td class="bold">Residual cDCGAN</td>
+                  <td class="champ">99.40% Proxy Rec</td>
+                  <td>D=1.67, G=1.19</td>
+                  <td class="loss">Minimax Eq</td>
+                </tr>
+                <tr>
+                  <td class="bold">Conditional DDPM</td>
+                  <td class="champ">0.0304 Noise MSE</td>
+                  <td>DDIM: 20 Steps</td>
+                  <td class="loss">0.02916</td>
+                </tr>
+                <tr>
+                  <td class="bold">MiniGPT Transformer</td>
+                  <td class="champ">1.110 Perplexity</td>
+                  <td>0.1505 Bits/Char</td>
+                  <td class="loss">0.10430</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div>
+            <div class="table-title">TABLE II: Generative Synthesis &amp; Edge Latency Benchmark</div>
+            <table class="academic-table">
+              <thead>
+                <tr>
+                  <th>Generative Model</th>
+                  <th>Visual Quality</th>
+                  <th>Inference</th>
+                  <th>Advantage / Trade-off</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="bold">Spatial β-VAE</td>
+                  <td>Smooth Structural</td>
+                  <td>12 ms</td>
+                  <td>Fast Latent Navigation</td>
+                </tr>
+                <tr>
+                  <td class="bold">Residual cDCGAN</td>
+                  <td>High Realism</td>
+                  <td class="champ">32 ms</td>
+                  <td>Sub-35ms Augmentation</td>
+                </tr>
+                <tr>
+                  <td class="bold">DDPM (1000 Steps)</td>
+                  <td>Pristine Crispness</td>
+                  <td>28.4 s</td>
+                  <td>Baseline Diffusion (Slow)</td>
+                </tr>
+                <tr>
+                  <td class="bold">DDPM (20-Step DDIM)</td>
+                  <td>Photorealistic</td>
+                  <td class="champ">1.82 s</td>
+                  <td>15.6&times; Accelerated Sampler</td>
+                </tr>
+                <tr>
+                  <td class="bold">MiniGPT Policy</td>
+                  <td>Grounded Text</td>
+                  <td class="champ">45 ms</td>
+                  <td>PMC Municipal Bylaws</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Right Sub-Col: 4 Large Heroic Research Graphs (2x2 Grid) -->
+        <div class="heroic-graphs-grid">
+          <!-- Graph 1 -->
+          <div class="hero-graph-card">
+            <div class="hero-graph-hdr">Figure 2: Class-Wise PSNR Comparison (+7.0 dB Gain)</div>
+            <img src="figures/fig_psnr_comparison.png" class="hero-graph-img" alt="Class-wise PSNR Comparison" />
+          </div>
+          <!-- Graph 2 -->
+          <div class="hero-graph-card">
+            <div class="hero-graph-hdr">Figure 9: Initial vs Final 50-Epoch Multi-Model Loss Bars</div>
+            <img src="figures/fig_multimodel_loss_bars.png" class="hero-graph-img" alt="Multi-Model Loss Comparison" />
+          </div>
+          <!-- Graph 3 -->
+          <div class="hero-graph-card">
+            <div class="hero-graph-hdr">Figure 7: cDCGAN Minimax Equilibrium Dynamics</div>
+            <img src="figures/fig_gan_dynamics.png" class="hero-graph-img" alt="GAN Training Dynamics" />
+          </div>
+          <!-- Graph 4 -->
+          <div class="hero-graph-card">
+            <div class="hero-graph-hdr">Figure 10: Energy Consumption (kWh) &amp; Carbon Footprint</div>
+            <img src="figures/fig_energy_carbon_breakdown.png" class="hero-graph-img" alt="Energy and Carbon Footprint" />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 7. ROW 6: SECURITY & HARDENING + OVERALL RANKING -->
+    <div class="security-ranking-row">
+      <!-- Security Card -->
+      <div class="content-card sec-card">
+        <div class="section-title"><span class="title-bar" style="background: var(--rose-600);"></span>System Security &amp; Website Protection</div>
+        <div class="sec-item"><strong>1. Guarded API Gateway:</strong> Fast endpoints require verified <code>URBANGEN_API_KEY</code> header injection, rejecting unauthorized crawlers.</div>
+        <div class="sec-item"><strong>2. SlowAPI Rate Limiter:</strong> Token-bucket limiter blocks DDoS attempts, query abuse, and GPU memory saturation.</div>
+        <div class="sec-item"><strong>3. Magic-Byte Inspection:</strong> Strict MIME inspection and 10MB ceiling reject malicious binaries; input resolution clamped to 128&times;128.</div>
+        <div class="sec-item"><strong>4. Air-Gapped Data Sovereignty:</strong> 100% on-premises execution on RTX 4050 ensures sensitive municipal GIS data never leaks to cloud services.</div>
+        <div class="sec-item"><strong>5. Human-in-the-Loop Limits:</strong> Generative outputs serve strictly as advisory drafting support; autonomous legal zoning enforcement is prohibited.</div>
+      </div>
+
+      <!-- Ranking Card -->
+      <div class="content-card rank-card">
+        <div class="section-title"><span class="title-bar" style="background: var(--emerald-600);"></span>Overall Ranking: Champion Models per Task</div>
+        <div class="rank-item">
+          <span class="rank-name">1. Best Restorer: U-Net Skip DAE</span>
+          <span class="rank-val">29.65 dB PSNR (+7.0 dB Gain)</span>
+        </div>
+        <div class="rank-item">
+          <span class="rank-name">2. Best Territorial Auditor: ResNet-18 Classifier</span>
+          <span class="rank-val">98.10% Val Acc (F1: 0.9784)</span>
+        </div>
+        <div class="rank-item">
+          <span class="rank-name">3. Best Fast Generator: Residual cDCGAN</span>
+          <span class="rank-val">99.40% Proxy Rec (&lt;35ms)</span>
+        </div>
+        <div class="rank-item">
+          <span class="rank-name">4. Best Latent Manifold: Spatial β-VAE</span>
+          <span class="rank-val">27.49 dB PSNR / 60.72 nats KL</span>
+        </div>
+        <div class="rank-item">
+          <span class="rank-name">5. Best Photorealism: DDPM (20-Step DDIM)</span>
+          <span class="rank-val">0.0304 Noise MSE (1.82s)</span>
+        </div>
+        <div class="rank-item">
+          <span class="rank-name">6. Best Policy Engine: MiniGPT Causal Transformer</span>
+          <span class="rank-val">1.110 PPL (0.1505 BPC)</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 8. FOOTER BANNER -->
+    <footer class="poster-footer">
+      <div class="footer-left">
+        <strong>MIT ACADEMY OF ENGINEERING, PUNE</strong> — B.Tech Capstone Project Defense (2025–2026) · Savitribai Phule Pune University<br>
+        Submitted in partial fulfillment of the requirements for the degree of Bachelor of Technology in Computer Engineering.
+      </div>
+      <div class="footer-right">
+        IEEE Publication Track Submission Verified<br>
+        100% Reproducible Open-Source Package
+      </div>
+    </footer>
+
+  </div>
+
+</body>
+</html>

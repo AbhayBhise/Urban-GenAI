@@ -18,6 +18,7 @@ import {
   Moon,
   Loader2,
   X,
+  Presentation,
 } from 'lucide-react';
 import { apiFetch } from './lib/api';
 import { useAppStore, ViewType } from './store';
@@ -42,6 +43,7 @@ const Diffusion = lazy(() => import('./pages/Diffusion'));
 const Glossary = lazy(() => import('./pages/Glossary'));
 const FutureScope = lazy(() => import('./pages/FutureScope'));
 const SystemArchitecture = lazy(() => import('./pages/SystemArchitecture'));
+const Poster = lazy(() => import('./pages/Poster'));
 
 // Architecture Deep-Dive Pages
 const VAEArchitecture = lazy(() => import('./pages/VAEArchitecture'));
@@ -63,6 +65,7 @@ const PRELOAD_MAP: Partial<Record<ViewType, () => Promise<any>>> = {
   research: () => import('./pages/Research'),
   datasets: () => import('./pages/DatasetExplorer'),
   system: () => import('./pages/SystemInformation'),
+  poster: () => import('./pages/Poster'),
 };
 
 const preloadView = (view: ViewType) => {
@@ -357,6 +360,7 @@ export default function App() {
       title: 'WORKSPACE & REFERENCE',
       items: [
         { id: 'landing' as ViewType, label: 'Home Dashboard', icon: Sparkles },
+        { id: 'poster' as ViewType, label: 'Academic Poster', icon: Presentation, badge: '60M' },
         { id: 'glossary' as ViewType, label: 'Urban AI Glossary', icon: BookOpen, badge: 'Glossary' },
         { id: 'system-architecture' as ViewType, label: 'System Architecture', icon: Layers },
       ],
@@ -460,6 +464,8 @@ export default function App() {
         return <Glossary />;
       case 'future-scope':
         return <FutureScope />;
+      case 'poster':
+        return <Poster />;
       default:
         return <Landing onEnter={(v) => setActiveView(v as ViewType)} />;
     }

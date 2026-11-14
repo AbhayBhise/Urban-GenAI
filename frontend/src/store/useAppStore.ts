@@ -20,7 +20,8 @@ export type ViewType =
   | 'research'
   | 'glossary'
   | 'future-scope'
-  | 'system-architecture';
+  | 'system-architecture'
+  | 'poster';
 
 export type ThemeMode = 'dark' | 'light';
 
@@ -142,7 +143,7 @@ const getInitialView = (): ViewType => {
     'landing', 'ae', 'vae', 'classifier', 'plan-generator', 'governance',
     'gan', 'datasets', 'system', 'model-explorer', 'model-comparison',
     'training', 'evaluation', 'diffusion', 'research', 'glossary',
-    'future-scope', 'system-architecture'
+    'future-scope', 'system-architecture', 'poster'
   ];
   return valid.includes(hash as ViewType) ? (hash as ViewType) : 'landing';
 };

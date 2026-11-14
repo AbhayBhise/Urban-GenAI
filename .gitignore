@@ -85,4 +85,9 @@ Thumbs.db
 2022_REVISION _(2.0)_COMP_SYLLABUS.pdf
 Untitled0.ipynb
 
+# Scratch and test files
+scratch/
+plantuml.jar
+test_*.svg
+
 *.zip

@@ -1,0 +1,249 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 450" width="100%" height="100%" style="background:#FFFFFF; font-family:'Plus Jakarta Sans', Arial, sans-serif;">
+  <defs>
+    <filter id="shadow" x="-5%" y="-5%" width="110%" height="115%" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="#0F172A" flood-opacity="0.08" />
+    </filter>
+    <marker id="arrow-blue" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#0284C7" />
+    </marker>
+    <marker id="arrow-green" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#059669" />
+    </marker>
+    <marker id="arrow-purple" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#7C3AED" />
+    </marker>
+    <linearGradient id="grad-navy" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0A192F" />
+      <stop offset="100%" stop-color="#142B50" />
+    </linearGradient>
+  </defs>
+
+  <!-- Border & Canvas -->
+  <rect x="2" y="2" width="1596" height="446" rx="10" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="2"/>
+
+  <!-- ===================================================================== -->
+  <!-- 1. STAGE 1: REMOTE SENSING INGESTION (x: 16, w: 230)                   -->
+  <!-- ===================================================================== -->
+  <g transform="translate(16, 16)">
+    <rect width="230" height="418" rx="8" fill="#F0F9FF" stroke="#BAE6FD" stroke-width="1.5" filter="url(#shadow)"/>
+    <rect x="10" y="10" width="210" height="28" rx="5" fill="#0284C7"/>
+    <text x="115" y="28" text-anchor="middle" fill="#FFFFFF" font-size="11" font-weight="800" letter-spacing="0.03em">1. REMOTE SENSING INPUT</text>
+
+    <!-- Raw Data -->
+    <rect x="12" y="48" width="206" height="150" rx="6" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.2"/>
+    <text x="22" y="70" fill="#0A192F" font-size="12" font-weight="800">USGS UCMerced Dataset</text>
+    <text x="22" y="92" fill="#475569" font-size="10.5">• 2,100 Orthoimagery Tiles</text>
+    <text x="22" y="110" fill="#475569" font-size="10.5">• 256×256 px, 0.3m GSD</text>
+    <text x="22" y="128" fill="#475569" font-size="10.5">• 21 Urban Land-Use Classes</text>
+    <text x="22" y="146" fill="#475569" font-size="10.5">• Stratified 90% Train / 10% Val</text>
+    <rect x="22" y="160" width="186" height="24" rx="4" fill="#E0F2FE"/>
+    <text x="115" y="176" text-anchor="middle" fill="#0369A1" font-size="10" font-weight="700">Stratified Split: 1,890 / 210</text>
+
+    <!-- Down arrow -->
+    <line x1="115" y1="205" x2="115" y2="235" stroke="#0284C7" stroke-width="2" marker-end="url(#arrow-blue)"/>
+    <text x="122" y="224" fill="#0284C7" font-size="9" font-weight="700">Atmosphere</text>
+
+    <!-- Corrupted Tile -->
+    <rect x="12" y="242" width="206" height="162" rx="6" fill="#FFF1F2" stroke="#FECDD3" stroke-width="1.2"/>
+    <text x="22" y="264" fill="#E11D48" font-size="12" font-weight="800">Atmospheric Corruption</text>
+    <text x="22" y="286" fill="#475569" font-size="10.5">• Synthetic Cloud Shadowing</text>
+    <text x="22" y="304" fill="#475569" font-size="10.5">• Gaussian Sensor Noise (σ=0.15)</text>
+    <text x="22" y="322" fill="#475569" font-size="10.5">• Clamped Spatial Tensor:</text>
+    <text x="22" y="342" fill="#9F1239" font-family="monospace" font-size="11" font-weight="700">  x̃ ∈ ℝ^(128×128×3)</text>
+    <rect x="22" y="360" width="186" height="32" rx="4" fill="#FFE4E6"/>
+    <text x="115" y="380" text-anchor="middle" fill="#BE123C" font-size="10" font-weight="800">Degraded Input (22.65 dB)</text>
+  </g>
+
+  <!-- Arrow 1 to 2 -->
+  <line x1="250" y1="340" x2="278" y2="340" stroke="#0284C7" stroke-width="2.5" marker-end="url(#arrow-blue)"/>
+
+  <!-- ===================================================================== -->
+  <!-- 2. STAGE 2: SIGNAL RESTORATION (x: 280, w: 236)                       -->
+  <!-- ===================================================================== -->
+  <g transform="translate(280, 16)">
+    <rect width="236" height="418" rx="8" fill="#ECFDF5" stroke="#A7F3D0" stroke-width="1.5" filter="url(#shadow)"/>
+    <rect x="10" y="10" width="216" height="28" rx="5" fill="#059669"/>
+    <text x="118" y="28" text-anchor="middle" fill="#FFFFFF" font-size="11" font-weight="800" letter-spacing="0.03em">2. OPTICAL RESTORATION</text>
+
+    <!-- DAE Card -->
+    <rect x="12" y="48" width="212" height="356" rx="6" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.2"/>
+    <text x="22" y="72" fill="#065F46" font-size="12.5" font-weight="800">Model 1: Denoising AE</text>
+    <text x="22" y="90" fill="#047857" font-size="10.5" font-weight="700">U-Net Multi-Scale Architecture</text>
+    
+    <text x="22" y="115" fill="#475569" font-size="10">• Stem: 3 → 64 channels</text>
+    <text x="22" y="133" fill="#475569" font-size="10">• Encoder: L1(64) → L2(128) → L3(256)</text>
+    <text x="22" y="151" fill="#475569" font-size="10">• Bottleneck: 512 channels</text>
+    <text x="22" y="169" fill="#475569" font-size="10">• Skip-Connections: Stem, L1, L2, L3</text>
+    <text x="22" y="187" fill="#475569" font-size="10">• Transposed Conv Decoders</text>
+
+    <!-- Formula Box -->
+    <rect x="20" y="202" width="196" height="46" rx="4" fill="#F8FAFC" stroke="#E2E8F0" stroke-left="3px solid #059669"/>
+    <text x="28" y="222" fill="#0F172A" font-family="monospace" font-size="10" font-weight="700">ℒ_AE = (1/N) ∑ ||x - x̂||²</text>
+    <text x="28" y="238" fill="#059669" font-family="monospace" font-size="10.5" font-weight="800">Loss: 0.00449 MSE (0.00617)</text>
+
+    <!-- Metrics Callout -->
+    <rect x="20" y="258" width="196" height="66" rx="5" fill="#DCFCE7" stroke="#86EFAC" stroke-width="1.2"/>
+    <text x="28" y="280" fill="#065F46" font-size="12" font-weight="800">PSNR: 29.65 dB</text>
+    <text x="28" y="298" fill="#047857" font-size="10.5" font-weight="700">+7.0 dB Gain over Degraded</text>
+    <text x="28" y="314" fill="#065F46" font-size="10.5" font-weight="600">SSIM: 0.8649 (Crisp Grids)</text>
+
+    <!-- Output badge -->
+    <rect x="20" y="338" width="196" height="52" rx="5" fill="#F0FDF4" stroke="#BBF7D0"/>
+    <text x="28" y="358" fill="#047857" font-size="10" font-weight="700">OUTPUT PRODUCT:</text>
+    <text x="28" y="378" fill="#065F46" font-size="11" font-weight="800">Restored Tile x̂ (128×128×3)</text>
+  </g>
+
+  <!-- Arrow 2 to 3 -->
+  <line x1="520" y1="180" x2="548" y2="180" stroke="#059669" stroke-width="2.5" marker-end="url(#arrow-green)"/>
+  <line x1="520" y1="330" x2="548" y2="330" stroke="#059669" stroke-width="2.5" marker-end="url(#arrow-green)"/>
+
+  <!-- ===================================================================== -->
+  <!-- 3. STAGE 3: LATENT MANIFOLD & AUDIT (x: 550, w: 250)                  -->
+  <!-- ===================================================================== -->
+  <g transform="translate(550, 16)">
+    <rect width="250" height="418" rx="8" fill="#F5F3FF" stroke="#DDD6FE" stroke-width="1.5" filter="url(#shadow)"/>
+    <rect x="10" y="10" width="230" height="28" rx="5" fill="#7C3AED"/>
+    <text x="125" y="28" text-anchor="middle" fill="#FFFFFF" font-size="11" font-weight="800" letter-spacing="0.03em">3. MANIFOLD &amp; ZONING AUDIT</text>
+
+    <!-- Model 2: Spatial VAE -->
+    <rect x="12" y="48" width="226" height="175" rx="6" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.2"/>
+    <text x="22" y="70" fill="#6D28D9" font-size="12" font-weight="800">Model 2: Spatial β-VAE</text>
+    <text x="22" y="88" fill="#475569" font-size="10">• Latent: z ∈ ℝ^(64×8×8) preserves 2D</text>
+    <text x="22" y="104" fill="#475569" font-size="10">• 4-Stage Transposed Conv Decoder</text>
+    <text x="22" y="122" fill="#5B21B6" font-family="monospace" font-size="9.5" font-weight="700">ℒ_VAE = 0.7ℒ₁+0.3ℒ_MSE + 10⁻⁴D_KL</text>
+    <text x="22" y="138" fill="#7C3AED" font-family="monospace" font-size="10" font-weight="800">Loss: 0.0483 (KL: 60.72 nats)</text>
+    <rect x="20" y="148" width="210" height="65" rx="4" fill="#EDE9FE"/>
+    <text x="28" y="168" fill="#5B21B6" font-size="10.5" font-weight="800">PSNR: 27.49 dB | Smooth Manifold</text>
+    <text x="28" y="186" fill="#6D28D9" font-size="9.5" font-weight="700">Anomaly Detector: Disparity &gt; 3σ</text>
+    <text x="28" y="202" fill="#475569" font-size="9.5">Pinpoints unpermitted land change</text>
+
+    <!-- Model 3: Land-Use Classifier -->
+    <rect x="12" y="235" width="226" height="169" rx="6" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.2"/>
+    <text x="22" y="258" fill="#0284C7" font-size="12" font-weight="800">Model 3: Land-Use Classifier</text>
+    <text x="22" y="276" fill="#475569" font-size="10">• ResNet-18 Transfer Learning</text>
+    <text x="22" y="292" fill="#475569" font-size="10">• 21-Category Territorial Audit Head</text>
+    <text x="22" y="310" fill="#0369A1" font-family="monospace" font-size="10" font-weight="700">ℒ_CE = -∑ yᵢ log(pᵢ)</text>
+    <text x="22" y="326" fill="#0284C7" font-family="monospace" font-size="10" font-weight="800">Final CE Loss: 0.06150 (Epoch 50)</text>
+    <rect x="20" y="336" width="210" height="58" rx="4" fill="#E0F2FE"/>
+    <text x="28" y="356" fill="#0369A1" font-size="11" font-weight="800">Val Accuracy: 98.10%</text>
+    <text x="28" y="374" fill="#0284C7" font-size="10.5" font-weight="700">Macro F1: 0.9784 (21 Classes)</text>
+    <text x="28" y="388" fill="#475569" font-size="9">Provides class condition vector y</text>
+  </g>
+
+  <!-- Arrow 3 to 4 -->
+  <line x1="804" y1="180" x2="832" y2="180" stroke="#7C3AED" stroke-width="2.5" marker-end="url(#arrow-purple)"/>
+  <line x1="804" y1="330" x2="832" y2="330" stroke="#0284C7" stroke-width="2.5" marker-end="url(#arrow-blue)"/>
+
+  <!-- ===================================================================== -->
+  <!-- 4. STAGE 4: DUAL-MODALITY SYNTHESIS (x: 834, w: 250)                  -->
+  <!-- ===================================================================== -->
+  <g transform="translate(834, 16)">
+    <rect width="250" height="418" rx="8" fill="#FFFBEB" stroke="#FDE68A" stroke-width="1.5" filter="url(#shadow)"/>
+    <rect x="10" y="10" width="230" height="28" rx="5" fill="#D97706"/>
+    <text x="125" y="28" text-anchor="middle" fill="#FFFFFF" font-size="11" font-weight="800" letter-spacing="0.03em">4. GENERATIVE SYNTHESIS</text>
+
+    <!-- Model 4: Residual cDCGAN -->
+    <rect x="12" y="48" width="226" height="175" rx="6" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.2"/>
+    <text x="22" y="70" fill="#B45309" font-size="12" font-weight="800">Model 4: Residual cDCGAN</text>
+    <text x="22" y="88" fill="#475569" font-size="10">• 4x ResUpBlock Gen + Proj Disc</text>
+    <text x="22" y="104" fill="#475569" font-size="10">• Spectral Norm + AC-GAN Head</text>
+    <text x="22" y="122" fill="#B45309" font-family="monospace" font-size="9.5" font-weight="700">ℒ_G = ℒ_adv + 0.8ℒ_AC (EMA)</text>
+    <text x="22" y="138" fill="#D97706" font-family="monospace" font-size="10" font-weight="800">Minimax: D=1.67, G=1.19</text>
+    <rect x="20" y="148" width="210" height="65" rx="4" fill="#FEF3C7"/>
+    <text x="28" y="168" fill="#92400E" font-size="11" font-weight="800">Proxy Rec: 99.40% (167/168)</text>
+    <text x="28" y="186" fill="#B45309" font-size="10.5" font-weight="700">Edge Latency: &lt;35 ms</text>
+    <text x="28" y="202" fill="#475569" font-size="9.5">Instant scenario parcel synthesis</text>
+
+    <!-- Model 5: Conditional DDPM -->
+    <rect x="12" y="235" width="226" height="169" rx="6" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.2"/>
+    <text x="22" y="258" fill="#E11D48" font-size="12" font-weight="800">Model 5: Conditional DDPM</text>
+    <text x="22" y="276" fill="#475569" font-size="10">• Time/Class U-Net (T=1000)</text>
+    <text x="22" y="292" fill="#475569" font-size="10">• 20-Step Deterministic DDIM</text>
+    <text x="22" y="310" fill="#9F1239" font-family="monospace" font-size="9" font-weight="700">ℒ = ℒ_simple + ℒ_vlb + ℒ_guide + ...</text>
+    <text x="22" y="326" fill="#E11D48" font-family="monospace" font-size="10" font-weight="800">Noise MSE: 0.0304 | VLB: 0.02916</text>
+    <rect x="20" y="336" width="210" height="58" rx="4" fill="#FFE4E6"/>
+    <text x="28" y="356" fill="#9F1239" font-size="11" font-weight="800">Sampling Latency: 1.82 s</text>
+    <text x="28" y="374" fill="#BE123C" font-size="10.5" font-weight="700">15.6× Speedup vs 1000-Step</text>
+    <text x="28" y="388" fill="#475569" font-size="9">Pristine street grid photorealism</text>
+  </g>
+
+  <!-- Arrow 4 to 5 -->
+  <line x1="1088" y1="260" x2="1116" y2="260" stroke="#059669" stroke-width="2.5" marker-end="url(#arrow-green)"/>
+
+  <!-- ===================================================================== -->
+  <!-- 5. STAGE 5: GROUNDED POLICY ENGINE (x: 1118, w: 236)                  -->
+  <!-- ===================================================================== -->
+  <g transform="translate(1118, 16)">
+    <rect width="236" height="418" rx="8" fill="#ECFDF5" stroke="#A7F3D0" stroke-width="1.5" filter="url(#shadow)"/>
+    <rect x="10" y="10" width="216" height="28" rx="5" fill="#047857"/>
+    <text x="118" y="28" text-anchor="middle" fill="#FFFFFF" font-size="11" font-weight="800" letter-spacing="0.03em">5. GROUNDED POLICY ENGINE</text>
+
+    <!-- MiniGPT Model Card -->
+    <rect x="12" y="48" width="212" height="356" rx="6" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.2"/>
+    <text x="22" y="72" fill="#065F46" font-size="12.5" font-weight="800">Model 6: Urban Plan (MiniGPT)</text>
+    <text x="22" y="90" fill="#047857" font-size="10.5" font-weight="700">Causal Transformer Architecture</text>
+    
+    <text x="22" y="112" fill="#475569" font-size="10">• 4 Pre-LayerNorm Transformer Blocks</text>
+    <text x="22" y="128" fill="#475569" font-size="10">• d_model = 256, 4 Attention Heads</text>
+    <text x="22" y="144" fill="#475569" font-size="10">• Context Window T = 192 Tokens</text>
+    <text x="22" y="160" fill="#475569" font-size="10">• Pune Municipal Corp (PMC) Rules</text>
+
+    <!-- Formula & Perplexity -->
+    <rect x="20" y="174" width="196" height="46" rx="4" fill="#F8FAFC" stroke="#E2E8F0"/>
+    <text x="28" y="194" fill="#0F172A" font-family="monospace" font-size="10" font-weight="700">ℒ_causal = -∑ log P(wₜ | w_&lt;ₜ)</text>
+    <text x="28" y="210" fill="#059669" font-family="monospace" font-size="10.5" font-weight="800">Loss: 0.10430 | PPL: 1.110</text>
+
+    <!-- Bylaw Directives Box -->
+    <rect x="20" y="230" width="196" height="164" rx="5" fill="#D1FAE5" stroke="#6EE7B7" stroke-width="1.2"/>
+    <text x="28" y="252" fill="#065F46" font-size="11" font-weight="800">Actionable Municipal Directives:</text>
+    
+    <text x="28" y="274" fill="#047857" font-size="10" font-weight="700">• FSI Allocation (1.8 – 2.4):</text>
+    <text x="28" y="290" fill="#334155" font-size="9.5">  High-density transit corridors with</text>
+    <text x="28" y="304" fill="#334155" font-size="9.5">  strict urban infrastructure caps.</text>
+
+    <text x="28" y="324" fill="#047857" font-size="10" font-weight="700">• TOD &amp; Riverbank Buffers:</text>
+    <text x="28" y="340" fill="#334155" font-size="9.5">  Mandates 15% green preservation zone</text>
+
+    <text x="28" y="360" fill="#047857" font-size="10" font-weight="700">• Environmental Bylaws:</text>
+    <text x="28" y="376" fill="#334155" font-size="9.5">  Rainwater &amp; solar on plots &gt;1000m²</text>
+  </g>
+
+  <!-- Arrow 5 to 6 -->
+  <line x1="1358" y1="220" x2="1384" y2="220" stroke="#0F172A" stroke-width="2.5" marker-end="url(#arrow-blue)"/>
+
+  <!-- ===================================================================== -->
+  <!-- 6. STAGE 6: AIR-GAPPED EDGE SECURITY & GOVERNANCE (x: 1386, w: 198)   -->
+  <!-- ===================================================================== -->
+  <g transform="translate(1386, 16)">
+    <rect width="198" height="418" rx="8" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="1.5" filter="url(#shadow)"/>
+    <rect x="10" y="10" width="178" height="28" rx="5" fill="#0A192F"/>
+    <text x="99" y="28" text-anchor="middle" fill="#FFFFFF" font-size="10.5" font-weight="800" letter-spacing="0.03em">6. SECURITY &amp; HARDWARE</text>
+
+    <!-- Edge Gateway -->
+    <rect x="10" y="48" width="178" height="110" rx="6" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1.2"/>
+    <text x="18" y="68" fill="#0A192F" font-size="11" font-weight="800">FastAPI Gateway</text>
+    <text x="18" y="86" fill="#475569" font-size="9.5">• URBANGEN_API_KEY</text>
+    <text x="18" y="102" fill="#475569" font-size="9.5">• SlowAPI Token Bucket</text>
+    <text x="18" y="118" fill="#475569" font-size="9.5">• Magic-Byte Sanitization</text>
+    <text x="18" y="134" fill="#475569" font-size="9.5">• Clamped 128×128 / &lt;10MB</text>
+    <text x="18" y="150" fill="#0284C7" font-size="9" font-weight="700">Hardened Against DDoS</text>
+
+    <!-- Green AI Compute -->
+    <rect x="10" y="168" width="178" height="125" rx="6" fill="#ECFDF5" stroke="#A7F3D0" stroke-width="1.2"/>
+    <text x="18" y="188" fill="#065F46" font-size="11" font-weight="800">Green AI Edge Compute</text>
+    <text x="18" y="206" fill="#047857" font-size="9.5">• 100% On-Premises</text>
+    <text x="18" y="222" fill="#334155" font-size="9.5">• NVIDIA RTX 4050 6GB</text>
+    <text x="18" y="238" fill="#334155" font-size="9.5">• 0.133 kWh Total Energy</text>
+    <text x="18" y="254" fill="#334155" font-size="9.5">• 94.8 g CO₂e Footprint</text>
+    <text x="18" y="274" fill="#065F46" font-size="9" font-weight="800">Zero Cloud GIS Leakage</text>
+
+    <!-- Governance -->
+    <rect x="10" y="303" width="178" height="101" rx="6" fill="#FEF2F2" stroke="#FECDD3" stroke-width="1.2"/>
+    <text x="18" y="323" fill="#9F1239" font-size="10.5" font-weight="800">Human-in-the-Loop</text>
+    <text x="18" y="341" fill="#475569" font-size="9.5">• Advisory Planning Support</text>
+    <text x="18" y="357" fill="#475569" font-size="9.5">• Autonomous Zoning</text>
+    <text x="18" y="371" fill="#475569" font-size="9.5">  Enforcement Prohibited</text>
+    <text x="18" y="391" fill="#BE123C" font-size="9" font-weight="700">Audit-Compliant AI</text>
+  </g>
+
+</svg>

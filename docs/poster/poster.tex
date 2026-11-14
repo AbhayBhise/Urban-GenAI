@@ -1,0 +1,210 @@
+\documentclass[final]{beamer}
+\usepackage[orientation=portrait,size=a1,scale=1.2]{beamerposter}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{tikz}
+
+% Color Definitions (Matching UrbanGen AI Palette)
+\definecolor{NavyBlue}{RGB}{2, 132, 199}
+\definecolor{DarkNavy}{RGB}{11, 25, 44}
+\definecolor{CyanAccent}{RGB}{0, 212, 255}
+\definecolor{EmeraldGreen}{RGB}{4, 120, 87}
+\definecolor{BorderGray}{RGB}{203, 213, 225}
+\definecolor{SurfaceBg}{RGB}{248, 250, 252}
+
+\setbeamercolor{headline}{bg=DarkNavy,fg=white}
+\setbeamercolor{title in headline}{fg=CyanAccent}
+\setbeamercolor{author in headline}{fg=white}
+\setbeamercolor{institute in headline}{fg=BorderGray}
+\setbeamercolor{block title}{bg=NavyBlue,fg=white}
+\setbeamercolor{block body}{bg=white,fg=black}
+
+\title{\Huge \textbf{UrbanGen AI: A Multi-Model Generative Framework for Satellite Imagery Processing, Land-Use Analytics, and Sustainable Urban Planning}}
+\author{\Large \textbf{Abhay Bhise, Disha Satpute, Vaishnavi Phad, Vedant Ingle}}
+\institute{\large \textbf{Project Guides: Prof. Savita Mane \& Prof. Pramod Ganjewar} \\ \small Department of Computer Engineering, MIT Academy of Engineering, Pune (Affiliated to SPPU)}
+
+\begin{document}
+\begin{frame}[t]
+
+% Top Header
+\begin{beamercolorbox}[wd=\paperwidth,colsep=1.5em]{headline}
+  \centering
+  \vskip1ex
+  {\Huge \textbf{\color{CyanAccent} UrbanGen AI: A Multi-Model Generative Framework for Satellite Imagery Processing, Land-Use Analytics, and Sustainable Urban Planning}}\\[1.2ex]
+  {\Large \textbf{Edge-Deployable Multi-Modal Generative Intelligence for Municipal Remote Sensing \& Zoning Decision Support}}\\[1.2ex]
+  {\large \textbf{Students: Abhay Bhise, Disha Satpute, Vaishnavi Phad, Vedant Ingle} \quad|\quad \textbf{Guides: Prof. Savita Mane \& Prof. Pramod Ganjewar}}\\[0.8ex]
+  {\normalsize Department of Computer Engineering, MIT Academy of Engineering, Pune}
+  \vskip1ex
+\end{beamercolorbox}
+
+\vskip1.5cm
+
+\begin{columns}[t]
+
+  % -------------------------------------------------------------
+  % COLUMN 1: Background, Dataset & Governance (Width: 0.31)
+  % -------------------------------------------------------------
+  \begin{column}{0.31\textwidth}
+
+    \begin{block}{Project Statement}
+      Rapid urbanization poses critical challenges in municipal zoning compliance, transport connectivity, green cover conservation, and environmental resilience. Traditional GIS and manual satellite interpretation suffer from high latency, expensive labor, and lack of hypothetical scenario forecasting. \textbf{UrbanGen AI} delivers a unified multi-model generative framework on consumer edge hardware (RTX 4050 6GB) reconciling restoration, anomaly mapping, synthesis, and policy drafting.
+    \end{block}
+
+    \begin{block}{Key Research Objectives}
+      \begin{itemize}
+        \item \textbf{Signal Restoration:} Remove atmospheric noise ($\sigma=0.15$) via U-Net skip connections (29.65\,dB PSNR).
+        \item \textbf{Spatial Anomaly Detection:} Unsupervised zoning anomaly scoring and continuous latent traversal via $\beta$-VAE.
+        \item \textbf{Territorial Auditing:} 21-class land-use validation using fine-tuned ResNet-18 (98.10\% accuracy).
+        \item \textbf{Generative Synthesis:} Conditional aerial parcel synthesis via cDCGAN (99.40\% recognition) and DDPM (0.0304 MSE).
+        \item \textbf{Grounded Policy Drafting:} Translate visual telemetry into actionable municipal mandates using MiniGPT (PPL 1.110).
+      \end{itemize}
+    \end{block}
+
+    \begin{block}{Dataset Description (UCMerced)}
+      \begin{itemize}
+        \item \textbf{Benchmark:} UCMerced LandUse Benchmark Dataset.
+        \item \textbf{Scale:} 2,100 aerial tiles ($256 \times 256$ px, 0.3\,m GSD).
+        \item \textbf{Taxonomy:} 21 classes across 5 planning sectors (Built, Transport, Nature, Water, Agriculture).
+        \item \textbf{Data Split:} Uniform 90\% Train (1,890) / 10\% Val (210).
+        \item \textbf{Evaluation Protocol:} Standardized 50-epoch horizon and batch size 32 across all modules for rigorous comparability.
+      \end{itemize}
+    \end{block}
+
+    \begin{block}{Ethical Governance \& Edge Sovereignty}
+      \begin{itemize}
+        \item \textbf{Human-in-the-Loop:} Exclusively assistive zoning decision drafting; autonomous legal enforcement is strictly prohibited.
+        \item \textbf{Domain Shift Awareness:} Uncertainty indicators highlight regional drift between benchmark and Global South fabrics.
+        \item \textbf{Data Sovereignty:} Edge execution guarantees sensitive high-resolution municipal telemetry never leaks to cloud APIs.
+      \end{itemize}
+    \end{block}
+
+    \begin{block}{Green AI Computational Footprint}
+      \begin{itemize}
+        \item \textbf{Hardware:} Single NVIDIA RTX 4050 Laptop GPU (6GB).
+        \item \textbf{Total Energy:} \textbf{0.133\,kWh} (all 6 models combined).
+        \item \textbf{Training Time:} 66.3 minutes cumulative duration.
+        \item \textbf{Carbon Emissions:} \textbf{94.0\,g CO$_2$e} (CEA benchmark).
+      \end{itemize}
+    \end{block}
+
+  \end{column}
+
+  % -------------------------------------------------------------
+  % COLUMN 2: Model Architectures & Flow (Width: 0.35)
+  % -------------------------------------------------------------
+  \begin{column}{0.35\textwidth}
+
+    \begin{block}{Core Generative \& Analytical Architectures}
+      \textbf{1. Denoising Autoencoder (U-Net Skip-AE)}:
+      $$\hat{x} = \mathcal{D}\Big(\mathcal{E}(\tilde{x}), \{\mathbf{F}_{\text{stem}}, \mathbf{F}_1, \mathbf{F}_2, \mathbf{F}_3\}\Big), \quad \mathcal{L}_{\text{AE}} = \frac{1}{N}\sum \|x - \hat{x}\|_2^2$$
+      \begin{itemize}
+        \item Multi-scale transposed skip connections restore high-frequency street grids (+7.0\,dB on dense residential).
+      \end{itemize}
+      \vspace{0.4cm}
+
+      \textbf{2. Spatial $\beta$-VAE (Latent Anomaly Mapping)}:
+      $$\mathbf{z} = \boldsymbol{\mu} + \boldsymbol{\sigma} \odot \boldsymbol{\epsilon}, \quad \mathcal{L}_{\text{VAE}} = (0.7\mathcal{L}_1 + 0.3\mathcal{L}_{\text{MSE}}) + 10^{-4} \cdot D_{\text{KL}}$$
+      \begin{itemize}
+        \item Preserves $8 \times 8 \times 64$ spatial tensor for continuous topological latent space traversal without prior collapse.
+      \end{itemize}
+      \vspace{0.4cm}
+
+      \textbf{3. Territorial Land-Use Classifier (ResNet-18)}:
+      $$\hat{y} = \text{Softmax}(\mathbf{W}_c \cdot f_{\text{ResNet}}(x) + b_c), \quad \mathcal{L}_{\text{CE}} = -\sum y_i \log \hat{y}_i$$
+      \begin{itemize}
+        \item 98.10\% validation accuracy, 0.9784 Macro F1 for zoning compliance.
+      \end{itemize}
+      \vspace{0.4cm}
+
+      \textbf{4. Residual Class-Conditional DCGAN (cDCGAN)}:
+      $$D(x, y) = \psi(\phi(x)) + y^T V \phi(x), \quad \mathcal{L}_G = \mathcal{L}_{\text{adv}} + 0.8\mathcal{L}_{\text{AC}} + 1.2\mathcal{L}_{\text{semantic}}$$
+      \begin{itemize}
+        \item Projection Discriminator + Spectral Normalization achieves 99.40\% intended-class semantic recognition proxy without mode collapse.
+      \end{itemize}
+      \vspace{0.4cm}
+
+      \textbf{5. Class-Conditional DDPM (Diffusion Model)}:
+      $$\mathcal{L}_{\text{diffusion}}(\boldsymbol{\theta}) = \mathbb{E}_{t, \mathbf{x}_0, \boldsymbol{\epsilon}, c}\Big[\big\|\boldsymbol{\epsilon} - \boldsymbol{\epsilon}_{\boldsymbol{\theta}}(\mathbf{x}_t, t, c)\big\|_2^2\Big]$$
+      \begin{itemize}
+        \item 20-step deterministic DDIM sampler delivers sharp synthesis in 1.8\,s (0.0304 noise MSE).
+      \end{itemize}
+      \vspace{0.4cm}
+
+      \textbf{6. Municipal Urban Plan Generator (MiniGPT)}:
+      $$P(w_t | w_{<t}) = \text{Softmax}\left(\frac{\mathbf{Q}\mathbf{K}^T}{\sqrt{d_k}} \mathbf{V}\right), \quad \text{Perplexity} = 1.110$$
+      \begin{itemize}
+        \item Causal Transformer translating visual spatial analytics into grounded transit and zoning mandates (FSI, TOD, buffers).
+      \end{itemize}
+    \end{block}
+
+  \end{column}
+
+  % -------------------------------------------------------------
+  % COLUMN 3: Performance Metrics & Conclusions (Width: 0.31)
+  % -------------------------------------------------------------
+  \begin{column}{0.31\textwidth}
+
+    \begin{block}{Quantitative Verification Matrix (50 Epochs / 32 Batch)}
+      \centering
+      \small
+      \begin{tabularx}{\columnwidth}{@{}l c c c@{}}
+        \toprule
+        \textbf{Model} & \textbf{Primary Metric} & \textbf{Secondary} & \textbf{Loss} \\
+        \midrule
+        U-Net DAE & \textbf{29.65 dB} PSNR & SSIM: 0.8649 & 0.00617 \\
+        Spatial $\beta$-VAE & \textbf{27.49 dB} PSNR & KL: 60.72 nats & 0.0483 \\
+        ResNet-18 Cls & \textbf{98.10\%} Acc & F1: 0.9784 & 0.0615 \\
+        Residual cDCGAN & \textbf{99.40\%} Rec & D=1.67, G=1.19 & Minimax \\
+        Conditional DDPM & \textbf{0.0304} MSE & DDIM: 20-step & Best: 0.029 \\
+        MiniGPT Trans & \textbf{1.110} PPL & 0.1505 BPC & 0.1043 \\
+        \bottomrule
+      \end{tabularx}
+    \end{block}
+
+    \begin{block}{Comparative Benchmarking vs. Baselines}
+      \centering
+      \small
+      \begin{tabularx}{\columnwidth}{@{}X c c@{}}
+        \toprule
+        \textbf{Task \& Literature Baseline} & \textbf{UrbanGen AI (Ours)} & \textbf{Gain} \\
+        \midrule
+        Bottleneck AE (25.02\,dB) & \textbf{29.65\,dB PSNR} & \textbf{+4.63\,dB} \\
+        BoVW Classifier (76.80\%) & \textbf{98.10\% Acc} & \textbf{+21.30\%} \\
+        Standard cGAN (72.40\% Proxy) & \textbf{99.40\% Proxy} & \textbf{+27.00\%} \\
+        Cloud Compute Cluster & \textbf{Edge RTX 4050} & \textbf{0.133\,kWh} \\
+        \bottomrule
+      \end{tabularx}
+    \end{block}
+
+    \begin{block}{Key Engineering Learnings}
+      \begin{itemize}
+        \item \textbf{Skip Connections Remedy Feature Loss:} Solved high-frequency degradation in aerial imagery (+7.0\,dB PSNR).
+        \item \textbf{Latent Regularization Balance:} $\beta=10^{-4}$ prevents boundary smudging while preserving spatial anomaly scoring.
+        \item \textbf{Adversarial Stability:} Projection conditioning + Spectral Normalization eliminate mode collapse on small aerial sets.
+        \item \textbf{Fast Diffusion:} 20-step DDIM reduces sampling latency from minutes to 1.8 seconds with high fidelity.
+      \end{itemize}
+    \end{block}
+
+    \begin{block}{Conclusion \& Academic Defense}
+      \begin{itemize}
+        \item \textbf{Integrated Multi-Model Edge Framework:} Concurrently unifies restoration, latent anomaly mapping, generative synthesis, and qualitative policy generation.
+        \item \textbf{Strict Reproducibility:} Controlled 50-epoch / 32-batch protocol guarantees verifiable academic comparisons.
+        \item \textbf{Institutional Data Sovereignty:} Local edge execution empowers regional municipal planning bodies with zero cloud exposure.
+      \end{itemize}
+      \vskip0.5cm
+      \centering
+      \textbf{MIT Academy of Engineering, Pune} \\
+      \small Department of Computer Engineering \quad$\cdot$\quad B.Tech Capstone 2026
+    \end{block}
+
+  \end{column}
+
+\end{columns}
+
+\end{frame}
+\end{document}
+
