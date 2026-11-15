@@ -8,110 +8,198 @@
 
 skinparam dpi 300
 skinparam defaultFontName "Arial"
-skinparam defaultFontSize 12
-skinparam roundcorner 10
+skinparam defaultFontSize 11
+skinparam roundcorner 8
 skinparam shadowing true
 skinparam packageTitleAlignment left
 skinparam linetype ortho
+skinparam nodesep 30
+skinparam ranksep 30
 
-' Styling Palette (AuthentiMark & Academic Theme)
+' Academic Color Palette
 skinparam package {
   BackgroundColor #F8FAFC
-  BorderColor #94A3B8
-  BorderThickness 1.8
+  BorderColor #64748B
+  BorderThickness 1.5
   FontStyle bold
-  FontSize 13
+  FontSize 12
 }
 
 skinparam rectangle {
   BackgroundColor #FFFFFF
   BorderColor #0284C7
-  BorderThickness 1.6
-  FontSize 11
+  BorderThickness 1.4
+  FontSize 10.5
 }
 
 skinparam arrow {
   Color #0284C7
-  Thickness 1.8
-  FontSize 10
+  Thickness 1.6
+  FontSize 9.5
   FontStyle bold
 }
 
 ' ==============================================================================
-' 1. REMOTE SENSING INGESTION & DEGRADATION
+' TIER 1: INGESTION, RESTORATION & LATENT MANIFOLD
 ' ==============================================================================
-package "1. Remote Sensing Ingestion & Perturbation" #F0F9FF {
-  rectangle "<b>USGS UCMerced Orthoimagery</b>\\n• 2,100 Aerial Tiles (256x256 px, 0.3m GSD)\\n• 21 Municipal Land-Use Classes\\n• Stratified 90/10 Split (1,890 Train / 210 Val)" as RAW #E0F2FE
+package "1. Remote Sensing Ingestion and Perturbation" #F0F9FF {
+  rectangle RAW [
+<b>USGS UCMerced Orthoimagery</b>
+--
+• 2,100 Aerial Tiles (256x256 px, 0.3m GSD)
+• 21 Municipal Land-Use Classes
+• Stratified Split (1,890 Train / 210 Val)
+• RGB Spectral Baseline
+  ]
 
-  rectangle "<b>Atmospheric Degradation Layer</b>\\n• Synthetic Cloud Shadowing & Fog Attenuation\\n• Additive Sensor Gaussian Noise: \u03c3 = 0.15\\n• Corrupted Input Tile: x_tilde \u2208 \u211d^(128x128x3)" as NOISY #FEE2E2
+  rectangle NOISY [
+<b>Atmospheric Degradation Layer</b>
+--
+• Synthetic Cloud Shadow and Fog Attenuation
+• Additive Gaussian Sensor Noise: σ = 0.15
+• Corrupted Input Tile: x̃ ∈ ℝ^(128x128x3)
+• Simulates Adverse Sensor Weather
+  ]
 
-  RAW -right-> NOISY : Optical Attenuation
+  RAW -right-> NOISY : Optical Scattering
 }
 
-' ==============================================================================
-' 2. STAGE 1: SIGNAL RESTORATION (MODEL 1: U-NET DAE)
-' ==============================================================================
 package "2. Signal Restoration (Model 1: U-Net DAE)" #ECFDF5 {
-  rectangle "<b>Denoising Autoencoder (U-Net)</b>\\n• Stem \u2192 L1(64) \u2192 L2(128) \u2192 L3(256) \u2192 Bottleneck(512)\\n• Multi-Scale Transposed Skip-Connections\\n• <b>Loss Formula:</b> L_AE = (1/N) \u2211 ||x - x_hat||_2^2\\n• <b>Converged Loss:</b> 0.00449 MSE (0.00617 total)\\n• <b>Primary Metric:</b> 29.65 dB PSNR (+7.0 dB Gain)\\n• <b>Secondary Metric:</b> SSIM = 0.8649" as DAE #DCFCE7
+  rectangle DAE [
+<b>Denoising Autoencoder (U-Net)</b>
+--
+• Stem → L1(64) → L2(128) → L3(256) → Bottleneck(512)
+• Multi-Scale Transposed Skip-Connections
+• Loss: L_AE = (1/N) Σ ||x - x̂||₂² (MSE: 0.00449)
+• Primary Metric: 29.65 dB PSNR (+7.0 dB Gain)
+• Secondary Metric: SSIM = 0.8649
+  ]
 }
-NOISY -right-> DAE : Degraded Tile (128x128)
 
-' ==============================================================================
-' 3. STAGE 2 & 3: LATENT MANIFOLD & AUDITING (MODELS 2 & 3)
-' ==============================================================================
-package "3. Latent Manifold & Territorial Auditing" #F5F3FF {
-  rectangle "<b>Spatial \u03b2-VAE (Model 2)</b>\\n• ResNet-18 Backbone \u2192 Latent \u03bc, log\u03c3\u00b2 \u2208 \u211d^(64x8x8)\\n• 4-Stage Transposed Conv Decoder\\n• <b>Loss:</b> L_VAE = (0.7*L_1 + 0.3*L_MSE) + 10^-4*D_KL\\n• <b>Converged Loss:</b> 0.0483 (KL: 60.72 nats)\\n• <b>Metric:</b> 27.49 dB PSNR (Smooth Manifold)" as VAE #EDE9FE
+package "3. Latent Manifold and Territorial Auditing" #F5F3FF {
+  rectangle VAE [
+<b>Spatial β-VAE (Model 2)</b>
+--
+• ResNet-18 Backbone → Latent μ, log σ² ∈ ℝ^(64x8x8)
+• 4-Stage Transposed Conv Decoder (Compact Skips)
+• Loss: (0.7*L₁ + 0.3*L_MSE) + 10⁻⁴*D_KL = 0.0483
+• Metric: 27.49 dB PSNR | KL: 60.72 nats
+  ]
 
-  rectangle "<b>Unsupervised Anomaly Detector</b>\\n• Disparity Map: |x_restored - x_vae|\\n• Threshold: Disparity > 3\u03c3 Flagging\\n• Pinpoints Unpermitted Urban Encroachment" as ANOMALY #FEF3C7
+  rectangle ANOMALY [
+<b>Unsupervised Anomaly Detector</b>
+--
+• Disparity Map: |x_restored - x_vae|
+• Flagging Threshold: Disparity > 3σ
+• Detects Unpermitted Urban Encroachment
+• Risk Score Forwarded to Policy Engine
+  ]
 
-  rectangle "<b>Land-Use Classifier (Model 3)</b>\\n• ResNet-18 Transfer Backbone + Linear Head\\n• <b>Loss Formula:</b> L_CE = -\u2211 y_i log(p_i)\\n• <b>Converged Loss:</b> 0.0615 (Cross-Entropy)\\n• <b>Primary Metric:</b> 98.10% Validation Accuracy\\n• <b>Secondary Metric:</b> Macro F1: 0.9784" as CLS #E0F2FE
+  rectangle CLS [
+<b>Land-Use Classifier (Model 3)</b>
+--
+• Frozen Semantic Auditor (ResNet-18 + Linear Head)
+• Loss Formula: L_CE = -Σ y_i log(p_i) (0.0615)
+• Primary Metric: 98.10% Validation Accuracy
+• Secondary Metric: Macro F1: 0.9784
+  ]
 
-  VAE -down-> ANOMALY : Disparity Map
+  VAE -right-> ANOMALY : Disparity Map
 }
-DAE -right-> VAE : Clean Tile (128x128)
-DAE -down-> CLS : Clean Tile (128x128)
+
+NOISY -right-> DAE : Degraded Tile x̃ (128x128)
+DAE -right-> VAE : Clean Tile x̂ (128x128)
+DAE -down-> CLS : Clean Tile x̂ (128x128)
 VAE .down.> CLS : Latent Manifold Projection
 
 ' ==============================================================================
-' 4. STAGE 4: DUAL-MODALITY GENERATIVE SYNTHESIS (MODELS 4 & 5)
+' TIER 2: DUAL-MODALITY GENERATIVE SYNTHESIS & POLICY ENGINE
 ' ==============================================================================
 package "4. Dual-Modality Generative Parcel Synthesis" #FFFBEB {
-  rectangle "<b>Residual cDCGAN (Model 4)</b>\\n• 4x ResUpBlock Generator + Projection Discriminator\\n• Spectral Normalization + AC-GAN Auxiliary Head\\n• <b>Loss:</b> L_adv(D, G) Minimax + 0.8*L_AC (D=1.67, G=1.19)\\n• <b>Output:</b> High-Speed Synthetic Parcel (<35ms)\\n• <b>Metric:</b> 99.40% Semantic Proxy Recognition" as GAN #FEF3C7
+  rectangle GAN [
+<b>Residual cDCGAN (Model 4)</b>
+--
+• 4x ResUpBlock Generator + Projection Discriminator
+• Spectral Normalization + AC-GAN Auxiliary Head
+• Loss: L_adv Minimax + 0.8*L_AC (D=1.67, G=1.19)
+• Output: High-Speed Synthetic Parcel (<35ms)
+• Metric: 99.40% Semantic Proxy Recognition
+  ]
 
-  rectangle "<b>Conditional DDPM (Model 5)</b>\\n• Time- & Class-Conditioned U-Net (T=1000 Schedule)\\n• 20-Step Deterministic Accelerated DDIM Sampler\\n• <b>Loss:</b> L_simple + L_vlb + L_guide + L_sp + L_reg\\n• <b>Converged Loss:</b> 0.0304 Noise MSE (0.02916 VLB)\\n• <b>Metric:</b> 1.82s Latency (15.6x Accelerated)" as DIFF #FEE2E2
+  rectangle DIFF [
+<b>Conditional DDPM (Model 5)</b>
+--
+• Time- & Class-Conditioned U-Net (T=1000 Schedule)
+• 20-Step Deterministic Accelerated DDIM Sampler
+• Loss: L_simple + L_vlb + L_guide + L_sp + L_reg
+• Converged Loss: 0.0304 Noise MSE (0.02916 VLB)
+• Metric: 1.82s Latency (15.6x Accelerated)
+  ]
+
+  GAN -right-> DIFF : Dual Modalities
 }
-CLS -down-> GAN : Condition y \u2208 {0..20}
-CLS -down-> DIFF : Class Guidance Vector
-GAN .up.> CLS : Semantic Validation Loop (99.40%)
-DIFF .up.> CLS : Classifier Guidance (\u2207 log p(y|x))
 
-' ==============================================================================
-' 5. STAGE 5: GROUNDED POLICY ENGINE (MODEL 6: MINIGPT)
-' ==============================================================================
 package "5. Grounded Municipal Policy Formulation" #ECFDF5 {
-  rectangle "<b>Municipal Plan Generator (MiniGPT - Model 6)</b>\\n• 4-Layer Pre-LayerNorm Causal Transformer (d_model=256, 4 Heads)\\n• Context Window T=192 | PMC Development Control Rules\\n• <b>Loss Formula:</b> L_causal = -\u2211 log P(w_t | w_<t)\\n• <b>Converged Loss:</b> 0.10430 (Cross-Entropy)\\n• <b>Metrics:</b> 1.110 Validation Perplexity | 0.1505 Bits/Char" as GPT #D1FAE5
+  rectangle GPT [
+<b>Municipal Plan Generator (MiniGPT - Model 6)</b>
+--
+• 4-Layer Pre-LayerNorm Causal Transformer (d_model=256)
+• Context Window T=192 | PMC Development Control Rules
+• Loss Formula: L_causal = -Σ log P(w_t | w_<t) = 0.1043
+• Metrics: 1.110 Validation Perplexity | 0.1505 Bits/Char
+  ]
 
-  rectangle "<b>Actionable Grounded Directives</b>\\n• <b>FSI Allocation:</b> Base FSI 1.8\u20132.4 along transit spines\\n• <b>TOD Corridors:</b> 15% Riverbank green buffer setback\\n• <b>Environmental:</b> Rainwater & solar mandate (>1,000 m\u00b2)" as BYLAWS #A7F3D0
+  rectangle BYLAWS [
+<b>Actionable Grounded Directives</b>
+--
+• FSI Allocation: Base FSI 1.8–2.4 along transit spines
+• TOD Corridors: 15% Riverbank green buffer setback
+• Environmental: Rainwater and solar mandate (>1,000 m²)
+  ]
 
   GPT -right-> BYLAWS : Generates Bylaws
 }
+
+CLS -down-> GAN : Condition y ∈ {0..20}
+CLS -down-> DIFF : Class Guidance Vector
+GAN .up.> CLS : Validation Loop (99.40%)
+DIFF .up.> CLS : Classifier Guidance (∇ log p(y|x))
+
 CLS -right-> GPT : Verified Zoning Label y
-ANOMALY -right-> GPT : Anomaly Telemetry & Risk Score
+ANOMALY -down-> GPT : Anomaly Telemetry & Risk Score
 
 ' ==============================================================================
-' 6. AIR-GAPPED EDGE INFRASTRUCTURE & CLOSED-LOOP GOVERNANCE
+' TIER 3: AIR-GAPPED EDGE SECURITY & CLOSED-LOOP GOVERNANCE
 ' ==============================================================================
-package "6. Air-Gapped Edge Hardware & System Security" #F8FAFC {
-  rectangle "<b>FastAPI Edge Gateway</b>\\n• Verified URBANGEN_API_KEY Header Authentication\\n• SlowAPI Token-Bucket Rate Limiter (Anti-DDoS)\\n• Magic-Byte File Inspection (<10MB, Clamped 128x128)" as GATEWAY #FFFFFF
+package "6. Air-Gapped Edge Hardware and Closed-Loop System Security" #F8FAFC {
+  rectangle GATEWAY [
+<b>FastAPI Edge Gateway</b>
+--
+• Verified URBANGEN_API_KEY Header Authentication
+• SlowAPI Token-Bucket Rate Limiter (Anti-DDoS)
+• Magic-Byte File Inspection (<10MB, Clamped 128x128)
+  ]
 
-  rectangle "<b>Green AI Edge Compute</b>\\n• 100% On-Premises Consumer NVIDIA RTX 4050 Laptop GPU (6GB, 75W)\\n• Cumulative Training: 66.3 min | Energy: 0.133 kWh | Carbon: 94.8 g CO\u2082e\\n• Air-Gapped Zero Cloud GIS Leakage (Complete Data Sovereignty)" as HARDWARE #FFFFFF
+  rectangle HARDWARE [
+<b>Green AI Edge Compute</b>
+--
+• 100% On-Premises Consumer NVIDIA RTX 4050 Laptop GPU (6GB, 75W)
+• Cumulative Training: 66.3 min | Energy: 0.133 kWh | Carbon: 94.8 g CO₂e
+• Air-Gapped Zero Cloud GIS Leakage (Complete Data Sovereignty)
+  ]
 
-  rectangle "<b>Human-in-the-Loop Municipal Governance</b>\\n• Generative outputs serve strictly as advisory decision support\\n• Autonomous legal zoning enforcement is prohibited by design" as GOV #FFFFFF
+  rectangle GOV [
+<b>Human-in-the-Loop Municipal Governance</b>
+--
+• Generative outputs serve strictly as advisory decision support
+• Autonomous legal zoning enforcement is prohibited by design
+• Flags high reconstruction disparity outside pre-trained fabrics
+  ]
 
-  GATEWAY -right-> HARDWARE
-  HARDWARE -right-> GOV
+  GATEWAY -right-> HARDWARE : Enforces Hardware Quota
+  HARDWARE -right-> GOV : Operational Boundary
 }
-BYLAWS -down-> GATEWAY : Policy Telemetry
-NOISY ..> GATEWAY : Gateway File Sanitization
+
+BYLAWS -down-> GOV : Grounded Policy Directives
 
 @enduml
