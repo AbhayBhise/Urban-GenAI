@@ -46,9 +46,9 @@
     <text x="22" y="92" fill="#475569" font-size="10.5">&#8226; 2,100 Aerial Tiles</text>
     <text x="22" y="112" fill="#475569" font-size="10.5">&#8226; 256&#215;256 px, 0.3m GSD</text>
     <text x="22" y="132" fill="#475569" font-size="10.5">&#8226; 21 Zoning Classes</text>
-    <text x="22" y="152" fill="#475569" font-size="10.5">&#8226; Stratified 90/10 Split</text>
+    <text x="22" y="152" fill="#475569" font-size="10.5">&#8226; Stratified 70/15/15 Split</text>
     <rect x="22" y="164" width="144" height="26" rx="3" fill="#E0F2FE"/>
-    <text x="94" y="181" text-anchor="middle" fill="#0369A1" font-size="10.5" font-weight="700">1,890 Train / 210 Val</text>
+    <text x="94" y="181" text-anchor="middle" fill="#0369A1" font-size="10.5" font-weight="700">1,470 Train / 315 Val / 315 Test</text>
     <rect x="22" y="198" width="144" height="74" rx="3" fill="#F8FAFC" stroke="#E2E8F0"/>
     <text x="94" y="222" text-anchor="middle" fill="#0F172A" font-size="10.5" font-weight="700">RGB Spectral Baseline</text>
     <text x="94" y="244" text-anchor="middle" fill="#64748B" font-size="9.5">Ground-Truth Baseline</text>

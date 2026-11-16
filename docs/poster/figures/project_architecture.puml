@@ -48,7 +48,7 @@ package "1. Remote Sensing Ingestion and Perturbation" #F0F9FF {
 --
 • 2,100 Aerial Tiles (256x256 px, 0.3m GSD)
 • 21 Municipal Land-Use Classes
-• Stratified Split (1,890 Train / 210 Val)
+• Stratified Split (1,470 Train / 315 Val / 315 Test)
 • RGB Spectral Baseline
   ]
 

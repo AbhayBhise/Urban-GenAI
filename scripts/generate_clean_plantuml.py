@@ -80,7 +80,7 @@ skinparam arrow {
 ' TIER 1: INGESTION, RESTORATION & LATENT MANIFOLD
 ' ==============================================================================
 package "1. Remote Sensing Ingestion & Perturbation" #F0F9FF {
-  rectangle "<b>USGS UCMerced Orthoimagery</b>\n• 2,100 Aerial Tiles (256x256 px, 0.3m GSD)\n• 21 Municipal Land-Use Classes\n• Stratified Split (1,890 Train / 210 Val)\n• RGB Spectral Baseline" as RAW #E0F2FE
+  rectangle "<b>USGS UCMerced Orthoimagery</b>\n• 2,100 Aerial Tiles (256x256 px, 0.3m GSD)\n• 21 Municipal Land-Use Classes\n• Stratified Split (1,470 Tr / 315 Val / 315 Ts)\n• RGB Spectral Baseline" as RAW #E0F2FE
 
   rectangle "<b>Atmospheric Degradation Layer</b>\n• Synthetic Cloud Shadow & Fog Attenuation\n• Additive Gaussian Sensor Noise: σ = 0.15\n• Corrupted Input Tile: x̃ ∈ ℝ^(128x128x3)\n• Simulates Adverse Sensor Weather" as NOISY #FEE2E2
 
@@ -209,9 +209,9 @@ def render_vector_svg_and_png(workspace):
     <text x="22" y="92" fill="#475569" font-size="10.5">&#8226; 2,100 Aerial Tiles</text>
     <text x="22" y="112" fill="#475569" font-size="10.5">&#8226; 256&#215;256 px, 0.3m GSD</text>
     <text x="22" y="132" fill="#475569" font-size="10.5">&#8226; 21 Zoning Classes</text>
-    <text x="22" y="152" fill="#475569" font-size="10.5">&#8226; Stratified 90/10 Split</text>
+    <text x="22" y="152" fill="#475569" font-size="10.5">&#8226; Stratified 70/15/15 Split</text>
     <rect x="22" y="164" width="144" height="26" rx="3" fill="#E0F2FE"/>
-    <text x="94" y="181" text-anchor="middle" fill="#0369A1" font-size="10.5" font-weight="700">1,890 Train / 210 Val</text>
+    <text x="94" y="181" text-anchor="middle" fill="#0369A1" font-size="10.5" font-weight="700">1,470 Tr / 315 Val / 315 Ts</text>
     <rect x="22" y="198" width="144" height="74" rx="3" fill="#F8FAFC" stroke="#E2E8F0"/>
     <text x="94" y="222" text-anchor="middle" fill="#0F172A" font-size="10.5" font-weight="700">RGB Spectral Baseline</text>
     <text x="94" y="244" text-anchor="middle" fill="#64748B" font-size="9.5">Ground-Truth Baseline</text>
@@ -508,6 +508,8 @@ def render_vector_svg_and_png(workspace):
         # Copy PNG to all target locations
         png_targets = [
             os.path.join(workspace, "docs", "poster", "figures", "pipeline_architecture_plantuml.png"),
+            os.path.join(workspace, "docs", "figures", "clean_project_architecture.png"),
+            os.path.join(workspace, "docs", "figures", "pipeline_architecture_plantuml.png"),
             os.path.join(workspace, "frontend", "public", "poster", "figures", "clean_project_architecture.png"),
             os.path.join(workspace, "frontend", "public", "poster", "figures", "pipeline_architecture_plantuml.png"),
             r"C:\Users\HP\.gemini\antigravity\brain\7a2c521c-9251-41f2-b44d-f0b19d5fe7c6\clean_project_architecture.png"
