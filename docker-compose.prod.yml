@@ -1,0 +1,104 @@
+# ==============================================================================
+# Enterprise Production Docker Compose Topology
+# Architected for High Availability, Horizontal Scalability, and Zero Downtime
+# ==============================================================================
+
+version: '3.8'
+
+services:
+  # ----------------------------------------------------------------------------
+  # Edge Reverse Proxy & Load Balancer
+  # ----------------------------------------------------------------------------
+  nginx:
+    image: nginx:alpine
+    container_name: urbangen_nginx_prod
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - frontend_dist:/usr/share/nginx/html:ro
+      - nginx_cache:/var/cache/nginx
+    depends_on:
+      - backend
+      - frontend
+    networks:
+      - urbangen_net
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "-", "http://127.0.0.1/healthz"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  # ----------------------------------------------------------------------------
+  # High-Concurrency FastAPI Backend (Multi-Worker Non-Root Container)
+  # ----------------------------------------------------------------------------
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: urbangen_backend_prod
+    restart: unless-stopped
+    environment:
+      - URBANGEN_API_KEY=${URBANGEN_API_KEY:-}
+      - URBANGEN_ALLOWED_ORIGINS=${URBANGEN_ALLOWED_ORIGINS:-*}
+      - URBANGEN_RATE_LIMIT=120/minute
+      - URBANGEN_CACHE_TTL_SEC=300
+      - WEB_CONCURRENCY=4
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - urbangen_net
+    deploy:
+      resources:
+        limits:
+          cpus: '4.0'
+          memory: 4096M
+        reservations:
+          cpus: '1.0'
+          memory: 1024M
+
+  # ----------------------------------------------------------------------------
+  # Distributed Cache & Rate Limiting Store
+  # ----------------------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: urbangen_redis_prod
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory", "512mb", "--maxmemory-policy", "allkeys-lru"]
+    volumes:
+      - redis_data:/data
+    networks:
+      - urbangen_net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # ----------------------------------------------------------------------------
+  # Static Frontend Builder (Generates optimized production bundle)
+  # ----------------------------------------------------------------------------
+  frontend:
+    image: node:20-alpine
+    container_name: urbangen_frontend_build
+    working_dir: /app
+    volumes:
+      - ./frontend:/app
+      - frontend_dist:/app/dist
+    command: >
+      sh -c "npm ci && npm run build"
+    networks:
+      - urbangen_net
+
+networks:
+  urbangen_net:
+    driver: bridge
+
+volumes:
+  frontend_dist:
+  nginx_cache:
+  redis_data:
