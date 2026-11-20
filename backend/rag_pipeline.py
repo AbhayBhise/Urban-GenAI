@@ -6,6 +6,8 @@ except ImportError:
     gpd = None
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), "..", "pune_datasets")
+CACHE_FILE = os.path.join(DATA_DIR, "pune_stats_cache.json")
+CORPUS_CACHE_FILE = os.path.join(os.path.dirname(__file__), "corpus", "pune_stats_cache.json")
 
 PUNE_STATS = {
     "building_count": 0,
@@ -20,6 +22,19 @@ PUNE_STATS = {
 }
 
 def load_stats():
+    # 0. Check precomputed cache for instant (<10ms) zero-dependency startup
+    target_cache = CACHE_FILE if os.path.exists(CACHE_FILE) else (CORPUS_CACHE_FILE if os.path.exists(CORPUS_CACHE_FILE) else None)
+    if target_cache:
+        try:
+            import json
+            with open(target_cache, "r", encoding="utf-8") as f:
+                cached = json.load(f)
+                PUNE_STATS.update(cached)
+            print("Loaded Pune GIS stats from cache.")
+            return
+        except Exception as e:
+            print("Warning: failed to read pune_stats_cache.json:", str(e))
+
     if gpd is None:
         print("Geopandas not installed. Skipping shapefile loading.")
         return

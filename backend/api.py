@@ -1,10 +1,38 @@
 import os
+import sys
+import time
 import math
 import json
 import io
 import base64
 import asyncio
 import hashlib
+
+# Ensure backend and repository root directories are in sys.path for bulletproof imports across environments
+_BACKEND_DIR = os.path.dirname(os.path.abspath(__file__))
+_REPO_ROOT = os.path.dirname(_BACKEND_DIR)
+if _BACKEND_DIR not in sys.path:
+    sys.path.insert(0, _BACKEND_DIR)
+if _REPO_ROOT not in sys.path:
+    sys.path.insert(0, _REPO_ROOT)
+
+def resolve_path(rel_path: str) -> str:
+    """Resolve paths robustly whether executed from repo root, backend, or inside Docker."""
+    if os.path.isabs(rel_path) and os.path.exists(rel_path):
+        return rel_path
+    clean = rel_path.replace("\\", "/")
+    while clean.startswith("../"):
+        clean = clean[3:]
+    while clean.startswith("./"):
+        clean = clean[2:]
+    for base in (_REPO_ROOT, _BACKEND_DIR, os.getcwd()):
+        candidate = os.path.normpath(os.path.join(base, clean))
+        if os.path.exists(candidate):
+            return candidate
+    return os.path.normpath(os.path.join(_REPO_ROOT, clean))
+
+SERVER_START_TIME = time.time()
+
 import torch
 import torch.nn.functional as F
 import psutil
@@ -31,13 +59,30 @@ from rag_pipeline import PUNE_STATS, query_rag
 from security import (
     ALLOWED_ORIGINS, AUTH_ENABLED, RATE_LIMIT, limiter,
     require_api_key, read_image_upload, privacy_policy,
+    EnterpriseSecurityMiddleware, api_cache, metrics,
 )
 
-app = FastAPI(title="UrbanGen AI API")
+app = FastAPI(title="UrbanGen AI API", version="1.0.0")
 
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+@app.exception_handler(Exception)
+async def global_unhandled_exception_handler(request: Request, exc: Exception):
+    req_id = request.headers.get("X-Request-ID", "unknown")
+    print(f"[ERROR] Unhandled exception on {request.method} {request.url.path} (Request ID: {req_id}): {exc}")
+    return Response(
+        status_code=500,
+        content=json.dumps({
+            "error": "Internal Server Error",
+            "message": "An unexpected error occurred while processing your request.",
+            "request_id": req_id
+        }),
+        media_type="application/json"
+    )
+
 app.add_middleware(SlowAPIMiddleware)
+app.add_middleware(EnterpriseSecurityMiddleware)
 
 app.add_middleware(
     CORSMiddleware,
@@ -92,22 +137,22 @@ def load_model_if_exists(model, path):
     return False
 
 
-ae_loaded = load_model_if_exists(ae, '../outputs/ae/model.pth')
-vae_loaded = load_model_if_exists(vae, '../outputs/vae/model.pth')
-trans_loaded = load_model_if_exists(transformer, '../outputs/transformer/model.pth')
+ae_loaded = load_model_if_exists(ae, resolve_path('outputs/ae/model.pth'))
+vae_loaded = load_model_if_exists(vae, resolve_path('outputs/vae/model.pth'))
+trans_loaded = load_model_if_exists(transformer, resolve_path('outputs/transformer/model.pth'))
 
 # ---------------------------------------------------------------------------
 # Conditional GAN Generator — loaded from EMA checkpoint produced by train_gan.py
 # ---------------------------------------------------------------------------
 gan_generator = GANGenerator(latent_dim=GAN_LATENT_DIM, num_classes=GAN_NUM_CLASSES).to(device)
-gan_loaded = load_model_if_exists(gan_generator, '../outputs/gan/generator_ema.pth')
+gan_loaded = load_model_if_exists(gan_generator, resolve_path('outputs/gan/generator_ema.pth'))
 
 # ---------------------------------------------------------------------------
 # UrbanGenAI class-conditional diffusion model (DDIM Fast Sampler)
 # ---------------------------------------------------------------------------
 diffusion_unet = DiffusionUNet(base_ch=32, num_classes=len(URBAN_CLASSES), condition_channels=0).to(device)
 diffusion_model = DDPM(diffusion_unet, timesteps=1000).to(device)
-_DIFFUSION_CHECKPOINT = '../outputs/diffusion_class_conditional/model_best.pth'
+_DIFFUSION_CHECKPOINT = resolve_path('outputs/diffusion_class_conditional/model_best.pth')
 diffusion_loaded = load_model_if_exists(diffusion_unet, _DIFFUSION_CHECKPOINT)
 
 
@@ -121,7 +166,7 @@ def refresh_diffusion_checkpoint():
     return diffusion_loaded
 
 GAN_META: dict = {}
-_gan_meta_path = '../outputs/gan/meta.json'
+_gan_meta_path = resolve_path('outputs/gan/meta.json')
 if os.path.exists(_gan_meta_path):
     try:
         with open(_gan_meta_path, encoding='utf-8') as _f:
@@ -136,7 +181,7 @@ if os.path.exists(_gan_meta_path):
 gpt = None
 gpt_stoi = None
 gpt_itos = None
-GPT_DIR = '../outputs/gpt'
+GPT_DIR = resolve_path('outputs/gpt')
 
 
 def load_gpt():
@@ -174,15 +219,29 @@ gpt_loaded = load_gpt()
 # purely the classic Gatys/Ecker/Bethge (2015) content+style optimization
 # using VGG's conv activations as a perceptual feature space.
 # ---------------------------------------------------------------------------
-try:
-    style_vgg = tv_models.vgg16(weights='IMAGENET1K_V1').features.to(device).eval()
-    for _p in style_vgg.parameters():
-        _p.requires_grad_(False)
-    style_vgg_loaded = True
-except Exception as e:
-    style_vgg = None
-    style_vgg_loaded = False
-    print(f"Warning: Failed to load VGG16 for style transfer: {e}")
+style_vgg = None
+style_vgg_loaded = False
+import threading
+_vgg_lock = threading.Lock()
+
+def get_style_vgg():
+    global style_vgg, style_vgg_loaded
+    if style_vgg is not None:
+        return style_vgg
+    with _vgg_lock:
+        if style_vgg is not None:
+            return style_vgg
+        try:
+            vgg = tv_models.vgg16(weights='IMAGENET1K_V1').features.to(device).eval()
+            for _p in vgg.parameters():
+                _p.requires_grad_(False)
+            style_vgg = vgg
+            style_vgg_loaded = True
+        except Exception as e:
+            style_vgg = None
+            style_vgg_loaded = False
+            print(f"Warning: Failed to load VGG16 for style transfer: {e}")
+        return style_vgg
 
 # Anomaly-detection baseline: reconstruction error on a random sample of
 # real, in-distribution UCMerced tiles. A tile's error is only meaningful
@@ -495,10 +554,13 @@ compute_urbanization_targets()
 
 
 def _vgg_features(x, layers):
+    vgg = get_style_vgg()
+    if vgg is None:
+        raise RuntimeError("VGG16 style feature extractor is not available.")
     x = (x - STYLE_IMAGENET_MEAN) / STYLE_IMAGENET_STD
     feats = {}
     max_layer = max(layers)
-    for i, layer in enumerate(style_vgg):
+    for i, layer in enumerate(vgg):
         x = layer(x)
         if i in layers:
             feats[i] = x
@@ -1019,15 +1081,71 @@ def enhance_generated_urban_image(image, target=None, strength=1.0):
 
 
 
+@app.get("/healthz")
+def healthz():
+    """Liveness probe: verifies process is alive and responsive."""
+    mem = psutil.virtual_memory()
+    return {
+        "status": "healthy",
+        "service": "urbangen-ai",
+        "timestamp": time.time(),
+        "uptime_sec": round(time.time() - SERVER_START_TIME, 2),
+        "memory": {
+            "used_mb": round((mem.total - mem.available) / (1024 * 1024), 2),
+            "percent": mem.percent
+        },
+        "device": str(device),
+        "cache": api_cache.stats()
+    }
+
+
+@app.get("/readyz")
+def readyz():
+    """Readiness probe: verifies model checkpoints and pipelines are loaded."""
+    refresh_diffusion_checkpoint()
+    ready = any([ae_loaded, vae_loaded, trans_loaded, gan_loaded, diffusion_loaded, gpt_loaded])
+    if not ready:
+        return Response(
+            status_code=503,
+            content=json.dumps({"status": "not_ready", "detail": "No model checkpoints ready"}),
+            media_type="application/json"
+        )
+    return {
+        "status": "ready",
+        "service": "urbangen-ai",
+        "models_ready": {
+            "ae": ae_loaded,
+            "vae": vae_loaded,
+            "classifier": trans_loaded,
+            "gan": gan_loaded,
+            "diffusion": diffusion_loaded,
+            "gpt": gpt_loaded
+        }
+    }
+
+
+@app.get("/metrics", response_class=PlainTextResponse)
+def get_metrics():
+    """Prometheus-compatible metrics exposition endpoint."""
+    return PlainTextResponse(
+        metrics.generate_prometheus_output(),
+        media_type="text/plain; version=0.0.4; charset=utf-8"
+    )
+
+
 @app.get("/evaluate/vae")
 def get_vae_evaluation():
     """Reconstruction-quality and latent-health metrics computed once at
     startup over a representative sample spanning all 21 UCMerced classes.
     This is measured runtime evaluation data, not a persisted held-out split."""
+    cached = api_cache.get("eval_vae")
+    if cached is not None:
+        return cached
     if vae_loaded and not VAE_EVAL_METRICS:
         compute_vae_evaluation()
     if not VAE_EVAL_METRICS:
         return Response(status_code=400, content="VAE evaluation unavailable (model or dataset missing).")
+    api_cache.set("eval_vae", VAE_EVAL_METRICS, ttl=600.0)
     return VAE_EVAL_METRICS
 
 
@@ -1036,10 +1154,14 @@ def get_ae_evaluation():
     """Same per-class PSNR/SSIM/MSE methodology as /evaluate/vae, using a
     representative per-class sample so both reconstruction models are reported
     on equal footing."""
+    cached = api_cache.get("eval_ae")
+    if cached is not None:
+        return cached
     if ae_loaded and not AE_EVAL_METRICS:
         compute_ae_evaluation()
     if not AE_EVAL_METRICS:
         return Response(status_code=400, content="AE evaluation unavailable (model or dataset missing).")
+    api_cache.set("eval_ae", AE_EVAL_METRICS, ttl=600.0)
     return AE_EVAL_METRICS
 
 
@@ -1047,10 +1169,14 @@ def get_ae_evaluation():
 def get_classifier_evaluation():
     """Confusion matrix + per-class accuracy over a random real-data sample
     (see compute_classifier_evaluation)."""
+    cached = api_cache.get("eval_classifier")
+    if cached is not None:
+        return cached
     if trans_loaded and not CLASSIFIER_EVAL_METRICS:
         compute_classifier_evaluation()
     if not CLASSIFIER_EVAL_METRICS:
         return Response(status_code=400, content="Classifier evaluation unavailable (model or dataset missing).")
+    api_cache.set("eval_classifier", CLASSIFIER_EVAL_METRICS, ttl=600.0)
     return CLASSIFIER_EVAL_METRICS
 
 
@@ -1059,10 +1185,14 @@ def get_gan_evaluation():
     """Classifier-based sample-quality proxy (see compute_gan_evaluation) --
     what fraction of generated samples per class the independently-trained
     Land-Use Classifier recognizes as that class."""
+    cached = api_cache.get("eval_gan")
+    if cached is not None:
+        return cached
     if gan_loaded and trans_loaded and not GAN_EVAL_METRICS:
         compute_gan_evaluation()
     if not GAN_EVAL_METRICS:
         return Response(status_code=400, content="GAN evaluation unavailable (GAN or Classifier not trained).")
+    api_cache.set("eval_gan", GAN_EVAL_METRICS, ttl=600.0)
     return GAN_EVAL_METRICS
 
 
@@ -1071,10 +1201,14 @@ def get_gpt_evaluation():
     """Held-out cross-entropy, perplexity and bits-per-char for MiniGPT on
     the last 10% of the training corpus (see compute_gpt_evaluation) -- the
     standard intrinsic language-model metric."""
+    cached = api_cache.get("eval_gpt")
+    if cached is not None:
+        return cached
     if gpt_loaded and not GPT_EVAL_METRICS:
         compute_gpt_evaluation()
     if not GPT_EVAL_METRICS:
         return Response(status_code=400, content="MiniGPT evaluation unavailable (model or corpus missing).")
+    api_cache.set("eval_gpt", GPT_EVAL_METRICS, ttl=600.0)
     return GPT_EVAL_METRICS
 
 
@@ -1099,7 +1233,7 @@ def get_config():
 @app.get("/history/{model_name}")
 def get_history(model_name: str):
     output_name = 'diffusion_class_conditional' if model_name == 'diffusion' else model_name
-    path = f'../outputs/{output_name}/history.json'
+    path = resolve_path(f'outputs/{output_name}/history.json')
     if os.path.exists(path):
         with open(path, 'r') as f:
             return json.load(f)
@@ -1305,7 +1439,8 @@ async def infer_vae_urbanize(request: Request, file: UploadFile = File(...), alp
     still shows a brief loading state since this is well over a typical
     request latency, just not the ~40-60s an earlier, lower-resolution
     version of this endpoint took."""
-    if not style_vgg_loaded:
+    vgg = get_style_vgg()
+    if vgg is None:
         return Response(status_code=400, content="Style transfer model unavailable.")
     global URBANIZATION_TARGET_PATHS
     if not URBANIZATION_TARGET_PATHS:
@@ -1607,6 +1742,26 @@ def get_privacy():
 
 
 
+def _sample_diffusion_candidates(c_tensor, c_idx, steps, eta):
+    candidates = []
+    candidate_seeds = [2026, 2027, 2028, 2029]
+    for seed in candidate_seeds:
+        with torch.random.fork_rng(devices=[0] if device.type == "cuda" else []):
+            torch.manual_seed(seed)
+            candidate = diffusion_model.ddim_sample(
+                (1, 3, 128, 128),
+                c_tensor,
+                steps=steps,
+                eta=eta,
+                classifier=transformer if trans_loaded else None,
+                classifier_guidance_scale=0.01 if trans_loaded else 0.0,
+            )
+        scored = score_diffusion_candidate(candidate, c_idx)
+        scored["seed"] = seed
+        candidates.append(scored)
+    return candidates
+
+
 # ---------------------------------------------------------------------------
 # Diffusion Inference & Evaluation Endpoints
 # ---------------------------------------------------------------------------
@@ -1626,22 +1781,9 @@ async def infer_diffusion(request: Request, file: UploadFile = File(...),
     c_tensor = torch.tensor([c_idx], device=device)
     steps = max(5, min(int(steps), 50))
     eta = max(0.0, min(float(eta), 1.0))
-    candidates = []
-    candidate_seeds = [2026, 2027, 2028, 2029]
-    for seed in candidate_seeds:
-        with torch.random.fork_rng(devices=[0] if device.type == "cuda" else []):
-            torch.manual_seed(seed)
-            candidate = diffusion_model.ddim_sample(
-                (1, 3, 128, 128),
-                c_tensor,
-                steps=steps,
-                eta=eta,
-                classifier=transformer if trans_loaded else None,
-                classifier_guidance_scale=0.01 if trans_loaded else 0.0,
-            )
-        scored = score_diffusion_candidate(candidate, c_idx)
-        scored["seed"] = seed
-        candidates.append(scored)
+
+    # Offload heavy DDIM sampling to threadpool to prevent event loop blocking
+    candidates = await asyncio.to_thread(_sample_diffusion_candidates, c_tensor, c_idx, steps, eta)
 
     valid_candidates = [
         item for item in candidates
@@ -1678,6 +1820,9 @@ async def infer_diffusion(request: Request, file: UploadFile = File(...),
 
 @app.get("/evaluate/diffusion")
 def evaluate_diffusion():
+    cached = api_cache.get("eval_diffusion")
+    if cached is not None:
+        return cached
     refresh_diffusion_checkpoint()
     history_path = '../outputs/diffusion_class_conditional/history.json'
     history = []
@@ -1687,7 +1832,7 @@ def evaluate_diffusion():
         except Exception:
             pass
     final_loss = history[-1]['loss'] if history else None
-    return {
+    res = {
         "model": "Class-Conditional DDPM (DDIM 40-step Sampler)",
         "status": "trained" if diffusion_loaded else "unavailable",
         "dataset": "UCMerced LandUse",
@@ -1700,6 +1845,8 @@ def evaluate_diffusion():
         "architecture": "U-Net with sinusoidal-timestep and land-use-label conditioning; sampled from Gaussian noise",
         "parameters_millions": round(sum(p.numel() for p in diffusion_unet.parameters()) / 1e6, 2)
     }
+    api_cache.set("eval_diffusion", res, ttl=600.0)
+    return res
 
 
 @app.get("/evaluate/summary")
@@ -1711,8 +1858,11 @@ def evaluate_summary():
     measured values. Missing models are represented as null rather than an
     invented fallback number.
     """
+    cached = api_cache.get("eval_summary")
+    if cached is not None:
+        return cached
     ensure_evaluation_metrics()
-    return {
+    res = {
         "schema_version": "1.0",
         "dataset": {
             "name": "UCMerced LandUse",
@@ -1730,6 +1880,8 @@ def evaluate_summary():
             "gpt": {"name": "MiniGPT Urban-Planning Transformer", "status": gpt_loaded, "metrics": GPT_EVAL_METRICS or None},
         },
     }
+    api_cache.set("eval_summary", res, ttl=600.0)
+    return res
 
 
 @app.get("/governance/{doc}", response_class=PlainTextResponse)
@@ -1737,7 +1889,7 @@ def get_governance_doc(doc: str):
     fname = _DOC_FILES.get(doc)
     if not fname:
         return PlainTextResponse("Unknown document.", status_code=404)
-    path = os.path.join("..", "docs", fname)
+    path = resolve_path(f'docs/{fname}')
     if not os.path.exists(path):
         return PlainTextResponse("Document not found.", status_code=404)
     return PlainTextResponse(open(path, encoding="utf-8").read())
@@ -1745,12 +1897,16 @@ def get_governance_doc(doc: str):
 
 @app.get("/datasets")
 def get_datasets():
+    cached = api_cache.get("datasets_info")
+    if cached is not None:
+        return cached
+    pune_path = resolve_path("pune_datasets")
     ucmerced_path = DATASET_PATH
     datasets_info = {
         "pune_datasets": {
-            "path": "../pune_datasets",
-            "exists": os.path.exists("../pune_datasets"),
-            "files": len(os.listdir("../pune_datasets")) if os.path.exists("../pune_datasets") else 0
+            "path": pune_path,
+            "exists": os.path.exists(pune_path),
+            "files": len(os.listdir(pune_path)) if os.path.exists(pune_path) else 0
         },
         "ucmerced": {
             "path": str(ucmerced_path),
@@ -1766,6 +1922,7 @@ def get_datasets():
             ) if ucmerced_path.exists() else 0,
         }
     }
+    api_cache.set("datasets_info", datasets_info, ttl=300.0)
     return datasets_info
 
 
