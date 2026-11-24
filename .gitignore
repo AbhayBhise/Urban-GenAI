@@ -89,5 +89,7 @@ Untitled0.ipynb
 scratch/
 plantuml.jar
 test_*.svg
+*.tmp
+~$*
 
 *.zip
