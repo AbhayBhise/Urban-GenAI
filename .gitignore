@@ -60,6 +60,7 @@ outputs/probe_*.jpg
 outputs/presentation_assets/
 outputs/gan_120epochs_backup/
 *.pptx
+!docs/*.pptx
 
 # ------------------------------------------------------------
 # Explicitly keep model weights + training history. Scoped to the
