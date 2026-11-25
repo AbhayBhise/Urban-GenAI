@@ -316,8 +316,10 @@ def get_style_vgg():
 # real, in-distribution UCMerced tiles. A tile's error is only meaningful
 # relative to what "normal" error looks like for this model — a raw MSE
 # number tells a planner nothing on its own.
-VAE_ANOMALY_MEAN = None
-VAE_ANOMALY_STD = None
+# Precomputed over 294 real UCMerced tiles (random.seed(0)) so cloud
+# deployments without the full UCMerced dataset still score VAE anomalies.
+VAE_ANOMALY_MEAN = 0.006746967788785696
+VAE_ANOMALY_STD = 0.004495460540056229
 
 
 def compute_vae_anomaly_baseline(n_samples=300):
@@ -326,6 +328,8 @@ def compute_vae_anomaly_baseline(n_samples=300):
         return
     import random
     from dataset import DATASET_PATH, URBAN_CLASSES
+    if not DATASET_PATH.exists():
+        return
 
     random.seed(0)
     paths = []

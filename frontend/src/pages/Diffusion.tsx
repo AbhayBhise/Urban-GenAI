@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { AlertCircle, CheckCircle2, Image as ImageIcon, Upload } from 'lucide-react';
 import { apiFetch } from '../lib/api';
+import ModelUseCaseCard from '../components/ModelUseCaseCard';
 import DiffusionArchitecture from './DiffusionArchitecture';
 
 const CLASSES = [
@@ -84,7 +85,7 @@ export default function Diffusion() {
       body.append('class_name', className);
       body.append('steps', String(steps));
       body.append('eta', String(eta));
-      const response = await apiFetch('/infer/diffusion', { method: 'POST', body });
+      const response = await apiFetch('/infer/diffusion', { method: 'POST', body, timeoutMs: 60000 });
       if (!response.ok) throw new Error(await response.text());
       const result = await response.json();
       setResult(result);
@@ -98,13 +99,19 @@ export default function Diffusion() {
   return (
     <div>
       <div className="panel-header">
-        <h1 className="panel-title">Urban Scenario Diffusion</h1>
+        <h1 className="panel-title">Diffusion Generator — High-Detail Scenario Tile Creator</h1>
         <div className="panel-desc">
-          Generate a new target-class aerial tile using the trained class-conditional DDPM and fast
-          DDIM sampler. The uploaded file is retained for the existing upload workflow, but is not
-          passed to the generator or blended into the result.
+          Creates a new aerial photo for any land-use type you choose by slowly turning random static
+          into a clear scene over 20–40 steps, then checks the result with the Land-Use Classifier.
+          (Your uploaded file is only used to trigger the request and is not copied into the output.)
         </div>
       </div>
+
+      <ModelUseCaseCard
+        datasetRole="Trained to remove noise step-by-step from UCMerced aerial photos conditioned on 21 land-use labels."
+        inferenceAction="Starts from pure static noise and refines it over your chosen number of steps toward the target class, then checks the result with the Land-Use Classifier."
+        projectValue="Produces realistic synthetic land-use tiles for visualizing city expansion scenarios without copying existing dataset images."
+      />
 
       {error && <div className="card" style={{ borderColor: 'var(--danger)', color: 'var(--danger)', marginBottom: 20 }}>{error}</div>}
 

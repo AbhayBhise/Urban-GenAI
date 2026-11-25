@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { apiFetch } from '../lib/api';
 import TransparencyBanner from '../lib/TransparencyBanner';
+import ModelUseCaseCard from '../components/ModelUseCaseCard';
 
 export default function PlanGenerator() {
   const [presets, setPresets] = useState<string[]>([]);
@@ -71,15 +72,19 @@ export default function PlanGenerator() {
   return (
     <div>
       <div className="panel-header">
-        <h1 className="panel-title">Urban Plan Generator</h1>
+        <h1 className="panel-title">Urban Plan Generator (MiniGPT) — Sustainability Policy Advisor</h1>
         <div className="panel-desc">
-          A decoder-only <strong>Transformer</strong> (MiniGPT) built from scratch —
-          multi-head causal self-attention, learned positional embeddings, autoregressive
-          sampling — trained on an urban-planning corpus. When live Pune GIS statistics are
-          available, it can use them to draft sustainability recommendations for planner review.
-          Generated text is advisory and must be checked against authoritative planning data.
+          A custom language model trained on urban-planning rules and Pune GIS data. It drafts
+          practical zoning, green-buffer, and sustainability recommendations for planner review.
+          Generated text is advisory and should be checked against official municipal records.
         </div>
       </div>
+
+      <ModelUseCaseCard
+        datasetRole="Trained on curated urban-planning bylaws, sustainable development guidelines, and Pune municipal GIS statistics."
+        inferenceAction="Reads your ward or parcel prompt (or live Pune GIS stats) and writes structured planning advice on FSI, setbacks, green cover, and solar/rainwater rules."
+        projectValue="Turns raw land-use numbers into plain-English planning recommendations that urban planners can review and act on."
+      />
 
       <div style={{ marginBottom: 20 }}><TransparencyBanner /></div>
 

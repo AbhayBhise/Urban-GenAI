@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Sparkles, Shuffle, Grid3X3, Download, Zap, Info, Eye, X, ArrowLeft, RefreshCw, Check } from 'lucide-react';
 import { apiFetch } from '../lib/api';
+import ModelUseCaseCard from '../components/ModelUseCaseCard';
 
 // UCMerced 21 classes with human-readable labels, icons, and broad category groupings
 interface UrbanClassItem {
@@ -860,13 +861,18 @@ export default function GAN({ isGanTrained }: { isGanTrained?: boolean }) {
             <Sparkles size={13} />
             IEEE 50e / 32b Verified Protocol · Projection cDCGAN
           </div>
-          <h1 className="gan-title">Class-Conditional DCGAN — Urban Aerial Tile Generator</h1>
+          <h1 className="gan-title">Conditional DCGAN — Fast Synthetic Aerial Tile Generator</h1>
           <p className="gan-subtitle">
-            Synthesize class-specific 128×128 aerial land-use imagery from pure Gaussian noise vectors 
-            (<strong>z ~ 𝒩(0, I)</strong>) conditioned on learned 64-dimensional class embeddings. 
-            The Generator uses 4 Residual Upsampling blocks to synthesize realistic aerial patterns for any of the 21 UCMerced categories.
+            Creates brand-new 128×128 aerial photos from scratch for any of the 21 land-use types you pick
+            (such as residential, harbor, or forest) in milliseconds.
           </p>
         </div>
+
+        <ModelUseCaseCard
+          datasetRole="Trained on 21 UCMerced land-use classes by pitting a Generator against a Discriminator until generated tiles match real aerial textures."
+          inferenceAction="Takes random noise plus your chosen land-use label and generates new synthetic satellite tiles on demand."
+          projectValue="Lets planners quickly create extra training examples for rare land-use types and prototype urban layouts without waiting for new satellite captures."
+        />
 
         {/* Not-Trained Warning Banner */}
         {!ganTrained && (
