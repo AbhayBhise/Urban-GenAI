@@ -1,5 +1,6 @@
 import os
 import sys
+import gc
 import time
 import math
 import json
@@ -103,11 +104,7 @@ RUN_STARTUP_EVALUATIONS = os.getenv("URBANGEN_STARTUP_EVALUATIONS", "0") == "1"
 
 AE_LATENT = None  # DenoisingAE has no explicit latent dim arg
 VAE_LATENT_CHANNELS = 64
-
-# Models
-ae = DenoisingAE().to(device)
-vae = VAE(latent_channels=VAE_LATENT_CHANNELS, skip_channels=16, skip0_channels=16).to(device)
-transformer = UrbanClassifier(num_classes=len(URBAN_CLASSES)).to(device)
+LOW_MEMORY_MODE = os.getenv("URBANGEN_LOW_MEMORY", "1" if os.getenv("RENDER") else "0") == "1"
 
 
 def is_git_lfs_pointer(path):
@@ -119,6 +116,10 @@ def is_git_lfs_pointer(path):
             )
     except OSError:
         return False
+
+
+def _checkpoint_available(path):
+    return os.path.exists(path) and not is_git_lfs_pointer(path)
 
 
 def load_model_if_exists(model, path):
@@ -139,32 +140,98 @@ def load_model_if_exists(model, path):
     return False
 
 
-ae_loaded = load_model_if_exists(ae, resolve_path('outputs/ae/model.pth'))
-vae_loaded = load_model_if_exists(vae, resolve_path('outputs/vae/model.pth'))
-trans_loaded = load_model_if_exists(transformer, resolve_path('outputs/transformer/model.pth'))
+if LOW_MEMORY_MODE:
+    ae = None
+    vae = None
+    transformer = None
+    gan_generator = None
+    diffusion_unet = None
+    diffusion_model = None
+    _DIFFUSION_CHECKPOINT = resolve_path('outputs/diffusion_class_conditional/model_best.pth')
+    ae_loaded = _checkpoint_available(resolve_path('outputs/ae/model.pth'))
+    vae_loaded = _checkpoint_available(resolve_path('outputs/vae/model.pth'))
+    trans_loaded = _checkpoint_available(resolve_path('outputs/transformer/model.pth'))
+    gan_loaded = _checkpoint_available(resolve_path('outputs/gan/generator_ema.pth'))
+    diffusion_loaded = _checkpoint_available(_DIFFUSION_CHECKPOINT)
+else:
+    # Models
+    ae = DenoisingAE().to(device)
+    vae = VAE(latent_channels=VAE_LATENT_CHANNELS, skip_channels=16, skip0_channels=16).to(device)
+    transformer = UrbanClassifier(num_classes=len(URBAN_CLASSES)).to(device)
+    ae_loaded = load_model_if_exists(ae, resolve_path('outputs/ae/model.pth'))
+    vae_loaded = load_model_if_exists(vae, resolve_path('outputs/vae/model.pth'))
+    trans_loaded = load_model_if_exists(transformer, resolve_path('outputs/transformer/model.pth'))
 
-# ---------------------------------------------------------------------------
-# Conditional GAN Generator — loaded from EMA checkpoint produced by train_gan.py
-# ---------------------------------------------------------------------------
-gan_generator = GANGenerator(latent_dim=GAN_LATENT_DIM, num_classes=GAN_NUM_CLASSES).to(device)
-gan_loaded = load_model_if_exists(gan_generator, resolve_path('outputs/gan/generator_ema.pth'))
+    # ---------------------------------------------------------------------------
+    # Conditional GAN Generator — loaded from EMA checkpoint produced by train_gan.py
+    # ---------------------------------------------------------------------------
+    gan_generator = GANGenerator(latent_dim=GAN_LATENT_DIM, num_classes=GAN_NUM_CLASSES).to(device)
+    gan_loaded = load_model_if_exists(gan_generator, resolve_path('outputs/gan/generator_ema.pth'))
 
-# ---------------------------------------------------------------------------
-# UrbanGenAI class-conditional diffusion model (DDIM Fast Sampler)
-# ---------------------------------------------------------------------------
-diffusion_unet = DiffusionUNet(base_ch=32, num_classes=len(URBAN_CLASSES), condition_channels=0).to(device)
-diffusion_model = DDPM(diffusion_unet, timesteps=1000).to(device)
-_DIFFUSION_CHECKPOINT = resolve_path('outputs/diffusion_class_conditional/model_best.pth')
-diffusion_loaded = load_model_if_exists(diffusion_unet, _DIFFUSION_CHECKPOINT)
+    # ---------------------------------------------------------------------------
+    # UrbanGenAI class-conditional diffusion model (DDIM Fast Sampler)
+    # ---------------------------------------------------------------------------
+    diffusion_unet = DiffusionUNet(base_ch=32, num_classes=len(URBAN_CLASSES), condition_channels=0).to(device)
+    diffusion_model = DDPM(diffusion_unet, timesteps=1000).to(device)
+    _DIFFUSION_CHECKPOINT = resolve_path('outputs/diffusion_class_conditional/model_best.pth')
+    diffusion_loaded = load_model_if_exists(diffusion_unet, _DIFFUSION_CHECKPOINT)
+
+
+def _use_model(name: str):
+    """In LOW_MEMORY_MODE (e.g. Render 512MB Free Tier), keep only one model in RAM at a time."""
+    global ae, vae, transformer, gan_generator, diffusion_unet, diffusion_model, gpt, gpt_stoi, gpt_itos
+    if not LOW_MEMORY_MODE:
+        return
+    if name != "ae":
+        ae = None
+    if name != "vae":
+        vae = None
+    if name != "transformer":
+        transformer = None
+    if name != "gan":
+        gan_generator = None
+    if name != "diffusion":
+        diffusion_unet = None
+        diffusion_model = None
+    if name != "gpt":
+        gpt = None
+    gc.collect()
+
+    if name == "ae" and ae is None and ae_loaded:
+        m = DenoisingAE().to(device)
+        load_model_if_exists(m, resolve_path('outputs/ae/model.pth'))
+        ae = m
+    elif name == "vae" and vae is None and vae_loaded:
+        m = VAE(latent_channels=VAE_LATENT_CHANNELS, skip_channels=16, skip0_channels=16).to(device)
+        load_model_if_exists(m, resolve_path('outputs/vae/model.pth'))
+        vae = m
+    elif name == "transformer" and transformer is None and trans_loaded:
+        m = UrbanClassifier(num_classes=len(URBAN_CLASSES)).to(device)
+        load_model_if_exists(m, resolve_path('outputs/transformer/model.pth'))
+        transformer = m
+    elif name == "gan" and gan_generator is None and gan_loaded:
+        m = GANGenerator(latent_dim=GAN_LATENT_DIM, num_classes=GAN_NUM_CLASSES).to(device)
+        load_model_if_exists(m, resolve_path('outputs/gan/generator_ema.pth'))
+        gan_generator = m
+    elif name == "diffusion" and diffusion_unet is None and diffusion_loaded:
+        u = DiffusionUNet(base_ch=32, num_classes=len(URBAN_CLASSES), condition_channels=0).to(device)
+        load_model_if_exists(u, _DIFFUSION_CHECKPOINT)
+        diffusion_unet = u
+        diffusion_model = DDPM(u, timesteps=1000).to(device)
+    elif name == "gpt" and gpt is None:
+        load_gpt()
 
 
 def refresh_diffusion_checkpoint():
     """Pick up a checkpoint produced after API startup without fake fallbacks."""
     global diffusion_loaded
-    if not diffusion_loaded and os.path.exists(_DIFFUSION_CHECKPOINT):
-        diffusion_loaded = load_model_if_exists(
-            diffusion_unet, _DIFFUSION_CHECKPOINT
-        )
+    if not diffusion_loaded and _checkpoint_available(_DIFFUSION_CHECKPOINT):
+        if LOW_MEMORY_MODE:
+            diffusion_loaded = True
+        else:
+            diffusion_loaded = load_model_if_exists(
+                diffusion_unet, _DIFFUSION_CHECKPOINT
+            )
     return diffusion_loaded
 
 GAN_META: dict = {}
@@ -213,7 +280,7 @@ def load_gpt():
         return False
 
 
-gpt_loaded = load_gpt()
+gpt_loaded = _checkpoint_available(os.path.join(GPT_DIR, 'model.pth')) if LOW_MEMORY_MODE else load_gpt()
 
 # ---------------------------------------------------------------------------
 # VGG16 feature extractor for neural style transfer (infer_vae_urbanize).
@@ -1123,6 +1190,18 @@ def get_metrics():
     )
 
 
+def _load_validation_report_fallback(section_key: str):
+    report_path = resolve_path("outputs/system_validation_report.json")
+    if os.path.exists(report_path):
+        try:
+            with open(report_path, encoding="utf-8") as f:
+                data = json.load(f)
+            return data.get("models", {}).get(section_key)
+        except Exception:
+            pass
+    return None
+
+
 @app.get("/evaluate/vae")
 def get_vae_evaluation():
     """Reconstruction-quality and latent-health metrics computed once at
@@ -1131,12 +1210,13 @@ def get_vae_evaluation():
     cached = api_cache.get("eval_vae")
     if cached is not None:
         return cached
-    if vae_loaded and not VAE_EVAL_METRICS:
+    if vae_loaded and not VAE_EVAL_METRICS and not LOW_MEMORY_MODE:
         compute_vae_evaluation()
-    if not VAE_EVAL_METRICS:
+    res = VAE_EVAL_METRICS or _load_validation_report_fallback("spatial_vae")
+    if not res:
         return Response(status_code=400, content="VAE evaluation unavailable (model or dataset missing).")
-    api_cache.set("eval_vae", VAE_EVAL_METRICS, ttl=600.0)
-    return VAE_EVAL_METRICS
+    api_cache.set("eval_vae", res, ttl=600.0)
+    return res
 
 
 @app.get("/evaluate/ae")
@@ -1147,12 +1227,13 @@ def get_ae_evaluation():
     cached = api_cache.get("eval_ae")
     if cached is not None:
         return cached
-    if ae_loaded and not AE_EVAL_METRICS:
+    if ae_loaded and not AE_EVAL_METRICS and not LOW_MEMORY_MODE:
         compute_ae_evaluation()
-    if not AE_EVAL_METRICS:
+    res = AE_EVAL_METRICS or _load_validation_report_fallback("autoencoder")
+    if not res:
         return Response(status_code=400, content="AE evaluation unavailable (model or dataset missing).")
-    api_cache.set("eval_ae", AE_EVAL_METRICS, ttl=600.0)
-    return AE_EVAL_METRICS
+    api_cache.set("eval_ae", res, ttl=600.0)
+    return res
 
 
 @app.get("/evaluate/classifier")
@@ -1162,12 +1243,13 @@ def get_classifier_evaluation():
     cached = api_cache.get("eval_classifier")
     if cached is not None:
         return cached
-    if trans_loaded and not CLASSIFIER_EVAL_METRICS:
+    if trans_loaded and not CLASSIFIER_EVAL_METRICS and not LOW_MEMORY_MODE:
         compute_classifier_evaluation()
-    if not CLASSIFIER_EVAL_METRICS:
+    res = CLASSIFIER_EVAL_METRICS or _load_validation_report_fallback("classifier")
+    if not res:
         return Response(status_code=400, content="Classifier evaluation unavailable (model or dataset missing).")
-    api_cache.set("eval_classifier", CLASSIFIER_EVAL_METRICS, ttl=600.0)
-    return CLASSIFIER_EVAL_METRICS
+    api_cache.set("eval_classifier", res, ttl=600.0)
+    return res
 
 
 @app.get("/evaluate/gan")
@@ -1178,12 +1260,13 @@ def get_gan_evaluation():
     cached = api_cache.get("eval_gan")
     if cached is not None:
         return cached
-    if gan_loaded and trans_loaded and not GAN_EVAL_METRICS:
+    if gan_loaded and trans_loaded and not GAN_EVAL_METRICS and not LOW_MEMORY_MODE:
         compute_gan_evaluation()
-    if not GAN_EVAL_METRICS:
+    res = GAN_EVAL_METRICS or _load_validation_report_fallback("conditional_gan")
+    if not res:
         return Response(status_code=400, content="GAN evaluation unavailable (GAN or Classifier not trained).")
-    api_cache.set("eval_gan", GAN_EVAL_METRICS, ttl=600.0)
-    return GAN_EVAL_METRICS
+    api_cache.set("eval_gan", res, ttl=600.0)
+    return res
 
 
 @app.get("/evaluate/gpt")
@@ -1194,12 +1277,13 @@ def get_gpt_evaluation():
     cached = api_cache.get("eval_gpt")
     if cached is not None:
         return cached
-    if gpt_loaded and not GPT_EVAL_METRICS:
+    if gpt_loaded and not GPT_EVAL_METRICS and not LOW_MEMORY_MODE:
         compute_gpt_evaluation()
-    if not GPT_EVAL_METRICS:
+    res = GPT_EVAL_METRICS or _load_validation_report_fallback("minigpt_policy")
+    if not res:
         return Response(status_code=400, content="MiniGPT evaluation unavailable (model or corpus missing).")
-    api_cache.set("eval_gpt", GPT_EVAL_METRICS, ttl=600.0)
-    return GPT_EVAL_METRICS
+    api_cache.set("eval_gpt", res, ttl=600.0)
+    return res
 
 
 @app.get("/status")
@@ -1239,6 +1323,7 @@ async def infer_ae(request: Request, file: UploadFile = File(...)):
     directly rather than a resized/renormalized round-trip copy."""
     if not ae_loaded:
         return Response(status_code=400, content="Autoencoder not trained")
+    _use_model("ae")
     img = await read_image_upload(file)
     clean_x = ae_transform(img).unsqueeze(0).to(device)
     noisy_x = add_noise(clean_x)
@@ -1265,6 +1350,7 @@ async def infer_vae(request: Request, file: UploadFile = File(...)):
     against reconstruction."""
     if not vae_loaded:
         return Response(status_code=400, content="VAE not trained")
+    _use_model("vae")
     img = await read_image_upload(file)
     clean_x = vae_transform(img).unsqueeze(0).to(device)
     with torch.no_grad():
@@ -1407,9 +1493,10 @@ async def infer_vae_interpolate(request: Request, file: UploadFile = File(...)):
     checkpoint: the endpoints are real tiles and the steps between them are
     plausible blends, which shows the latent space is smooth and
     continuous."""
-    model = vae
     if not vae_loaded:
         return Response(status_code=400, content="VAE not trained")
+    _use_model("vae")
+    model = vae
     img = await read_image_upload(file)
     clean_x = vae_transform(img).unsqueeze(0).to(device)
     other_img = _random_ucmerced_image()
@@ -1486,6 +1573,7 @@ async def generate_vae_random(request: Request):
     the reason its output remains visually identifiable."""
     if not vae_loaded:
         return Response(status_code=400, content="VAE not trained")
+    _use_model("vae")
     # This checkpoint's near-zero KL weight means independent N(0, I) noise is
     # outside the spatial latent distribution the decoder learned. Start from
     # a randomly selected real tile's posterior, then add controlled noise so
@@ -1514,6 +1602,7 @@ async def infer_transformer(request: Request, file: UploadFile = File(...)):
     backward compatibility; see /generate/plan for the transformer model."""
     if not trans_loaded:
         return Response(status_code=400, content="Classifier not trained")
+    _use_model("transformer")
     img = await read_image_upload(file)
     x = transformer_transform(img).unsqueeze(0).to(device)
     with torch.no_grad():
@@ -1555,6 +1644,7 @@ def infer_gan(request: Request, req: GANRequest):
             status_code=400,
             content="GAN not trained yet — run: python train_gan.py"
         )
+    _use_model("gan")
 
     class_idx = max(0, min(int(req.class_index), GAN_NUM_CLASSES - 1))
     n = max(1, min(int(req.num_images), 16))
@@ -1618,6 +1708,7 @@ def gan_class_grid(request: Request):
     """Generate one sample per class (21 images) as a reference grid."""
     if not gan_loaded:
         return Response(status_code=400, content="GAN not trained yet")
+    _use_model("gan")
 
     z = torch.randn(GAN_NUM_CLASSES, GAN_LATENT_DIM, device=device)
     labels = torch.arange(GAN_NUM_CLASSES, device=device)
@@ -1688,6 +1779,7 @@ def generate_plan(request: Request, req: PlanRequest):
     if not gpt_loaded:
         return Response(status_code=400,
                         content="MiniGPT not trained (run: python train_gpt.py)")
+    _use_model("gpt")
     prompt = (req.prompt or "").strip()
     if not prompt:
         prompt = build_stats_prompt()
@@ -1753,8 +1845,10 @@ def get_privacy():
 
 
 def _sample_diffusion_candidates(c_tensor, c_idx, steps, eta):
+    _use_model("diffusion")
     candidates = []
     candidate_seeds = [2026, 2027, 2028, 2029] if device.type == "cuda" else [2026]
+    raw_samples = []
     for seed in candidate_seeds:
         with torch.random.fork_rng(devices=[0] if device.type == "cuda" else []):
             torch.manual_seed(seed)
@@ -1763,10 +1857,14 @@ def _sample_diffusion_candidates(c_tensor, c_idx, steps, eta):
                 c_tensor,
                 steps=steps,
                 eta=eta,
-                classifier=transformer if trans_loaded else None,
-                classifier_guidance_scale=0.01 if trans_loaded else 0.0,
+                classifier=None if LOW_MEMORY_MODE else (transformer if trans_loaded else None),
+                classifier_guidance_scale=0.0 if LOW_MEMORY_MODE else (0.01 if trans_loaded else 0.0),
             )
-        scored = score_diffusion_candidate(candidate, c_idx)
+        raw_samples.append((seed, candidate.detach().cpu()))
+    if LOW_MEMORY_MODE and trans_loaded:
+        _use_model("transformer")
+    for seed, candidate in raw_samples:
+        scored = score_diffusion_candidate(candidate.to(device), c_idx)
         scored["seed"] = seed
         candidates.append(scored)
     return candidates
