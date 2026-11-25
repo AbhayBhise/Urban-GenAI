@@ -6,12 +6,12 @@
 **Course:** Final Year B.Tech (Semester VII) — Generative Artificial Intelligence (`2304422L`) · **MIT Academy of Engineering, Pune**  
 **Live Application:** https://urbangen-ai.vercel.app · **Cloud API:** https://urban-genai.onrender.com · **Presentation:** [`UrbanGen_AI_External_Exam_Phase1_Presentation.pptx`](UrbanGen_AI_External_Exam_Phase1_Presentation.pptx)
 
-| Student Name | Roll Number | PRN Number | Seat Number |
-| :--- | :--- | :--- | :--- |
-| **Abhay Bhise** | `[Add Roll No]` | `[Add PRN]` | `[Add Seat No]` |
-| **Vedant Ingle** | `[Add Roll No]` | `[Add PRN]` | `[Add Seat No]` |
-| **Rushikesh Bodake** | `[Add Roll No]` | `[Add PRN]` | `[Add Seat No]` |
-| **Pranav Kolte** | `[Add Roll No]` | `[Add PRN]` | `[Add Seat No]` |
+| Student Name | PRN Number |
+| :--- | :--- |
+| **Abhay Bhise** | `202402040016` |
+| **Vedant Ingle** | `202402040031` |
+| **Disha** | `202402040019` |
+| **Vaishnavi** | `202402040006` |
 
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![PyTorch 2.x](https://img.shields.io/badge/PyTorch-2.x-EE4C2C.svg)](https://pytorch.org/)
@@ -358,10 +358,10 @@ Urban spatial interventions directly impact civic livelihood, infrastructure equ
 
 **UrbanGen AI** was developed at **MIT Academy of Engineering (MITAOE)**, Alandi, Pune, Maharashtra, India:
 
-- **Abhay Bhise** — *Department of Computer Engineering, MIT Academy of Engineering*
-- **Vedant Ingle** — *Department of Computer Engineering, MIT Academy of Engineering*
-- **Rushikesh Bodake** — *Department of Computer Engineering, MIT Academy of Engineering*
-- **Pranav Kolte** — *Department of Computer Engineering, MIT Academy of Engineering*
+- **Abhay Bhise** (`202402040016`) — *Department of Computer Engineering, MIT Academy of Engineering*
+- **Vedant Ingle** (`202402040031`) — *Department of Computer Engineering, MIT Academy of Engineering*
+- **Disha** (`202402040019`) — *Department of Computer Engineering, MIT Academy of Engineering*
+- **Vaishnavi** (`202402040006`) — *Department of Computer Engineering, MIT Academy of Engineering*
 - **Prof. Savita Jadhav** — *Faculty Advisor, MIT Academy of Engineering*
 - **Prof. Pramod Ganjewar** — *Faculty Advisor, MIT Academy of Engineering*
 
