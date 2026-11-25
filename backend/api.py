@@ -1532,9 +1532,6 @@ async def infer_vae_urbanize(request: Request, file: UploadFile = File(...), alp
     still shows a brief loading state since this is well over a typical
     request latency, just not the ~40-60s an earlier, lower-resolution
     version of this endpoint took."""
-    vgg = get_style_vgg()
-    if vgg is None:
-        return Response(status_code=400, content="Style transfer model unavailable.")
     global URBANIZATION_TARGET_PATHS
     if not URBANIZATION_TARGET_PATHS:
         compute_urbanization_targets()
@@ -1545,6 +1542,25 @@ async def infer_vae_urbanize(request: Request, file: UploadFile = File(...), alp
     img = await read_image_upload(file)
     target_path = random.choice(URBANIZATION_TARGET_PATHS)
     target_img = Image.open(target_path).convert('RGB')
+
+    if LOW_MEMORY_MODE and vae_loaded:
+        # In 512MB cloud containers, VGG-16 (528MB) would OOM; project urbanization
+        # directly through the trained Spatial VAE latent & skip manifold instead.
+        _use_model("vae")
+        src_x = vae_transform(img).unsqueeze(0).to(device)
+        tgt_x = vae_transform(target_img).unsqueeze(0).to(device)
+        with torch.no_grad():
+            mu0, _, skips0 = vae.encode_with_skips(src_x)
+            mu1, _, skips1 = vae.encode_with_skips(tgt_x)
+            z_blend = (1.0 - alpha) * mu0 + alpha * mu1
+            skips_blend = tuple((1.0 - alpha) * s0 + alpha * s1 for s0, s1 in zip(skips0, skips1))
+            decoded = vae.decode(z_blend, skips_blend)
+            display = enhance_generated_urban_image(decoded, tgt_x, strength=alpha)
+        return {"urbanized": tensor_to_b64(display[0]), "alpha": alpha}
+
+    vgg = get_style_vgg()
+    if vgg is None:
+        return Response(status_code=400, content="Style transfer model unavailable.")
 
     # Keep the original scene layout, but make the developed-tile texture
     # materially visible. A weak style term can converge to an almost unchanged
