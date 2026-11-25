@@ -97,6 +97,8 @@ app.add_middleware(
 GUARDED = [Depends(require_api_key)]
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+if device.type == 'cpu':
+    torch.set_num_threads(1)
 RUN_STARTUP_EVALUATIONS = os.getenv("URBANGEN_STARTUP_EVALUATIONS", "0") == "1"
 
 AE_LATENT = None  # DenoisingAE has no explicit latent dim arg
@@ -541,6 +543,12 @@ def compute_urbanization_targets(n_targets=12):
                     c.extend(list(cls_dir.glob(ext)))
                 if c:
                     paths.extend(random.sample(c, min(per_class, len(c))))
+
+    if not paths:
+        sample_tiles_dir = backend_dir / "sample_tiles"
+        if sample_tiles_dir.exists():
+            for prefix in ("denseresidential", "buildings"):
+                paths.extend(sorted(sample_tiles_dir.glob(f"{prefix}_*.jpg")))
 
     URBANIZATION_TARGET_PATHS = paths
     if not paths:
@@ -1322,11 +1330,15 @@ def _random_eurosat_image():
 
 def _random_ucmerced_path():
     import random
+    from pathlib import Path
     from dataset import DATASET_PATH, URBAN_CLASSES
-    cls = random.choice(URBAN_CLASSES)
-    cls_dir = DATASET_PATH / cls
-    candidates = list(cls_dir.glob("*.tif"))
-    return random.choice(candidates)
+    if DATASET_PATH.exists():
+        cls = random.choice(URBAN_CLASSES)
+        candidates = list((DATASET_PATH / cls).glob("*.tif"))
+        if candidates:
+            return random.choice(candidates)
+    sample_dir = Path(_BACKEND_DIR) / "sample_tiles"
+    return random.choice(sorted(sample_dir.glob("*.jpg")))
 
 
 def _random_ucmerced_image():
@@ -1335,10 +1347,22 @@ def _random_ucmerced_image():
 
 def _random_undeveloped_ucmerced_path():
     import random
+    from pathlib import Path
     from dataset import DATASET_PATH
-    cls = random.choice(UNDEVELOPED_CLASSES)
-    candidates = list((DATASET_PATH / cls).glob("*.tif"))
-    return random.choice(candidates)
+    if DATASET_PATH.exists():
+        cls = random.choice(UNDEVELOPED_CLASSES)
+        candidates = list((DATASET_PATH / cls).glob("*.tif"))
+        if candidates:
+            return random.choice(candidates)
+    sample_dir = Path(_BACKEND_DIR) / "sample_tiles"
+    undevel = sorted(sample_dir.glob("agricultural_*.jpg")) + sorted(sample_dir.glob("forest_*.jpg"))
+    return random.choice(undevel)
+
+
+def _class_name_for_sample(path):
+    if path.parent.name == "sample_tiles":
+        return path.stem.split("_")[0]
+    return path.parent.name
 
 
 @app.get("/sample/ucmerced")
@@ -1348,7 +1372,7 @@ def sample_ucmerced():
     img = Image.open(path).convert('RGB')
     buf = io.BytesIO()
     img.save(buf, format="JPEG")
-    return Response(content=buf.getvalue(), media_type="image/jpeg", headers={"X-Class": path.parent.name})
+    return Response(content=buf.getvalue(), media_type="image/jpeg", headers={"X-Class": _class_name_for_sample(path)})
 
 
 @app.get("/sample/ucmerced/undeveloped")
@@ -1361,7 +1385,7 @@ def sample_ucmerced_undeveloped():
     img = Image.open(path).convert('RGB')
     buf = io.BytesIO()
     img.save(buf, format="JPEG")
-    return Response(content=buf.getvalue(), media_type="image/jpeg", headers={"X-Class": path.parent.name})
+    return Response(content=buf.getvalue(), media_type="image/jpeg", headers={"X-Class": _class_name_for_sample(path)})
 
 
 @app.get("/sample/eurosat")
@@ -1599,8 +1623,12 @@ def gan_class_grid(request: Request):
     labels = torch.arange(GAN_NUM_CLASSES, device=device)
 
     gan_generator.eval()
+    chunks = []
     with torch.no_grad():
-        fake_imgs = gan_generator(z, labels)  # (21, 3, 128, 128)
+        for start in range(0, GAN_NUM_CLASSES, 7):
+            end = min(start + 7, GAN_NUM_CLASSES)
+            chunks.append(gan_generator(z[start:end], labels[start:end]).cpu())
+    fake_imgs = torch.cat(chunks, dim=0)  # (21, 3, 128, 128)
 
     grid = make_grid(fake_imgs, nrow=7, padding=2, normalize=True, value_range=(-1, 1))
     buf = io.BytesIO()
