@@ -1952,14 +1952,19 @@ def evaluate_diffusion():
     if cached is not None:
         return cached
     refresh_diffusion_checkpoint()
-    history_path = '../outputs/diffusion_class_conditional/history.json'
+    history_path = resolve_path('outputs/diffusion_class_conditional/history.json')
     history = []
     if os.path.exists(history_path):
         try:
-            history = json.load(open(history_path, encoding='utf-8'))
+            with open(history_path, encoding='utf-8') as f:
+                history = json.load(f)
         except Exception:
             pass
     final_loss = history[-1]['loss'] if history else None
+    unet_ref = diffusion_unet
+    if unet_ref is None:
+        unet_ref = DiffusionUNet(base_ch=32, num_classes=len(URBAN_CLASSES), condition_channels=0)
+    params_m = round(sum(p.numel() for p in unet_ref.parameters()) / 1e6, 2)
     res = {
         "model": "Class-Conditional DDPM (DDIM 40-step Sampler)",
         "status": "trained" if diffusion_loaded else "unavailable",
@@ -1971,7 +1976,7 @@ def evaluate_diffusion():
         "final_loss": final_loss,
         "best_loss": min((row.get('loss', float('inf')) for row in history), default=None),
         "architecture": "U-Net with sinusoidal-timestep and land-use-label conditioning; sampled from Gaussian noise",
-        "parameters_millions": round(sum(p.numel() for p in diffusion_unet.parameters()) / 1e6, 2)
+        "parameters_millions": params_m
     }
     api_cache.set("eval_diffusion", res, ttl=600.0)
     return res
