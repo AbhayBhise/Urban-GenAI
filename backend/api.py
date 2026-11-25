@@ -595,31 +595,10 @@ def run_urbanization_style_transfer(content_img, target_img, size=512, steps=250
     upload) so its VGG features match `target_img`'s texture (Gram
     matrices, i.e. style) while staying close to its own VGG features at
     STYLE_CONTENT_LAYER (i.e. content/structure), regularized by _tv_loss
-    to keep the result spatially coherent (see its docstring).
-
-    size=512 (native, matching the endpoint's previous *display* size)
-    replaces the original size=200 + bicubic-upscale-to-512 pipeline: that
-    combination was optimizing at 200x200 and then blindly upscaling,
-    which just enlarges the same blur rather than adding real detail —
-    visibly worse the larger/more zoomed-in it's displayed. Optimizing
-    natively at 512 costs ~9s on this GPU at steps=150; steps=250 (~15s)
-    gives the optimizer enough iterations to actually resolve texture
-    detail across the larger canvas rather than leaving it under-converged.
-    Both settings were re-verified (no white-streak/incoherent-noise
-    regressions) after this resolution change. On CPU this would cost
-    proportionally more than the original's ~50-70s estimate -- fine for
-    this GPU deployment, but revisit `size`/`steps` if ever run on CPU.
-
-    tv_weight=8.0 (up from an initial 3.0) and grad_clip=1.0 were tuned
-    against a content image with a naturally high-frequency texture
-    (UCMerced's "chaparral" class -- dense small dark specks on a light
-    background): at tv_weight=3.0 that combination produced sharp white
-    streak artifacts partway through optimization, on top of the same
-    incoherent-noise failure mode _tv_loss was originally added for. Both
-    settings verified clean (no streaks, no noise, structure still
-    recognizable) across chaparral and the earlier reported failures
-    (runway, river) against multiple developed-class targets."""
-    to_tensor = transforms.Compose([transforms.Resize((size, size)), transforms.ToTensor()])
+    to keep the result spatially coherent (see its docstring)."""
+    opt_size = size if device.type == "cuda" else 192
+    opt_steps = steps if device.type == "cuda" else 45
+    to_tensor = transforms.Compose([transforms.Resize((opt_size, opt_size)), transforms.ToTensor()])
     content = to_tensor(content_img).unsqueeze(0).to(device)
     target = to_tensor(target_img).unsqueeze(0).to(device)
 
@@ -633,7 +612,7 @@ def run_urbanization_style_transfer(content_img, target_img, size=512, steps=250
     gen = content.clone().requires_grad_(True)
     optimizer = torch.optim.Adam([gen], lr=lr)
 
-    for _ in range(steps):
+    for _ in range(opt_steps):
         optimizer.zero_grad()
         feats = _vgg_features(gen.clamp(0, 1), all_layers)
         c_loss = F.mse_loss(feats[STYLE_CONTENT_LAYER], fixed_content)
@@ -644,7 +623,10 @@ def run_urbanization_style_transfer(content_img, target_img, size=512, steps=250
             torch.nn.utils.clip_grad_norm_([gen], grad_clip)
         optimizer.step()
 
-    return gen.clamp(0, 1).detach()
+    out = gen.clamp(0, 1).detach()
+    if opt_size != size:
+        out = F.interpolate(out, size=(size, size), mode="bicubic", align_corners=False).clamp(0, 1)
+    return out
 
 
 ae_transform = transforms.Compose([
@@ -1744,7 +1726,7 @@ def get_privacy():
 
 def _sample_diffusion_candidates(c_tensor, c_idx, steps, eta):
     candidates = []
-    candidate_seeds = [2026, 2027, 2028, 2029]
+    candidate_seeds = [2026, 2027, 2028, 2029] if device.type == "cuda" else [2026]
     for seed in candidate_seeds:
         with torch.random.fork_rng(devices=[0] if device.type == "cuda" else []):
             torch.manual_seed(seed)

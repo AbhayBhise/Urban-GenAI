@@ -18,6 +18,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 COPY backend/requirements.txt .
 RUN pip install --upgrade pip && \
+    pip install --user --index-url https://download.pytorch.org/whl/cpu torch torchvision && \
     pip install --user -r requirements.txt
 
 # Stage 2: Hardened Non-Root Production Runtime
@@ -46,8 +47,6 @@ COPY --from=builder /root/.local /home/appuser/.local
 # Copy application code and verified artifacts
 COPY backend /app/backend
 COPY outputs /app/outputs
-COPY pune_datasets /app/pune_datasets
-COPY UCMerced_LandUse /app/UCMerced_LandUse
 COPY docs /app/docs
 
 # Set ownership to unprivileged user
@@ -62,5 +61,5 @@ EXPOSE 8000
 HEALTHCHECK --interval=15s --timeout=5s --start-period=20s --retries=3 \
     CMD curl -f http://127.0.0.1:8000/healthz || exit 1
 
-# Launch production server with multi-worker concurrency
-CMD ["uvicorn", "api:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4", "--loop", "uvloop", "--http", "httptools", "--proxy-headers", "--forwarded-allow-ips", "*"]
+# Launch production server with 1 worker to fit Render Free Tier (512MB RAM)
+CMD ["sh", "-c", "uvicorn api:app --host 0.0.0.0 --port ${PORT:-8000} --workers 1 --proxy-headers --forwarded-allow-ips *"]

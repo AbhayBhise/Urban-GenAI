@@ -38,7 +38,7 @@ load_dotenv()
 
 API_KEY = os.getenv("URBANGEN_API_KEY", "").strip()
 
-_DEFAULT_ORIGINS = "http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000,http://127.0.0.1:3000,http://localhost:8000,http://127.0.0.1:8000"
+_DEFAULT_ORIGINS = "http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000,http://127.0.0.1:3000,http://localhost:8000,http://127.0.0.1:8000,https://urbangen-ai.vercel.app"
 ALLOWED_ORIGINS = [
     o.strip()
     for o in os.getenv("URBANGEN_ALLOWED_ORIGINS", _DEFAULT_ORIGINS).split(",")
