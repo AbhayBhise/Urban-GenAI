@@ -23,9 +23,9 @@ class VAE(nn.Module):
     """
 
     def __init__(self, latent_channels=64, use_skips=True, skip_dropout=0.2,
-                 skip_channels=16, skip0_channels=16):
+                 skip_channels=16, skip0_channels=16, pretrained: bool = True):
         super().__init__()
-        resnet = models.resnet18(weights='IMAGENET1K_V1')
+        resnet = models.resnet18(weights='IMAGENET1K_V1' if pretrained else None)
         self.use_skips = use_skips
         self.skip_dropout = skip_dropout
         self.stem = nn.Sequential(resnet.conv1, resnet.bn1, resnet.relu)  # 64x64x64

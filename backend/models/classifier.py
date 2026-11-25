@@ -11,9 +11,9 @@ class UrbanClassifier(nn.Module):
     models/gpt.py (MiniGPT). See docs/MODEL_CARD.md.
     """
 
-    def __init__(self, num_classes=21):
+    def __init__(self, num_classes=21, pretrained: bool = True):
         super().__init__()
-        self.model = models.resnet18(weights='IMAGENET1K_V1')
+        self.model = models.resnet18(weights='IMAGENET1K_V1' if pretrained else None)
         self.model.fc = nn.Linear(512, num_classes)
 
     def set_backbone_trainable(self, trainable: bool):

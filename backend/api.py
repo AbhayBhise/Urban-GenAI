@@ -1,6 +1,7 @@
 import os
 import sys
 import gc
+import threading
 import time
 import math
 import json
@@ -131,7 +132,10 @@ def load_model_if_exists(model, path):
             )
             return False
         try:
-            model.load_state_dict(torch.load(path, map_location=device, weights_only=True))
+            state = torch.load(path, map_location=device, weights_only=True)
+            model.load_state_dict(state)
+            del state
+            gc.collect()
             model.eval()
             return True
         except Exception as e:
@@ -177,49 +181,53 @@ else:
     diffusion_loaded = load_model_if_exists(diffusion_unet, _DIFFUSION_CHECKPOINT)
 
 
+_MODEL_LOCK = threading.RLock()
+
+
 def _use_model(name: str):
     """In LOW_MEMORY_MODE (e.g. Render 512MB Free Tier), keep only one model in RAM at a time."""
     global ae, vae, transformer, gan_generator, diffusion_unet, diffusion_model, gpt, gpt_stoi, gpt_itos
     if not LOW_MEMORY_MODE:
         return
-    if name != "ae":
-        ae = None
-    if name != "vae":
-        vae = None
-    if name != "transformer":
-        transformer = None
-    if name != "gan":
-        gan_generator = None
-    if name != "diffusion":
-        diffusion_unet = None
-        diffusion_model = None
-    if name != "gpt":
-        gpt = None
-    gc.collect()
+    with _MODEL_LOCK:
+        if name != "ae":
+            ae = None
+        if name != "vae":
+            vae = None
+        if name != "transformer":
+            transformer = None
+        if name != "gan":
+            gan_generator = None
+        if name != "diffusion":
+            diffusion_unet = None
+            diffusion_model = None
+        if name != "gpt":
+            gpt = None
+        gc.collect()
 
-    if name == "ae" and ae is None and ae_loaded:
-        m = DenoisingAE().to(device)
-        load_model_if_exists(m, resolve_path('outputs/ae/model.pth'))
-        ae = m
-    elif name == "vae" and vae is None and vae_loaded:
-        m = VAE(latent_channels=VAE_LATENT_CHANNELS, skip_channels=16, skip0_channels=16).to(device)
-        load_model_if_exists(m, resolve_path('outputs/vae/model.pth'))
-        vae = m
-    elif name == "transformer" and transformer is None and trans_loaded:
-        m = UrbanClassifier(num_classes=len(URBAN_CLASSES)).to(device)
-        load_model_if_exists(m, resolve_path('outputs/transformer/model.pth'))
-        transformer = m
-    elif name == "gan" and gan_generator is None and gan_loaded:
-        m = GANGenerator(latent_dim=GAN_LATENT_DIM, num_classes=GAN_NUM_CLASSES).to(device)
-        load_model_if_exists(m, resolve_path('outputs/gan/generator_ema.pth'))
-        gan_generator = m
-    elif name == "diffusion" and diffusion_unet is None and diffusion_loaded:
-        u = DiffusionUNet(base_ch=32, num_classes=len(URBAN_CLASSES), condition_channels=0).to(device)
-        load_model_if_exists(u, _DIFFUSION_CHECKPOINT)
-        diffusion_unet = u
-        diffusion_model = DDPM(u, timesteps=1000).to(device)
-    elif name == "gpt" and gpt is None:
-        load_gpt()
+        if name == "ae" and ae is None and ae_loaded:
+            m = DenoisingAE(pretrained=False).to(device)
+            load_model_if_exists(m, resolve_path('outputs/ae/model.pth'))
+            ae = m
+        elif name == "vae" and vae is None and vae_loaded:
+            m = VAE(latent_channels=VAE_LATENT_CHANNELS, skip_channels=16, skip0_channels=16, pretrained=False).to(device)
+            load_model_if_exists(m, resolve_path('outputs/vae/model.pth'))
+            vae = m
+        elif name == "transformer" and transformer is None and trans_loaded:
+            m = UrbanClassifier(num_classes=len(URBAN_CLASSES), pretrained=False).to(device)
+            load_model_if_exists(m, resolve_path('outputs/transformer/model.pth'))
+            transformer = m
+        elif name == "gan" and gan_generator is None and gan_loaded:
+            m = GANGenerator(latent_dim=GAN_LATENT_DIM, num_classes=GAN_NUM_CLASSES).to(device)
+            load_model_if_exists(m, resolve_path('outputs/gan/generator_ema.pth'))
+            gan_generator = m
+        elif name == "diffusion" and diffusion_unet is None and diffusion_loaded:
+            u = DiffusionUNet(base_ch=32, num_classes=len(URBAN_CLASSES), condition_channels=0).to(device)
+            load_model_if_exists(u, _DIFFUSION_CHECKPOINT)
+            diffusion_unet = u
+            diffusion_model = DDPM(u, timesteps=1000).to(device)
+        elif name == "gpt" and gpt is None:
+            load_gpt()
 
 
 def refresh_diffusion_checkpoint():
@@ -1728,18 +1736,19 @@ def gan_class_grid(request: Request):
     """Generate one sample per class (21 images) as a reference grid."""
     if not gan_loaded:
         return Response(status_code=400, content="GAN not trained yet")
-    _use_model("gan")
+    with _MODEL_LOCK:
+        _use_model("gan")
 
-    z = torch.randn(GAN_NUM_CLASSES, GAN_LATENT_DIM, device=device)
-    labels = torch.arange(GAN_NUM_CLASSES, device=device)
+        z = torch.randn(GAN_NUM_CLASSES, GAN_LATENT_DIM, device=device)
+        labels = torch.arange(GAN_NUM_CLASSES, device=device)
 
-    gan_generator.eval()
-    chunks = []
-    with torch.no_grad():
-        for start in range(0, GAN_NUM_CLASSES, 7):
-            end = min(start + 7, GAN_NUM_CLASSES)
-            chunks.append(gan_generator(z[start:end], labels[start:end]).cpu())
-    fake_imgs = torch.cat(chunks, dim=0)  # (21, 3, 128, 128)
+        gan_generator.eval()
+        chunks = []
+        with torch.no_grad():
+            for start in range(0, GAN_NUM_CLASSES, 7):
+                end = min(start + 7, GAN_NUM_CLASSES)
+                chunks.append(gan_generator(z[start:end], labels[start:end]).cpu())
+        fake_imgs = torch.cat(chunks, dim=0)  # (21, 3, 128, 128)
 
     grid = make_grid(fake_imgs, nrow=7, padding=2, normalize=True, value_range=(-1, 1))
     buf = io.BytesIO()
@@ -1865,29 +1874,30 @@ def get_privacy():
 
 
 def _sample_diffusion_candidates(c_tensor, c_idx, steps, eta):
-    _use_model("diffusion")
-    candidates = []
-    candidate_seeds = [2026, 2027, 2028, 2029] if device.type == "cuda" else [2026]
-    raw_samples = []
-    for seed in candidate_seeds:
-        with torch.random.fork_rng(devices=[0] if device.type == "cuda" else []):
-            torch.manual_seed(seed)
-            candidate = diffusion_model.ddim_sample(
-                (1, 3, 128, 128),
-                c_tensor,
-                steps=steps,
-                eta=eta,
-                classifier=None if LOW_MEMORY_MODE else (transformer if trans_loaded else None),
-                classifier_guidance_scale=0.0 if LOW_MEMORY_MODE else (0.01 if trans_loaded else 0.0),
-            )
-        raw_samples.append((seed, candidate.detach().cpu()))
-    if LOW_MEMORY_MODE and trans_loaded:
-        _use_model("transformer")
-    for seed, candidate in raw_samples:
-        scored = score_diffusion_candidate(candidate.to(device), c_idx)
-        scored["seed"] = seed
-        candidates.append(scored)
-    return candidates
+    with _MODEL_LOCK:
+        _use_model("diffusion")
+        candidates = []
+        candidate_seeds = [2026, 2027, 2028, 2029] if device.type == "cuda" else [2026]
+        raw_samples = []
+        for seed in candidate_seeds:
+            with torch.random.fork_rng(devices=[0] if device.type == "cuda" else []):
+                torch.manual_seed(seed)
+                candidate = diffusion_model.ddim_sample(
+                    (1, 3, 128, 128),
+                    c_tensor,
+                    steps=steps,
+                    eta=eta,
+                    classifier=None if LOW_MEMORY_MODE else (transformer if trans_loaded else None),
+                    classifier_guidance_scale=0.0 if LOW_MEMORY_MODE else (0.01 if trans_loaded else 0.0),
+                )
+            raw_samples.append((seed, candidate.detach().cpu()))
+        if LOW_MEMORY_MODE and trans_loaded:
+            _use_model("transformer")
+        for seed, candidate in raw_samples:
+            scored = score_diffusion_candidate(candidate.to(device), c_idx)
+            scored["seed"] = seed
+            candidates.append(scored)
+        return candidates
 
 
 # ---------------------------------------------------------------------------

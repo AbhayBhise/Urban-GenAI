@@ -22,9 +22,9 @@ class DenoisingAE(nn.Module):
     skips only help the decoder reconstruct around it.
     """
 
-    def __init__(self):
+    def __init__(self, pretrained: bool = True):
         super().__init__()
-        resnet = models.resnet18(weights='IMAGENET1K_V1')
+        resnet = models.resnet18(weights='IMAGENET1K_V1' if pretrained else None)
         self.stem = nn.Sequential(resnet.conv1, resnet.bn1, resnet.relu)  # 128x128 -> 64x64x64
         self.maxpool = resnet.maxpool                                     # -> 32x32x64
         self.layer1 = resnet.layer1                                       # 32x32x64
