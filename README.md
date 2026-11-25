@@ -3,6 +3,16 @@
 # 🏙️ UrbanGen AI
 ### Edge-Deployable Multi-Model Generative Framework for Aerial Remote Sensing and Municipal Urban Planning
 
+**Course:** Final Year B.Tech (Semester VII) — Generative Artificial Intelligence (`2304422L`) · **MIT Academy of Engineering, Pune**  
+**Live Application:** https://urbangen-ai.vercel.app · **Cloud API:** https://urban-genai.onrender.com · **Presentation:** [`UrbanGen_AI_External_Exam_Phase1_Presentation.pptx`](UrbanGen_AI_External_Exam_Phase1_Presentation.pptx)
+
+| Student Name | Roll Number | PRN Number | Seat Number |
+| :--- | :--- | :--- | :--- |
+| **Abhay Bhise** | `[Add Roll No]` | `[Add PRN]` | `[Add Seat No]` |
+| **Vedant Ingle** | `[Add Roll No]` | `[Add PRN]` | `[Add Seat No]` |
+| **Rushikesh Bodake** | `[Add Roll No]` | `[Add PRN]` | `[Add Seat No]` |
+| **Pranav Kolte** | `[Add Roll No]` | `[Add PRN]` | `[Add Seat No]` |
+
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![PyTorch 2.x](https://img.shields.io/badge/PyTorch-2.x-EE4C2C.svg)](https://pytorch.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-009688.svg)](https://fastapi.tiangolo.com)
@@ -278,6 +288,17 @@ npm install
 npm run dev
 ```
 *Open `http://localhost:5173` in your browser.*
+
+### 4. Model Usage Guide (Live Web App & API Endpoints)
+
+| Model | Purpose in Plain English | API Endpoint | Saved Checkpoint |
+| :--- | :--- | :--- | :--- |
+| **Denoising Autoencoder** (`DenoisingAE`) | Cleans noisy/grainy satellite tiles (`128×128`) and reports MSE & PSNR | `POST /infer/ae` | `outputs/ae/model.pth` |
+| **Spatial β-VAE** (`VAE`) | Detects unusual/anomalous land use (`z`-score vs. 294-tile baseline), blends tiles & previews urbanization | `POST /infer/vae`, `/infer/vae/interpolate`, `/infer/vae/urbanize`, `/generate/vae/random` | `outputs/vae/model.pth` |
+| **Land-Use Classifier** (`UrbanClassifier`) | Identifies 21 municipal land-use classes (`224×224`) with top-5 confidence bars | `POST /infer/classifier` | `outputs/transformer/model.pth` |
+| **Conditional DCGAN** (`Generator`) | Synthesizes new `128×128` aerial tiles for any selected class in milliseconds | `POST /infer/gan`, `GET /infer/gan/grid` | `outputs/gan/generator_ema.pth` |
+| **Diffusion Generator** (`DDPM` / `DDIM`) | Generates high-detail `128×128` scenario tiles over 20–40 DDIM steps + classifier verification | `POST /infer/diffusion` | `outputs/diffusion_class_conditional/model.pth` |
+| **Urban Plan Generator** (`MiniGPT`) | Drafts sustainability & zoning recommendations from prompts and Pune GIS stats | `POST /generate/plan` | `outputs/gpt/model.pth` |
 
 ---
 
