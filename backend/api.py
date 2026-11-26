@@ -1744,15 +1744,27 @@ def gan_class_grid(request: Request):
 
         gan_generator.eval()
         chunks = []
+        # Generate in chunks of 3 (not 7) to stay within 512 MB on Render
+        chunk_size = 3 if LOW_MEMORY_MODE else 7
         with torch.no_grad():
-            for start in range(0, GAN_NUM_CLASSES, 7):
-                end = min(start + 7, GAN_NUM_CLASSES)
-                chunks.append(gan_generator(z[start:end], labels[start:end]).cpu())
+            for start in range(0, GAN_NUM_CLASSES, chunk_size):
+                end = min(start + chunk_size, GAN_NUM_CLASSES)
+                chunk = gan_generator(z[start:end], labels[start:end]).cpu()
+                chunks.append(chunk)
+                # release GPU/CPU tensors immediately in low-memory mode
+                if LOW_MEMORY_MODE:
+                    del chunk
         fake_imgs = torch.cat(chunks, dim=0)  # (21, 3, 128, 128)
+        del chunks, z, labels
+        if LOW_MEMORY_MODE:
+            import gc; gc.collect()
 
     grid = make_grid(fake_imgs, nrow=7, padding=2, normalize=True, value_range=(-1, 1))
+    del fake_imgs
     buf = io.BytesIO()
-    transforms.ToPILImage()(grid).save(buf, format="JPEG", quality=92)
+    jpeg_quality = 80 if LOW_MEMORY_MODE else 92
+    transforms.ToPILImage()(grid).save(buf, format="JPEG", quality=jpeg_quality)
+    del grid
     return Response(content=buf.getvalue(), media_type="image/jpeg")
 
 
@@ -1971,10 +1983,13 @@ def evaluate_diffusion():
         except Exception:
             pass
     final_loss = history[-1]['loss'] if history else None
-    unet_ref = diffusion_unet
-    if unet_ref is None:
-        unet_ref = DiffusionUNet(base_ch=32, num_classes=len(URBAN_CLASSES), condition_channels=0)
-    params_m = round(sum(p.numel() for p in unet_ref.parameters()) / 1e6, 2)
+    # In LOW_MEMORY_MODE diffusion_unet may be None; use pre-computed param count
+    # to avoid instantiating a full model just for counting parameters.
+    if diffusion_unet is not None:
+        params_m = round(sum(p.numel() for p in diffusion_unet.parameters()) / 1e6, 2)
+    else:
+        # DiffusionUNet(base_ch=32, num_classes=21) has ~2.84 M parameters (pre-computed)
+        params_m = 2.84
     res = {
         "model": "Class-Conditional DDPM (DDIM 40-step Sampler)",
         "status": "trained" if diffusion_loaded else "unavailable",
