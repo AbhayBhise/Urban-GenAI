@@ -14,7 +14,7 @@
 - **GitHub Repository:** https://github.com/AbhayBhise/Urban-GenAI  
 - **Live Frontend (Vercel):** https://urbangen-ai.vercel.app  
 - **Live Backend API (Render):** https://urban-genai.onrender.com  
-- **Presentation (PPT):** [`../UrbanGen_AI_External_Exam_Phase1_Presentation.pptx`](../UrbanGen_AI_External_Exam_Phase1_Presentation.pptx)
+- **Presentation (PPT — 30 Marks Scope):** [`UrbanGen_AI_30Marks_Presentation.pptx`](UrbanGen_AI_30Marks_Presentation.pptx)
 
 ---
 
