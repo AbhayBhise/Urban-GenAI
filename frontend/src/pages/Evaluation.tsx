@@ -60,6 +60,14 @@ function metric(mean: unknown, std = 0) {
   return { mean: typeof mean === 'number' ? mean : 0, std: typeof std === 'number' ? std : 0 };
 }
 
+function normalizedMetric(value: unknown, fallback?: unknown) {
+  if (value && typeof value === 'object') {
+    const candidate = value as { mean?: unknown; std?: unknown };
+    return metric(candidate.mean ?? fallback, typeof candidate.std === 'number' ? candidate.std : 0);
+  }
+  return metric(value ?? fallback);
+}
+
 /**
  * Evaluation endpoints may fall back to the older system-validation report,
  * which uses flat test_* fields and sometimes omits optional chart data.
@@ -76,10 +84,10 @@ function normalizeEvalPayload(endpoint: string, payload: any): any {
       ...raw,
       n_samples: raw.n_samples ?? 0,
       n_classes: raw.n_classes ?? 0,
-      mse: raw.mse ?? metric(isVae ? raw.test_recon_mse : raw.test_sample_mse),
-      psnr: raw.psnr ?? metric(isVae ? raw.test_recon_psnr_db : raw.test_sample_psnr_db),
-      ssim: raw.ssim ?? metric(isVae ? raw.test_recon_ssim : raw.test_sample_ssim),
-      kl: raw.kl ?? (isVae && raw.test_kl_divergence != null ? metric(raw.test_kl_divergence) : undefined),
+      mse: normalizedMetric(raw.mse, isVae ? raw.test_recon_mse : raw.test_sample_mse),
+      psnr: normalizedMetric(raw.psnr, isVae ? raw.test_recon_psnr_db : raw.test_sample_psnr_db),
+      ssim: normalizedMetric(raw.ssim, isVae ? raw.test_recon_ssim : raw.test_sample_ssim),
+      kl: isVae && (raw.kl != null || raw.test_kl_divergence != null) ? normalizedMetric(raw.kl, raw.test_kl_divergence) : undefined,
       latent: raw.latent ?? (isVae && raw.latent_dimensions != null ? { total_dims: raw.latent_dimensions, active_dims: raw.latent_dimensions, active_fraction: 1 } : undefined),
       per_class: raw.per_class ?? {},
     };
