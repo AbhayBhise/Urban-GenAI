@@ -1,5 +1,20 @@
-import { useState } from 'react';
-import { Printer, ExternalLink, Code, Eye, Copy, Check, Sparkles, Download, Layers } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import {
+  Printer,
+  ExternalLink,
+  Code,
+  Eye,
+  Copy,
+  Check,
+  Sparkles,
+  Download,
+  Layers,
+  Maximize2,
+  Minimize2,
+  ZoomIn,
+  ZoomOut,
+  RotateCcw
+} from 'lucide-react';
 
 const LATEX_POSTER_CODE = `\\documentclass[final]{beamer}
 \\usepackage[orientation=portrait,size=a1,scale=1.2]{beamerposter}
@@ -25,6 +40,8 @@ const LATEX_POSTER_CODE = `\\documentclass[final]{beamer}
 export default function Poster() {
   const [activeTab, setActiveTab] = useState<'visual' | 'latex'>('visual');
   const [copied, setCopied] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [zoomLevel, setZoomLevel] = useState<number>(100);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(LATEX_POSTER_CODE);
@@ -41,6 +58,16 @@ export default function Poster() {
       window.open('/poster/index.html', '_blank')?.print();
     }
   };
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isFullscreen) {
+        setIsFullscreen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isFullscreen]);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
@@ -74,7 +101,7 @@ export default function Poster() {
             border: '1px solid var(--border)'
           }}>
             <Sparkles size={12} />
-            Academic Defense · 60 Marks Capstone Poster
+            Academic Defense Poster
           </div>
           <h1 style={{
             fontSize: '1.45rem',
@@ -195,7 +222,7 @@ export default function Poster() {
               boxShadow: '0 2px 8px rgba(2, 132, 199, 0.3)'
             }}
           >
-            <Printer size={15} /> Print / Save Single-Page PDF
+            <Printer size={15} /> Print / Save PDF
           </button>
 
           <a
@@ -217,7 +244,7 @@ export default function Poster() {
               cursor: 'pointer'
             }}
           >
-            <ExternalLink size={14} /> Fullscreen
+            <ExternalLink size={14} /> Full Window
           </a>
         </div>
       </div>
@@ -248,26 +275,189 @@ export default function Poster() {
       {activeTab === 'visual' ? (
         <div style={{
           background: 'var(--surface)',
-          border: '1px solid var(--border)',
-          borderRadius: 12,
+          border: isFullscreen ? 'none' : '1px solid var(--border)',
           overflow: 'hidden',
-          boxShadow: 'var(--card-shadow)',
+          boxShadow: isFullscreen ? 'none' : 'var(--card-shadow)',
           display: 'flex',
           flexDirection: 'column',
-          height: 'calc(100vh - 230px)',
-          minHeight: 700
+          borderRadius: isFullscreen ? 0 : 12,
+          ...(isFullscreen ? {
+            position: 'fixed' as const,
+            inset: 0,
+            zIndex: 99999,
+            height: '100vh',
+            width: '100vw',
+          } : {
+            height: 'calc(100vh - 210px)',
+            minHeight: 720,
+          })
         }}>
-          <iframe
-            id="poster-frame"
-            src="/poster/index.html"
-            title="UrbanGen AI Poster"
-            style={{
-              width: '100%',
+          {/* Viewer Floating Control Bar */}
+          <div style={{
+            background: 'var(--navy-900, #0A192F)',
+            color: '#FFFFFF',
+            padding: '8px 16px',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            fontSize: '0.82rem',
+            borderBottom: '1px solid rgba(255,255,255,0.12)',
+            flexWrap: 'wrap',
+            gap: 10
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <span style={{ fontWeight: 700, color: '#38BDF8' }}>Display &amp; Zoom:</span>
+              <button
+                onClick={() => setZoomLevel(100)}
+                style={{
+                  background: zoomLevel === 100 ? 'rgba(56, 189, 248, 0.25)' : 'rgba(255,255,255,0.08)',
+                  border: zoomLevel === 100 ? '1px solid #38BDF8' : '1px solid rgba(255,255,255,0.15)',
+                  color: zoomLevel === 100 ? '#38BDF8' : '#CBD5E1',
+                  borderRadius: 4,
+                  padding: '4px 10px',
+                  cursor: 'pointer',
+                  fontWeight: 600,
+                  fontSize: '0.78rem'
+                }}
+              >
+                Auto-Fit Width
+              </button>
+              <button
+                onClick={() => setZoomLevel(85)}
+                style={{
+                  background: zoomLevel === 85 ? 'rgba(56, 189, 248, 0.25)' : 'rgba(255,255,255,0.08)',
+                  border: zoomLevel === 85 ? '1px solid #38BDF8' : '1px solid rgba(255,255,255,0.15)',
+                  color: zoomLevel === 85 ? '#38BDF8' : '#CBD5E1',
+                  borderRadius: 4,
+                  padding: '4px 10px',
+                  cursor: 'pointer',
+                  fontWeight: 600,
+                  fontSize: '0.78rem'
+                }}
+              >
+                85% Compact
+              </button>
+              <button
+                onClick={() => setZoomLevel(70)}
+                style={{
+                  background: zoomLevel === 70 ? 'rgba(56, 189, 248, 0.25)' : 'rgba(255,255,255,0.08)',
+                  border: zoomLevel === 70 ? '1px solid #38BDF8' : '1px solid rgba(255,255,255,0.15)',
+                  color: zoomLevel === 70 ? '#38BDF8' : '#CBD5E1',
+                  borderRadius: 4,
+                  padding: '4px 10px',
+                  cursor: 'pointer',
+                  fontWeight: 600,
+                  fontSize: '0.78rem'
+                }}
+              >
+                70% Overview
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <button
+                onClick={() => setZoomLevel((z) => Math.max(50, z - 10))}
+                title="Zoom Out"
+                style={{
+                  background: 'rgba(255,255,255,0.08)',
+                  border: '1px solid rgba(255,255,255,0.15)',
+                  color: '#FFFFFF',
+                  borderRadius: 4,
+                  padding: '4px 8px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center'
+                }}
+              >
+                <ZoomOut size={13} />
+              </button>
+              <span style={{ fontFamily: 'var(--font-mono)', minWidth: 42, textAlign: 'center' }}>
+                {zoomLevel}%
+              </span>
+              <button
+                onClick={() => setZoomLevel((z) => Math.min(150, z + 10))}
+                title="Zoom In"
+                style={{
+                  background: 'rgba(255,255,255,0.08)',
+                  border: '1px solid rgba(255,255,255,0.15)',
+                  color: '#FFFFFF',
+                  borderRadius: 4,
+                  padding: '4px 8px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center'
+                }}
+              >
+                <ZoomIn size={13} />
+              </button>
+              <button
+                onClick={() => setZoomLevel(100)}
+                title="Reset Zoom"
+                style={{
+                  background: 'rgba(255,255,255,0.08)',
+                  border: '1px solid rgba(255,255,255,0.15)',
+                  color: '#FFFFFF',
+                  borderRadius: 4,
+                  padding: '4px 8px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center'
+                }}
+              >
+                <RotateCcw size={13} />
+              </button>
+
+              <button
+                onClick={() => setIsFullscreen(!isFullscreen)}
+                style={{
+                  background: isFullscreen ? 'var(--rose-600, #E11D48)' : 'linear-gradient(135deg, #0284C7 0%, #0369A1 100%)',
+                  border: 'none',
+                  color: '#FFFFFF',
+                  borderRadius: 4,
+                  padding: '4px 12px',
+                  cursor: 'pointer',
+                  fontWeight: 700,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6
+                }}
+              >
+                {isFullscreen ? <Minimize2 size={13} /> : <Maximize2 size={13} />}
+                {isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}
+              </button>
+            </div>
+          </div>
+
+          <div style={{
+            flex: 1,
+            width: '100%',
+            overflowX: 'hidden',
+            overflowY: 'auto',
+            background: 'var(--bg)',
+            display: 'flex',
+            justifyContent: 'center',
+            padding: 0
+          }}>
+            <div style={{
+              width: zoomLevel === 100 ? '100%' : `${zoomLevel}%`,
+              maxWidth: '100%',
               height: '100%',
-              border: 'none',
-              display: 'block'
-            }}
-          />
+              transition: 'width 0.2s ease',
+              margin: '0 auto'
+            }}>
+              <iframe
+                id="poster-frame"
+                src="/poster/index.html"
+                title="UrbanGen AI Poster"
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  border: 'none',
+                  display: 'block'
+                }}
+              />
+            </div>
+          </div>
         </div>
       ) : (
         <div style={{
@@ -329,4 +519,3 @@ export default function Poster() {
     </div>
   );
 }
-

@@ -57,7 +57,7 @@ const METRIC_OPTIONS = [
 ] as const;
 
 function metric(mean: unknown, std = 0) {
-  return { mean: typeof mean === 'number' ? mean : 0, std: typeof std === 'number' ? std : 0 };
+  return { mean: typeof mean === 'number' && Number.isFinite(mean) ? mean : 0, std: typeof std === 'number' && Number.isFinite(std) ? std : 0 };
 }
 
 function normalizedMetric(value: unknown, fallback?: unknown) {
@@ -80,25 +80,37 @@ function normalizeEvalPayload(endpoint: string, payload: any): any {
 
   if (key === 'ae' || key === 'vae') {
     const isVae = key === 'vae';
+    const perClassRaw = raw.per_class && typeof raw.per_class === 'object' ? raw.per_class : {};
+    const per_class = Object.fromEntries(Object.entries(perClassRaw).map(([cls, v]: [string, any]) => [
+      cls,
+      { mse: Number(v?.mse) || 0, psnr: Number(v?.psnr) || 0, ssim: Number(v?.ssim) || 0, n: Number(v?.n) || 0 },
+    ]));
     return {
       ...raw,
-      n_samples: raw.n_samples ?? 0,
-      n_classes: raw.n_classes ?? 0,
+      n_samples: Number(raw.n_samples) || 0,
+      n_classes: Number(raw.n_classes) || Object.keys(per_class).length,
       mse: normalizedMetric(raw.mse, isVae ? raw.test_recon_mse : raw.test_sample_mse),
       psnr: normalizedMetric(raw.psnr, isVae ? raw.test_recon_psnr_db : raw.test_sample_psnr_db),
       ssim: normalizedMetric(raw.ssim, isVae ? raw.test_recon_ssim : raw.test_sample_ssim),
       kl: isVae && (raw.kl != null || raw.test_kl_divergence != null) ? normalizedMetric(raw.kl, raw.test_kl_divergence) : undefined,
-      latent: raw.latent ?? (isVae && raw.latent_dimensions != null ? { total_dims: raw.latent_dimensions, active_dims: raw.latent_dimensions, active_fraction: 1 } : undefined),
-      per_class: raw.per_class ?? {},
+      latent: raw.latent ?? (isVae && raw.latent_dimensions != null ? { total_dims: Number(raw.latent_dimensions) || 0, active_dims: Number(raw.latent_dimensions) || 0, active_fraction: 1 } : undefined),
+      per_class,
     };
   }
 
   if (key === 'classifier') {
-    return { ...raw, n_samples: raw.n_samples ?? 0, classes: raw.classes ?? [], confusion_matrix: raw.confusion_matrix ?? [], per_class_accuracy: raw.per_class_accuracy ?? {}, accuracy: raw.accuracy ?? (typeof raw.test_split_accuracy === 'number' ? raw.test_split_accuracy / 100 : 0) };
+    return { ...raw, n_samples: Number(raw.n_samples) || 0, classes: Array.isArray(raw.classes) ? raw.classes : [], confusion_matrix: Array.isArray(raw.confusion_matrix) ? raw.confusion_matrix : [], per_class_accuracy: raw.per_class_accuracy && typeof raw.per_class_accuracy === 'object' ? raw.per_class_accuracy : {}, accuracy: typeof raw.accuracy === 'number' ? raw.accuracy : (typeof raw.test_split_accuracy === 'number' ? raw.test_split_accuracy / 100 : 0) };
   }
 
-  if (key === 'gan') return { ...raw, n_samples: raw.n_samples ?? 0, n_classes: raw.n_classes ?? 0, per_class: raw.per_class ?? {} };
-  if (key === 'gpt') return { ...raw, held_out_chars: raw.held_out_chars ?? 0, vocab_size: raw.vocab_size ?? 1, cross_entropy: raw.cross_entropy ?? raw.held_out_val_loss ?? 0, perplexity: raw.perplexity ?? raw.held_out_perplexity ?? 0, bits_per_char: raw.bits_per_char ?? raw.bits_per_character ?? 0, n_params_millions: raw.n_params_millions ?? (raw.parameters ? raw.parameters / 1e6 : 0) };
+  if (key === 'gan') {
+    const perClassRaw = raw.per_class && typeof raw.per_class === 'object' ? raw.per_class : {};
+    const per_class = Object.fromEntries(Object.entries(perClassRaw).map(([cls, v]: [string, any]) => [
+      cls,
+      { recognized: Number(v?.recognized) || 0, n: Number(v?.n) || 0, rate: typeof v?.rate === 'number' ? v.rate : 0 },
+    ]));
+    return { ...raw, n_samples: Number(raw.n_samples) || 0, n_classes: Number(raw.n_classes) || Object.keys(per_class).length, overall_recognition_rate: typeof raw.overall_recognition_rate === 'number' ? raw.overall_recognition_rate : 0, per_class };
+  }
+  if (key === 'gpt') return { ...raw, held_out_chars: Number(raw.held_out_chars) || 0, vocab_size: Number(raw.vocab_size) || 1, cross_entropy: Number(raw.cross_entropy ?? raw.held_out_val_loss) || 0, perplexity: Number(raw.perplexity ?? raw.held_out_perplexity) || 0, bits_per_char: Number(raw.bits_per_char ?? raw.bits_per_character) || 0, final_train_loss: raw.final_train_loss ?? null, n_params_millions: Number(raw.n_params_millions ?? (raw.parameters ? raw.parameters / 1e6 : 0)) || 0 };
   return raw;
 }
 
@@ -628,7 +640,7 @@ function MatrixPanel() {
       primaryMetric: 'SSIM',
       primaryVal: vae ? `${vae.ssim.mean.toFixed(2)} ± ${vae.ssim.std.toFixed(2)}` : '—',
       secondaryMetric: 'Active Latent Dims / KL',
-      secondaryVal: vae ? `${vae.latent?.active_dims ?? '—'}/${vae.latent?.total_dims ?? '—'} (${vae.kl?.mean.toFixed(0) ?? '—'} nats)` : '—',
+      secondaryVal: vae ? `${vae.latent?.active_dims ?? '—'}/${vae.latent?.total_dims ?? '—'} (${vae.kl?.mean?.toFixed(0) ?? '—'} nats)` : '—',
       objective: 'Probabilistic continuous latent morphing & anomaly z-score benchmarking',
     },
     {

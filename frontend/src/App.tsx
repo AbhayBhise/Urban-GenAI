@@ -480,7 +480,7 @@ export default function App() {
       title: 'WORKSPACE & REFERENCE',
       items: [
         { id: 'landing' as ViewType, label: 'Home Dashboard', icon: Sparkles },
-        { id: 'poster' as ViewType, label: 'Academic Poster', icon: Presentation, badge: '60M' },
+        { id: 'poster' as ViewType, label: 'Academic Poster', icon: Presentation },
         { id: 'glossary' as ViewType, label: 'Urban AI Glossary', icon: BookOpen, badge: 'Glossary' },
         { id: 'system-architecture' as ViewType, label: 'System Architecture', icon: Layers },
       ],
