@@ -56,6 +56,44 @@ const METRIC_OPTIONS = [
   { key: 'mse', label: 'MSE', suffix: '', higherIsBetter: false },
 ] as const;
 
+function metric(mean: unknown, std = 0) {
+  return { mean: typeof mean === 'number' ? mean : 0, std: typeof std === 'number' ? std : 0 };
+}
+
+/**
+ * Evaluation endpoints may fall back to the older system-validation report,
+ * which uses flat test_* fields and sometimes omits optional chart data.
+ * Normalize those responses once so every panel can rely on one safe shape.
+ */
+function normalizeEvalPayload(endpoint: string, payload: any): any {
+  const key = endpoint.split('/').pop() ?? '';
+  const reportKey = key === 'vae' ? 'spatial_vae' : key === 'ae' ? 'autoencoder' : key === 'gan' ? 'conditional_gan' : key === 'gpt' ? 'minigpt_planner' : key;
+  const raw = payload?.models?.[reportKey]?.metrics ?? payload?.metrics ?? payload ?? {};
+
+  if (key === 'ae' || key === 'vae') {
+    const isVae = key === 'vae';
+    return {
+      ...raw,
+      n_samples: raw.n_samples ?? 0,
+      n_classes: raw.n_classes ?? 0,
+      mse: raw.mse ?? metric(isVae ? raw.test_recon_mse : raw.test_sample_mse),
+      psnr: raw.psnr ?? metric(isVae ? raw.test_recon_psnr_db : raw.test_sample_psnr_db),
+      ssim: raw.ssim ?? metric(isVae ? raw.test_recon_ssim : raw.test_sample_ssim),
+      kl: raw.kl ?? (isVae && raw.test_kl_divergence != null ? metric(raw.test_kl_divergence) : undefined),
+      latent: raw.latent ?? (isVae && raw.latent_dimensions != null ? { total_dims: raw.latent_dimensions, active_dims: raw.latent_dimensions, active_fraction: 1 } : undefined),
+      per_class: raw.per_class ?? {},
+    };
+  }
+
+  if (key === 'classifier') {
+    return { ...raw, n_samples: raw.n_samples ?? 0, classes: raw.classes ?? [], confusion_matrix: raw.confusion_matrix ?? [], per_class_accuracy: raw.per_class_accuracy ?? {}, accuracy: raw.accuracy ?? (typeof raw.test_split_accuracy === 'number' ? raw.test_split_accuracy / 100 : 0) };
+  }
+
+  if (key === 'gan') return { ...raw, n_samples: raw.n_samples ?? 0, n_classes: raw.n_classes ?? 0, per_class: raw.per_class ?? {} };
+  if (key === 'gpt') return { ...raw, held_out_chars: raw.held_out_chars ?? 0, vocab_size: raw.vocab_size ?? 1, cross_entropy: raw.cross_entropy ?? raw.held_out_val_loss ?? 0, perplexity: raw.perplexity ?? raw.held_out_perplexity ?? 0, bits_per_char: raw.bits_per_char ?? raw.bits_per_character ?? 0, n_params_millions: raw.n_params_millions ?? (raw.parameters ? raw.parameters / 1e6 : 0) };
+  return raw;
+}
+
 function useEval<T>(endpoint: string) {
   const [data, setData] = useState<T | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -68,7 +106,7 @@ function useEval<T>(endpoint: string) {
           setError(res.status === 400 ? await res.text() : `Error ${res.status}`);
           return;
         }
-        setData(await res.json());
+        setData(normalizeEvalPayload(endpoint, await res.json()));
       })
       .catch(err => setError(String(err)));
   }, [endpoint]);
