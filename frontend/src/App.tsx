@@ -1414,27 +1414,6 @@ export default function App() {
             </div>
 
             <div className="topbar-right" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              {/* MIT AOE Academic Defense badge */}
-              <div
-                className="defense-badge"
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  fontSize: '0.74rem',
-                  fontFamily: 'var(--font-mono)',
-                  color: 'var(--muted)',
-                  padding: '4px 10px',
-                  borderRadius: 6,
-                  background: 'var(--surface-inset)',
-                  border: '1px solid var(--border)',
-                }}
-              >
-                <span>MIT AOE, Pune</span>
-                <span style={{ color: 'var(--border-subtle)' }}>|</span>
-                <span style={{ color: 'var(--accent)', fontWeight: 600 }}>60M Capstone</span>
-              </div>
-
               {/* One-Click Urban AI Glossary Quick Access */}
               <button
                 onClick={() => setActiveView('glossary')}
